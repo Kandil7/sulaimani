@@ -28,7 +28,7 @@ class SideMenu extends StatelessWidget {
             icon: Icons.point_of_sale_outlined,
             title: AppStrings.pos,
             isActive: currentPath.startsWith('/pos'),
-            onTap: () {},
+            onTap: () => context.go('/pos'),
           ),
           _MenuItem(
             icon: Icons.inventory_2_outlined,

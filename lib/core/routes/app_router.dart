@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../../presentation/layout/main_layout.dart';
 import '../../presentation/dashboard/pages/dashboard_page.dart';
 import '../../presentation/products/pages/products_page.dart';
+import '../../presentation/pos/pages/pos_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -19,6 +20,10 @@ class AppRouter {
           GoRoute(
             path: '/products',
             builder: (context, state) => const ProductsPage(),
+          ),
+          GoRoute(
+            path: '/pos',
+            builder: (context, state) => const PosPage(),
           ),
         ],
       ),

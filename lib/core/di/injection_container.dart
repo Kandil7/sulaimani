@@ -6,6 +6,8 @@ import '../../data/models/sale_model.dart';
 import '../../data/repositories/isar_generic_repository.dart';
 import '../../domain/repositories/generic_repository.dart';
 import '../../presentation/products/bloc/products_bloc.dart';
+import '../../data/models/sale_item_model.dart';
+import '../../presentation/pos/bloc/pos_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -26,6 +28,11 @@ Future<void> init() async {
     () => IsarGenericRepository<SaleModel>(sl<DatabaseService>().isar),
   );
 
+  sl.registerLazySingleton<GenericRepository<SaleItemModel>>(
+    () => IsarGenericRepository<SaleItemModel>(sl<DatabaseService>().isar),
+  );
+
   // Blocs
   sl.registerFactory(() => ProductsBloc(repository: sl()));
+  sl.registerFactory(() => PosBloc(sl(), sl(), sl()));
 }
