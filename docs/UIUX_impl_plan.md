@@ -20,7 +20,7 @@
 
 ***
 
-### Color System
+### Color SystemARR
 | Token | Color | استخدام |
 |-------|-------|---------|
 | Primary | #2E7D32 | أزرار، Active states، أيقونات رئيسية |
