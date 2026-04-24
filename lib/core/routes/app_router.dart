@@ -3,6 +3,8 @@ import '../../presentation/layout/main_layout.dart';
 import '../../presentation/dashboard/pages/dashboard_page.dart';
 import '../../presentation/products/pages/products_page.dart';
 import '../../presentation/pos/pages/pos_page.dart';
+import '../../presentation/reports/pages/reports_page.dart';
+import '../../presentation/settings/pages/settings_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -24,6 +26,14 @@ class AppRouter {
           GoRoute(
             path: '/pos',
             builder: (context, state) => const PosPage(),
+          ),
+          GoRoute(
+            path: '/reports',
+            builder: (context, state) => const ReportsPage(),
+          ),
+          GoRoute(
+            path: '/settings',
+            builder: (context, state) => const SettingsPage(),
           ),
         ],
       ),

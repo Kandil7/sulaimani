@@ -73,6 +73,46 @@ class TopBar extends StatelessWidget {
               ),
               const SizedBox(width: AppSizes.lg),
               
+              // Notifications
+              PopupMenuButton<String>(
+                icon: const Badge(
+                  label: Text('3'),
+                  child: Icon(Icons.notifications_outlined, color: AppColors.textSecondary),
+                ),
+                offset: const Offset(0, 50),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    enabled: false,
+                    child: Text('التنبيهات', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  ),
+                  const PopupMenuDivider(),
+                  const PopupMenuItem(
+                    child: ListTile(
+                      leading: Icon(Icons.warning, color: Colors.red),
+                      title: Text('منتج منتهي الصلاحية'),
+                      subtitle: Text('سيبروفلوكساسين منتهي منذ يوم'),
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    child: ListTile(
+                      leading: Icon(Icons.info, color: Colors.orange),
+                      title: Text('نواقص أدوية'),
+                      subtitle: Text('راوند أب 5 قطع متبقية'),
+                    ),
+                  ),
+                  const PopupMenuDivider(),
+                  PopupMenuItem(
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {},
+                        child: const Text('عرض كل التنبيهات'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: AppSizes.lg),
+              
               // User Profile Placeholder
               const CircleAvatar(
                 backgroundColor: AppColors.primary,
