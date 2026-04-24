@@ -33,7 +33,7 @@ dependencies:
   printing: ^5.13.0
 
   # Charts
-  fl_chart: ^0.69.0
+  fl_chart: ^1.2.0
 
   # Tables
   data_table_2: ^2.5.12
