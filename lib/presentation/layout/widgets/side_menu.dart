@@ -34,7 +34,7 @@ class SideMenu extends StatelessWidget {
             icon: Icons.inventory_2_outlined,
             title: AppStrings.products,
             isActive: currentPath.startsWith('/products'),
-            onTap: () {},
+            onTap: () => context.go('/products'),
           ),
           _MenuItem(
             icon: Icons.receipt_long_outlined,
