@@ -13,6 +13,9 @@ class AppColors {
   static const Color warning = Color(0xFFF57C00);
   static const Color warningSurface = Color(0xFFFFF3E0);
   
+  static const Color success = Color(0xFF388E3C);
+  static const Color successSurface = Color(0xFFE8F5E9);
+  
   static const Color sidebar = Color(0xFF1A2332);
   static const Color background = Color(0xFFF5F7FA);
   static const Color surface = Color(0xFFFFFFFF);

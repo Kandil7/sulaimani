@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:isar/isar.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/sale_model.dart';
@@ -11,7 +10,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final GenericRepository<ProductModel> productRepository;
   final GenericRepository<SaleModel> saleRepository;
 
-  PosBloc({required this.productRepository, required this.saleRepository}) : super(PosInitial()) {
+  PosBloc({required this.productRepository, required this.saleRepository})
+      : super(PosInitial()) {
     on<SearchProductPos>(_onSearchProductPos);
     on<AddToCart>(_onAddToCart);
     on<RemoveFromCart>(_onRemoveFromCart);
@@ -20,8 +20,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     on<ClearCart>(_onClearCart);
   }
 
-  Future<void> _onSearchProductPos(SearchProductPos event, Emitter<PosState> emit) async {
-    final currentState = state is PosActive ? state as PosActive : const PosActive();
+  Future<void> _onSearchProductPos(
+      SearchProductPos event, Emitter<PosState> emit) async {
+    final currentState =
+        state is PosActive ? state as PosActive : const PosActive();
     if (event.query.isEmpty) {
       emit(currentState.copyWith(searchResults: []));
       return;
@@ -31,10 +33,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       final allProducts = await productRepository.getAll();
       final query = event.query.toLowerCase();
       final searchResults = allProducts.where((p) {
-        return p.name.toLowerCase().contains(query) || 
-               p.barcode.toLowerCase().contains(query);
+        return p.name.toLowerCase().contains(query) ||
+            p.barcode.toLowerCase().contains(query);
       }).toList();
-      
+
       emit(currentState.copyWith(searchResults: searchResults));
     } catch (e) {
       emit(PosError(e.toString()));
@@ -42,16 +44,19 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   }
 
   void _onAddToCart(AddToCart event, Emitter<PosState> emit) {
-    final currentState = state is PosActive ? state as PosActive : const PosActive();
-    
+    final currentState =
+        state is PosActive ? state as PosActive : const PosActive();
+
     // Check if already in cart
-    final existingIndex = currentState.cartItems.indexWhere((item) => item.product.value?.id == event.product.id);
-    
+    final existingIndex = currentState.cartItems
+        .indexWhere((item) => item.product.value?.id == event.product.id);
+
     final updatedCart = List<SaleItemModel>.from(currentState.cartItems);
-    
+
     if (existingIndex >= 0) {
       updatedCart[existingIndex].quantity += 1;
-      updatedCart[existingIndex].total = updatedCart[existingIndex].quantity * updatedCart[existingIndex].unitPrice;
+      updatedCart[existingIndex].total = updatedCart[existingIndex].quantity *
+          updatedCart[existingIndex].unitPrice;
     } else {
       final newItem = SaleItemModel()
         ..product.value = event.product
@@ -60,7 +65,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         ..total = event.product.sellingPrice;
       updatedCart.add(newItem);
     }
-    
+
     final total = updatedCart.fold(0.0, (sum, item) => sum + item.total);
     emit(currentState.copyWith(cartItems: updatedCart, total: total));
   }
@@ -75,12 +80,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     }
   }
 
-  void _onUpdateCartItemQuantity(UpdateCartItemQuantity event, Emitter<PosState> emit) {
+  void _onUpdateCartItemQuantity(
+      UpdateCartItemQuantity event, Emitter<PosState> emit) {
     if (state is PosActive) {
       final currentState = state as PosActive;
       final updatedCart = List<SaleItemModel>.from(currentState.cartItems);
       updatedCart[event.index].quantity = event.quantity;
-      updatedCart[event.index].total = event.quantity * updatedCart[event.index].unitPrice;
+      updatedCart[event.index].total =
+          event.quantity * updatedCart[event.index].unitPrice;
       final total = updatedCart.fold(0.0, (sum, item) => sum + item.total);
       emit(currentState.copyWith(cartItems: updatedCart, total: total));
     }
@@ -104,7 +111,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           ..updatedAt = DateTime.now();
 
         await saleRepository.insert(sale);
-        
+
         emit(PosSaleCompleted(receiptNo));
         emit(const PosActive());
       } catch (e) {

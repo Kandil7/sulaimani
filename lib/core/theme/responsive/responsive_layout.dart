@@ -7,11 +7,11 @@ class ResponsiveLayout extends StatelessWidget {
   final Widget desktop;
 
   const ResponsiveLayout({
-    Key? key,
+    super.key,
     required this.mobile,
     this.tablet,
     required this.desktop,
-  }) : super(key: key);
+  });
 
   static bool isMobile(BuildContext context) =>
       MediaQuery.of(context).size.width < Breakpoints.mobile;
@@ -23,7 +23,7 @@ class ResponsiveLayout extends StatelessWidget {
   static bool isDesktopS(BuildContext context) =>
       MediaQuery.of(context).size.width >= Breakpoints.tablet &&
       MediaQuery.of(context).size.width < Breakpoints.desktopS;
-      
+
   static bool isDesktopM(BuildContext context) =>
       MediaQuery.of(context).size.width >= Breakpoints.desktopS &&
       MediaQuery.of(context).size.width < Breakpoints.desktopM;

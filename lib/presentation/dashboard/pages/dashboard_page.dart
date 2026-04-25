@@ -20,15 +20,31 @@ class DashboardPage extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.xl),
           // Summary Cards
-          Row(
+          const Row(
             children: [
-              _SummaryCard(title: 'مبيعات اليوم', value: '15,430 ج', icon: Icons.monetization_on, color: AppColors.primary),
-              const SizedBox(width: AppSizes.md),
-              _SummaryCard(title: 'عدد الفواتير', value: '142', icon: Icons.receipt, color: Colors.purple),
-              const SizedBox(width: AppSizes.md),
-              _SummaryCard(title: 'متوسط الفاتورة', value: '108.6 ج', icon: Icons.analytics, color: Colors.teal),
-              const SizedBox(width: AppSizes.md),
-              _SummaryCard(title: 'نواقص الأدوية', value: '5', icon: Icons.warning, color: Colors.orange),
+              _SummaryCard(
+                  title: 'مبيعات اليوم',
+                  value: '15,430 ج',
+                  icon: Icons.monetization_on,
+                  color: AppColors.primary),
+              SizedBox(width: AppSizes.md),
+              _SummaryCard(
+                  title: 'عدد الفواتير',
+                  value: '142',
+                  icon: Icons.receipt,
+                  color: Colors.purple),
+              SizedBox(width: AppSizes.md),
+              _SummaryCard(
+                  title: 'متوسط الفاتورة',
+                  value: '108.6 ج',
+                  icon: Icons.analytics,
+                  color: Colors.teal),
+              SizedBox(width: AppSizes.md),
+              _SummaryCard(
+                  title: 'نواقص الأدوية',
+                  value: '5',
+                  icon: Icons.warning,
+                  color: Colors.orange),
             ],
           ),
           const SizedBox(height: AppSizes.xl),
@@ -46,28 +62,40 @@ class DashboardPage extends StatelessWidget {
                       BarChartData(
                         alignment: BarChartAlignment.spaceAround,
                         maxY: 20000,
-                        barTouchData: BarTouchData(enabled: false),
+                        barTouchData: const BarTouchData(enabled: false),
                         titlesData: FlTitlesData(
                           show: true,
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               getTitlesWidget: (value, meta) {
-                                const days = ['السبت', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+                                const days = [
+                                  'السبت',
+                                  'الأحد',
+                                  'الإثنين',
+                                  'الثلاثاء',
+                                  'الأربعاء',
+                                  'الخميس',
+                                  'الجمعة'
+                                ];
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(days[value.toInt() % 7], style: const TextStyle(fontSize: 12)),
+                                  child: Text(days[value.toInt() % 7],
+                                      style: const TextStyle(fontSize: 12)),
                                 );
                               },
                             ),
                           ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: true, reservedSize: 40),
+                          leftTitles: const AxisTitles(
+                            sideTitles:
+                                SideTitles(showTitles: true, reservedSize: 40),
                           ),
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
+                          rightTitles: const AxisTitles(
+                              sideTitles: SideTitles(showTitles: false)),
                         ),
-                        gridData: FlGridData(
+                        gridData: const FlGridData(
                           show: true,
                           drawVerticalLine: false,
                           horizontalInterval: 5000,
@@ -98,9 +126,13 @@ class DashboardPage extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: AppSizes.md),
                         child: Row(
                           children: [
-                            Text('${index + 1}. ', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text('${index + 1}. ',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.bold)),
                             const Expanded(child: Text('بنادول اكسترا')),
-                            Text('${100 - (index * 10)} عبوة', style: const TextStyle(color: AppColors.primary)),
+                            Text('${100 - (index * 10)} عبوة',
+                                style:
+                                    const TextStyle(color: AppColors.primary)),
                           ],
                         ),
                       );
@@ -118,7 +150,10 @@ class DashboardPage extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
               ],
             ),
             child: Column(
@@ -145,7 +180,8 @@ class DashboardPage extends StatelessWidget {
                   },
                   children: [
                     TableRow(
-                      decoration: BoxDecoration(color: AppColors.background),
+                      decoration:
+                          const BoxDecoration(color: AppColors.background),
                       children: [
                         _buildTableHeader('رقم الفاتورة'),
                         _buildTableHeader('القيمة'),
@@ -184,17 +220,28 @@ class DashboardPage extends StatelessWidget {
   Widget _buildTableHeader(String text) {
     return Padding(
       padding: const EdgeInsets.all(AppSizes.md),
-      child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+      child: Text(text,
+          style: const TextStyle(
+              fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
     );
   }
 
-  TableRow _buildTableRow(String id, String amount, String method, String time) {
+  TableRow _buildTableRow(
+      String id, String amount, String method, String time) {
     return TableRow(
       children: [
-        Padding(padding: const EdgeInsets.all(AppSizes.md), child: Text('#$id')),
-        Padding(padding: const EdgeInsets.all(AppSizes.md), child: Text(amount, style: const TextStyle(fontWeight: FontWeight.bold))),
-        Padding(padding: const EdgeInsets.all(AppSizes.md), child: Text(method)),
-        Padding(padding: const EdgeInsets.all(AppSizes.md), child: Text(time, style: const TextStyle(color: AppColors.textLight))),
+        Padding(
+            padding: const EdgeInsets.all(AppSizes.md), child: Text('#$id')),
+        Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: Text(amount,
+                style: const TextStyle(fontWeight: FontWeight.bold))),
+        Padding(
+            padding: const EdgeInsets.all(AppSizes.md), child: Text(method)),
+        Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: Text(time,
+                style: const TextStyle(color: AppColors.textSecondary))),
       ],
     );
   }
@@ -243,9 +290,12 @@ class _SummaryCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                Text(title,
+                    style: const TextStyle(color: Colors.grey, fontSize: 14)),
                 const SizedBox(height: 4),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                Text(value,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 24)),
               ],
             )
           ],
@@ -269,7 +319,10 @@ class _ChartCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4))
+          BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
         ],
       ),
       child: Column(
