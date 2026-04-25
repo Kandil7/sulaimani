@@ -1,336 +1,230 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../bloc/dashboard_bloc.dart';
+import '../bloc/dashboard_event.dart';
+import '../bloc/dashboard_state.dart';
+import '../widgets/stats_row.dart';
+import '../widgets/sales_chart.dart';
+import '../widgets/alerts_panel.dart';
+import '../widgets/recent_sales_table.dart';
+import '../widgets/welcome_header.dart';
+import '../widgets/quick_actions_row.dart';
+import '../widgets/loading_skeleton.dart';
+import '../widgets/top_products_chart.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  Timer? _autoRefreshTimer;
+  final String _userName = 'أحمد';
+
+  @override
+  void initState() {
+    super.initState();
+    _startAutoRefresh();
+  }
+
+  void _startAutoRefresh() {
+    _autoRefreshTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) {
+        if (mounted) {
+          context.read<DashboardBloc>().add(RefreshDashboard());
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _autoRefreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.xl),
+    return BlocBuilder<DashboardBloc, DashboardState>(
+      builder: (context, state) {
+        if (state is DashboardLoading) {
+          return const DashboardLoadingSkeleton();
+        }
+
+        if (state is DashboardError) {
+          return _buildErrorState(state.message);
+        }
+
+        if (state is DashboardLoaded) {
+          return _buildLoadedState(state);
+        }
+
+        return const DashboardLoadingSkeleton();
+      },
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text(
-            'لوحة القيادة',
-            style: AppTextStyles.h1,
+          Icon(
+            Icons.error_outline,
+            size: 64,
+            color: AppColors.danger,
           ),
-          const SizedBox(height: AppSizes.xl),
-          // Summary Cards
-          const Row(
-            children: [
-              _SummaryCard(
-                  title: 'مبيعات اليوم',
-                  value: '15,430 ج',
-                  icon: Icons.monetization_on,
-                  color: AppColors.primary),
-              SizedBox(width: AppSizes.md),
-              _SummaryCard(
-                  title: 'عدد الفواتير',
-                  value: '142',
-                  icon: Icons.receipt,
-                  color: Colors.purple),
-              SizedBox(width: AppSizes.md),
-              _SummaryCard(
-                  title: 'متوسط الفاتورة',
-                  value: '108.6 ج',
-                  icon: Icons.analytics,
-                  color: Colors.teal),
-              SizedBox(width: AppSizes.md),
-              _SummaryCard(
-                  title: 'نواقص الأدوية',
-                  value: '5',
-                  icon: Icons.warning,
-                  color: Colors.orange),
-            ],
+          const SizedBox(height: AppSizes.lg),
+          Text(
+            'حدث خطأ',
+            style: AppTextStyles.h2,
           ),
-          const SizedBox(height: AppSizes.xl),
-          // Charts Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                flex: 2,
-                child: _ChartCard(
-                  title: 'مبيعات آخر 7 أيام',
-                  child: SizedBox(
-                    height: 300,
-                    child: BarChart(
-                      BarChartData(
-                        alignment: BarChartAlignment.spaceAround,
-                        maxY: 20000,
-                        barTouchData: const BarTouchData(enabled: false),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              getTitlesWidget: (value, meta) {
-                                const days = [
-                                  'السبت',
-                                  'الأحد',
-                                  'الإثنين',
-                                  'الثلاثاء',
-                                  'الأربعاء',
-                                  'الخميس',
-                                  'الجمعة'
-                                ];
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Text(days[value.toInt() % 7],
-                                      style: const TextStyle(fontSize: 12)),
-                                );
-                              },
-                            ),
-                          ),
-                          leftTitles: const AxisTitles(
-                            sideTitles:
-                                SideTitles(showTitles: true, reservedSize: 40),
-                          ),
-                          topTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: const AxisTitles(
-                              sideTitles: SideTitles(showTitles: false)),
-                        ),
-                        gridData: const FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                          horizontalInterval: 5000,
-                        ),
-                        borderData: FlBorderData(show: false),
-                        barGroups: [
-                          _buildBarGroup(0, 15000),
-                          _buildBarGroup(1, 12000),
-                          _buildBarGroup(2, 18000),
-                          _buildBarGroup(3, 14000),
-                          _buildBarGroup(4, 16000),
-                          _buildBarGroup(5, 19000),
-                          _buildBarGroup(6, 17500),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+          const SizedBox(height: AppSizes.sm),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.xl),
+            child: Text(
+              message,
+              style: AppTextStyles.bodyM.copyWith(
+                color: AppColors.textSecondary,
               ),
-              const SizedBox(width: AppSizes.md),
-              Expanded(
-                flex: 1,
-                child: _ChartCard(
-                  title: 'أكثر المنتجات مبيعاً',
-                  child: Column(
-                    children: List.generate(5, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSizes.md),
-                        child: Row(
-                          children: [
-                            Text('${index + 1}. ',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold)),
-                            const Expanded(child: Text('بنادول اكسترا')),
-                            Text('${100 - (index * 10)} عبوة',
-                                style:
-                                    const TextStyle(color: AppColors.primary)),
-                          ],
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-              ),
-            ],
+              textAlign: TextAlign.center,
+            ),
           ),
-          const SizedBox(height: AppSizes.xl),
-          // Recent Invoices Table
-          Container(
-            padding: const EdgeInsets.all(AppSizes.lg),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4))
-              ],
+          const SizedBox(height: AppSizes.lg),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<DashboardBloc>().add(LoadDashboard());
+            },
+            icon: const Icon(Icons.refresh),
+            label: const Text('إعادة المحاولة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.lg,
+                vertical: AppSizes.md,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('أحدث الفواتير', style: AppTextStyles.h2),
-                    TextButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.download),
-                      label: const Text('تصدير Excel'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.md),
-                Table(
-                  columnWidths: const {
-                    0: FlexColumnWidth(1),
-                    1: FlexColumnWidth(2),
-                    2: FlexColumnWidth(2),
-                    3: FlexColumnWidth(2),
-                  },
-                  children: [
-                    TableRow(
-                      decoration:
-                          const BoxDecoration(color: AppColors.background),
-                      children: [
-                        _buildTableHeader('رقم الفاتورة'),
-                        _buildTableHeader('القيمة'),
-                        _buildTableHeader('طريقة الدفع'),
-                        _buildTableHeader('الوقت'),
-                      ],
-                    ),
-                    _buildTableRow('1042', '125 ج', 'نقدي', 'منذ 5 دقائق'),
-                    _buildTableRow('1041', '85 ج', 'فيزا', 'منذ 15 دقيقة'),
-                    _buildTableRow('1040', '450 ج', 'نقدي', 'منذ 45 دقيقة'),
-                    _buildTableRow('1039', '30 ج', 'نقدي', 'منذ ساعة'),
-                  ],
-                ),
-              ],
-            ),
-          )
+          ),
         ],
       ),
     );
   }
 
-  BarChartGroupData _buildBarGroup(int x, double y) {
-    return BarChartGroupData(
-      x: x,
-      barRods: [
-        BarChartRodData(
-          toY: y,
-          color: AppColors.primary,
-          width: 20,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTableHeader(String text) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.md),
-      child: Text(text,
-          style: const TextStyle(
-              fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
-    );
-  }
-
-  TableRow _buildTableRow(
-      String id, String amount, String method, String time) {
-    return TableRow(
-      children: [
-        Padding(
-            padding: const EdgeInsets.all(AppSizes.md), child: Text('#$id')),
-        Padding(
-            padding: const EdgeInsets.all(AppSizes.md),
-            child: Text(amount,
-                style: const TextStyle(fontWeight: FontWeight.bold))),
-        Padding(
-            padding: const EdgeInsets.all(AppSizes.md), child: Text(method)),
-        Padding(
-            padding: const EdgeInsets.all(AppSizes.md),
-            child: Text(time,
-                style: const TextStyle(color: AppColors.textSecondary))),
-      ],
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _SummaryCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    this.color = Colors.blue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.lg),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ],
-        ),
-        child: Row(
+  Widget _buildLoadedState(DashboardLoaded state) {
+    return RefreshIndicator(
+      onRefresh: () async {
+        context.read<DashboardBloc>().add(RefreshDashboard());
+      },
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSizes.xl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              padding: const EdgeInsets.all(AppSizes.md),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: color, size: 32),
+            WelcomeHeader(
+              userName: _userName,
+              onRefreshTap: () {
+                context.read<DashboardBloc>().add(RefreshDashboard());
+              },
             ),
-            const SizedBox(width: AppSizes.md),
-            Column(
+            const SizedBox(height: AppSizes.xl),
+            QuickActionsRow(
+              onQuickSaleTap: () => _navigateTo('/pos'),
+              onAddProductTap: () => _showAddProductDialog(),
+              onRecordPaymentTap: () => _navigateTo('/customers'),
+            ),
+            const SizedBox(height: AppSizes.xl),
+            StatsRow(
+              data: state,
+              onAlertsTap: () => _navigateTo('/alerts'),
+            ),
+            const SizedBox(height: AppSizes.xl),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(color: Colors.grey, fontSize: 14)),
-                const SizedBox(height: 4),
-                Text(value,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 24)),
+                Expanded(
+                  flex: 3,
+                  child: SalesChart(data: state.last7DaysSales),
+                ),
+                const SizedBox(width: AppSizes.md),
+                Expanded(
+                  flex: 2,
+                  child: AlertsPanel(
+                    alerts: state.urgentAlerts,
+                    onViewAllTap: () => _navigateTo('/alerts'),
+                    onAlertTap: (productId) =>
+                        _navigateTo('/products/$productId'),
+                  ),
+                ),
               ],
-            )
+            ),
+            const SizedBox(height: AppSizes.xl),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: RecentSalesTable(
+                    sales: state.recentSales,
+                    onViewAllTap: () => _navigateTo('/reports'),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.md),
+                Expanded(
+                  child: TopProductsChart(
+                    products: const [
+                      ProductSalesData(name: 'بنادول', salesCount: 120),
+                      ProductSalesData(name: 'فيفان', salesCount: 95),
+                      ProductSalesData(name: 'اسيبرو', salesCount: 80),
+                      ProductSalesData(name: 'اوميغا', salesCount: 65),
+                      ProductSalesData(name: 'فيتا', salesCount: 50),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _ChartCard extends StatelessWidget {
-  final String title;
-  final Widget child;
-
-  const _ChartCard({required this.title, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.lg),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4))
-        ],
+  void _navigateTo(String route) {
+    // TODO: Implement navigation using GoRouter
+    // For now, we'll use a placeholder
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('الانتقال إلى: $route'),
+        duration: const Duration(seconds: 1),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: AppTextStyles.h2),
-          const SizedBox(height: AppSizes.xl),
-          child,
+    );
+  }
+
+  void _showAddProductDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('إضافة منتج جديد'),
+        content: const Text('سيتم فتح نموذج إضافة منتج جديد'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _navigateTo('/products/new');
+            },
+            child: const Text('إضافة'),
+          ),
         ],
       ),
     );

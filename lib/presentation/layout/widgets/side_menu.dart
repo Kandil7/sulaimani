@@ -5,12 +5,17 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 
 class SideMenu extends StatelessWidget {
-  const SideMenu({super.key});
+  final int alertCount;
+
+  const SideMenu({
+    super.key,
+    this.alertCount = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     final currentPath = GoRouterState.of(context).uri.toString();
-    
+
     return Container(
       width: 250,
       color: Colors.white,
@@ -26,15 +31,28 @@ class SideMenu extends StatelessWidget {
           ),
           _MenuItem(
             icon: Icons.point_of_sale_outlined,
-            title: AppStrings.pos,
+            title: 'نقطة البيع',
             isActive: currentPath.startsWith('/pos'),
             onTap: () => context.go('/pos'),
           ),
           _MenuItem(
             icon: Icons.inventory_2_outlined,
-            title: AppStrings.products,
+            title: 'إدارة المنتجات',
             isActive: currentPath.startsWith('/products'),
             onTap: () => context.go('/products'),
+          ),
+          _MenuItem(
+            icon: Icons.people_outline,
+            title: 'العملاء',
+            isActive: currentPath.startsWith('/customers'),
+            onTap: () => context.go('/customers'),
+          ),
+          _MenuItem(
+            icon: Icons.warning_amber_outlined,
+            title: 'التنبيهات',
+            isActive: currentPath.startsWith('/alerts'),
+            onTap: () => context.go('/alerts'),
+            badgeCount: alertCount > 0 ? alertCount : null,
           ),
           _MenuItem(
             icon: Icons.receipt_long_outlined,
@@ -87,12 +105,14 @@ class _MenuItem extends StatelessWidget {
   final String title;
   final bool isActive;
   final VoidCallback onTap;
+  final int? badgeCount;
 
   const _MenuItem({
     required this.icon,
     required this.title,
     required this.isActive,
     required this.onTap,
+    this.badgeCount,
   });
 
   @override
@@ -100,24 +120,58 @@ class _MenuItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: AppSizes.sm),
+        margin:
+            const EdgeInsets.symmetric(horizontal: AppSizes.md, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.md, vertical: AppSizes.sm),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primarySurface : Colors.transparent,
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: isActive ? AppColors.primary : AppColors.textSecondary,
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  icon,
+                  color: isActive ? AppColors.primary : AppColors.textSecondary,
+                ),
+                if (badgeCount != null)
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.danger,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
+                      ),
+                      child: Text(
+                        badgeCount! > 99 ? '99+' : badgeCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(width: AppSizes.md),
-            Text(
-              title,
-              style: TextStyle(
-                color: isActive ? AppColors.primary : AppColors.textPrimary,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: isActive ? AppColors.primary : AppColors.textPrimary,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
           ],

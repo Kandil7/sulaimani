@@ -5,6 +5,8 @@ import '../../presentation/products/pages/products_page.dart';
 import '../../presentation/pos/pages/pos_page.dart';
 import '../../presentation/reports/pages/reports_page.dart';
 import '../../presentation/settings/pages/settings_page.dart';
+import '../../presentation/alerts/pages/alerts_page.dart';
+import '../../presentation/customers/pages/customers_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -28,8 +30,16 @@ class AppRouter {
             builder: (context, state) => const PosPage(),
           ),
           GoRoute(
+            path: '/customers',
+            builder: (context, state) => const CustomersPage(),
+          ),
+          GoRoute(
             path: '/reports',
             builder: (context, state) => const ReportsPage(),
+          ),
+          GoRoute(
+            path: '/alerts',
+            builder: (context, state) => const AlertsPage(),
           ),
           GoRoute(
             path: '/settings',

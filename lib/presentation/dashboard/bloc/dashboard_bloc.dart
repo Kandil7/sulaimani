@@ -26,25 +26,31 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   ) async {
     emit(DashboardLoading());
     try {
+      // Batch fetch all data at once to avoid multiple database calls
+      final results = await Future.wait([
+        productRepository.getAll(),
+        saleRepository.getAll(),
+        customerRepository.getAll(),
+      ]);
+
+      final products = results[0] as List<ProductModel>;
+      final sales = results[1] as List<SaleModel>;
+      final customers = results[2] as List<CustomerModel>;
+
       final now = DateTime.now();
       final startOfDay = DateTime(now.year, now.month, now.day);
       final endOfDay = startOfDay.add(const Duration(days: 1));
 
       // Get today's sales
-      final todaySales = await saleRepository.getAll();
-      final todayInvoices = todaySales
+      final todayInvoices = sales
           .where((sale) =>
               sale.createdAt.isAfter(startOfDay) &&
               sale.createdAt.isBefore(endOfDay))
           .toList();
       final todaySalesTotal =
-          todayInvoices.fold<double>(0, (sum, sale) => sum + sale.totalAmount);
+          todayInvoices.fold<double>(0, (sum, sale) => sum + sale.finalAmount);
 
-      // Get all products count
-      final products = await productRepository.getAll();
-      final totalProducts = products.length;
-
-      // Get alerts count (low stock + expiring)
+      // Get alerts count (low stock + expiring soon)
       final alertsCount = products.where((p) {
         if (p.expiryDate != null) {
           final daysUntilExpiry =
@@ -55,31 +61,29 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
       }).length;
 
       // Get total debt
-      final customers = await customerRepository.getAll();
       final totalDebt =
           customers.fold<double>(0, (sum, c) => sum + c.debtBalance);
 
-      // Get last 7 days sales
+      // Get last 7 days sales data
       final last7Days = <DailySales>[];
       for (int i = 6; i >= 0; i--) {
         final date = startOfDay.subtract(Duration(days: i));
         final nextDate = date.add(const Duration(days: 1));
-        final daySales = await saleRepository.getAll();
-        final dayInvoices = daySales
+        final dayInvoices = sales
             .where((s) =>
                 s.createdAt.isAfter(date) && s.createdAt.isBefore(nextDate))
             .toList();
         last7Days.add(DailySales(
           date: date,
-          amount: dayInvoices.fold<double>(0, (sum, s) => sum + s.totalAmount),
+          amount: dayInvoices.fold<double>(0, (sum, s) => sum + s.finalAmount),
           count: dayInvoices.length,
         ));
       }
 
-      // Get recent sales
-      final allSales = await saleRepository.getAll();
-      allSales.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      final recentSales = allSales
+      // Get recent sales (sorted by date, take last 5)
+      final sortedSales = List<SaleModel>.from(sales)
+        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      final recentSales = sortedSales
           .take(5)
           .map((s) => RecentSale(
                 id: s.id,
@@ -90,7 +94,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
               ))
           .toList();
 
-      // Get urgent alerts
+      // Get urgent alerts (expired or critical stock)
       final urgentAlerts = products
           .where((p) {
             if (p.expiryDate != null) {
@@ -101,24 +105,22 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
             return p.stockQuantity <= p.minimumStock;
           })
           .take(3)
-          .map((p) => AlertItem(
-                productId: p.id,
-                productName: p.name,
-                type: p.expiryDate != null &&
-                        p.expiryDate!.difference(DateTime.now()).inDays <= 0
-                    ? 'منتهي'
-                    : 'مخزون منخفض',
-                message: p.expiryDate != null &&
-                        p.expiryDate!.difference(DateTime.now()).inDays <= 0
-                    ? 'منتهي الصلاحية'
-                    : '${p.stockQuantity} قطعة',
-              ))
+          .map((p) {
+            final isExpired = p.expiryDate != null &&
+                p.expiryDate!.difference(DateTime.now()).inDays <= 0;
+            return AlertItem(
+              productId: p.id,
+              productName: p.name,
+              type: isExpired ? 'منتهي' : 'مخزون منخفض',
+              message: isExpired ? 'منتهي الصلاحية' : '${p.stockQuantity} قطعة',
+            );
+          })
           .toList();
 
       emit(DashboardLoaded(
         todaySales: todaySalesTotal,
         todayInvoicesCount: todayInvoices.length,
-        totalProductsCount: totalProducts,
+        totalProductsCount: products.length,
         alertsCount: alertsCount,
         totalDebt: totalDebt,
         last7DaysSales: last7Days,

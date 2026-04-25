@@ -1,191 +1,261 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../../../core/di/injection_container.dart';
+import '../../../domain/repositories/generic_repository.dart';
+import '../../../data/models/product_model.dart';
+import '../../../data/models/customer_model.dart';
 import '../bloc/pos_bloc.dart';
 import '../bloc/pos_event.dart';
 import '../bloc/pos_state.dart';
+import '../widgets/pos_search_bar.dart';
+import '../widgets/product_grid.dart';
+import '../widgets/cart_panel.dart';
+import '../widgets/invoice_preview_dialog.dart';
 
-class PosPage extends StatelessWidget {
+class PosPage extends StatefulWidget {
   const PosPage({super.key});
+
+  @override
+  State<PosPage> createState() => _PosPageState();
+}
+
+class _PosPageState extends State<PosPage> {
+  final _searchFocusNode = FocusNode();
+  List<CustomerModel> _customers = [];
+  Map<int, double> _customerDebts = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomers();
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadCustomers() async {
+    try {
+      final customerRepo = sl<GenericRepository<CustomerModel>>();
+      final customers = await customerRepo.getAll();
+
+      final debts = <int, double>{};
+      for (final customer in customers) {
+        debts[customer.id] = customer.debtBalance;
+      }
+
+      setState(() {
+        _customers = customers;
+        _customerDebts = debts;
+      });
+    } catch (e) {
+      debugPrint('Error loading customers: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<PosBloc>(),
-      child: const PosView(),
+      create: (_) => sl<PosBloc>()..add(LoadAllProducts()),
+      child: _PosView(
+        searchFocusNode: _searchFocusNode,
+        customers: _customers,
+        customerDebts: _customerDebts,
+        onCustomerDebtRequest: _loadCustomers,
+      ),
     );
   }
 }
 
-class PosView extends StatelessWidget {
-  const PosView({super.key});
+class _PosView extends StatefulWidget {
+  final FocusNode searchFocusNode;
+  final List<CustomerModel> customers;
+  final Map<int, double> customerDebts;
+  final VoidCallback onCustomerDebtRequest;
+
+  const _PosView({
+    required this.searchFocusNode,
+    required this.customers,
+    required this.customerDebts,
+    required this.onCustomerDebtRequest,
+  });
+
+  @override
+  State<_PosView> createState() => _PosViewState();
+}
+
+class _PosViewState extends State<_PosView> {
+  final _searchController = TextEditingController();
+  final _searchFocusNode = FocusNode();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+  void _handleSearch(String query) {
+    context.read<PosBloc>().add(SearchProductPos(query));
+  }
+
+  void _handleAddToCart(ProductModel product) {
+    context.read<PosBloc>().add(AddToCart(product));
+  }
+
+  void _handleQuantityChange(int index, int quantity) {
+    context.read<PosBloc>().add(UpdateCartItemQuantity(index, quantity));
+  }
+
+  void _handleRemoveFromCart(int index) {
+    context.read<PosBloc>().add(RemoveFromCart(index));
+  }
+
+  void _handleClearCart() {
+    context.read<PosBloc>().add(ClearCart());
+  }
+
+  void _handleOpenPayment() {
+    context.read<PosBloc>().add(OpenPaymentDialog());
+  }
+
+  void _quickSale() {
+    final state = context.read<PosBloc>().state;
+    if (state is PosActive && state.cartItems.isNotEmpty) {
+      context.read<PosBloc>().add(ConfirmSale(
+            paymentType: 'cash',
+            paidAmount: state.finalTotal,
+            customerId: null,
+          ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PosBloc, PosState>(
       listener: (context, state) {
-        if (state is PosSaleCompleted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('تمت عملية البيع بنجاح. رقم الفاتورة: ${state.receiptNumber}')),
+        // Handle side effects
+        if (state is PosSaleSuccess) {
+          // Show invoice preview
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => InvoicePreviewDialog(
+              sale: state.sale,
+              items: state.items,
+              pdfBytes: state.pdfBytes,
+              onNewSale: () {
+                Navigator.of(context).pop();
+                context.read<PosBloc>().add(LoadAllProducts());
+              },
+            ),
           );
         } else if (state is PosError) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message, style: const TextStyle(color: Colors.white)), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
       builder: (context, state) {
+        // Get active state
         final activeState = state is PosActive ? state : const PosActive();
-        
-        return Row(
-          children: [
-            // Left Side: Cart & Checkout
-            Expanded(
-              flex: 4,
-              child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(AppSizes.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Text('سلة المشتريات', style: AppTextStyles.h2),
-                    const Divider(),
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: activeState.cartItems.length,
-                        itemBuilder: (context, index) {
-                          final item = activeState.cartItems[index];
-                          final product = item.product.value;
-                          return ListTile(
-                            title: Text(product?.name ?? ''),
-                            subtitle: Text('${item.unitPrice} ج'),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.remove_circle_outline),
-                                  onPressed: item.quantity > 1 ? () => context.read<PosBloc>().add(UpdateCartItemQuantity(index, item.quantity - 1)) : null,
-                                ),
-                                Text('${item.quantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                IconButton(
-                                  icon: const Icon(Icons.add_circle_outline),
-                                  onPressed: () => context.read<PosBloc>().add(UpdateCartItemQuantity(index, item.quantity + 1)),
-                                ),
-                                const SizedBox(width: AppSizes.md),
-                                Text('${item.total} ج', style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline, color: AppColors.error),
-                                  onPressed: () => context.read<PosBloc>().add(RemoveFromCart(index)),
-                                )
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const Divider(),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('الإجمالي:', style: AppTextStyles.h2),
-                        Text('${activeState.total} ج', style: AppTextStyles.h1.copyWith(color: AppColors.primary)),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: activeState.cartItems.isEmpty ? null : () => context.read<PosBloc>().add(ClearCart()),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
-                              foregroundColor: AppColors.error,
-                              side: const BorderSide(color: AppColors.error),
-                            ),
-                            child: const Text('إلغاء'),
-                          ),
-                        ),
-                        const SizedBox(width: AppSizes.md),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: activeState.cartItems.isEmpty ? null : () => context.read<PosBloc>().add(ProcessSale()),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: AppSizes.md),
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('دفع وإصدار الفاتورة (F12)'),
-                          ),
-                        ),
-                      ],
-                    )
-                  ],
+        final isProcessing = state is PosProcessing;
+
+        // Build quantities map
+        final quantities = <int, int>{};
+        for (final item in activeState.cartItems) {
+          final productId = item.product.value?.id;
+          if (productId != null) {
+            quantities[productId] =
+                (quantities[productId] ?? 0) + item.quantity;
+          }
+        }
+
+        // Keyboard shortcuts
+        return KeyboardListener(
+          focusNode: FocusNode(),
+          onKeyEvent: (event) {
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.f1) {
+                _searchFocusNode.requestFocus();
+              } else if (event.logicalKey == LogicalKeyboardKey.f2) {
+                if (activeState.cartItems.isNotEmpty) {
+                  _handleOpenPayment();
+                }
+              } else if (event.logicalKey == LogicalKeyboardKey.escape) {
+                if (activeState.isPaymentDialogOpen) {
+                  context.read<PosBloc>().add(ClosePaymentDialog());
+                } else if (activeState.isExpiryWarningOpen) {
+                  context.read<PosBloc>().add(CloseExpiryWarningDialog());
+                } else if (activeState.cartItems.isNotEmpty) {
+                  _handleClearCart();
+                }
+              } else if (event.logicalKey == LogicalKeyboardKey.f12) {
+                _quickSale();
+              }
+            }
+          },
+          child: Scaffold(
+            body: Row(
+              children: [
+                // Left Panel: Cart (40%)
+                Expanded(
+                  flex: 4,
+                  child: CartPanel(
+                    cartItems: activeState.cartItems,
+                    total: activeState.total,
+                    discount: activeState.discount,
+                    finalTotal: activeState.finalTotal,
+                    onQuantityChanged: _handleQuantityChange,
+                    onRemove: _handleRemoveFromCart,
+                    onClearCart: _handleClearCart,
+                    onOpenPayment: _handleOpenPayment,
+                    isProcessing: isProcessing,
+                  ),
                 ),
-              ),
+
+                // Right Panel: Products (60%)
+                Expanded(
+                  flex: 6,
+                  child: Container(
+                    color: AppColors.background,
+                    child: Column(
+                      children: [
+                        // Search bar
+                        Container(
+                          padding: const EdgeInsets.all(AppSizes.md),
+                          color: Colors.white,
+                          child: PosSearchBar(
+                            focusNode: _searchFocusNode,
+                            onSearch: _handleSearch,
+                            onClear: () => _handleSearch(''),
+                          ),
+                        ),
+
+                        // Product grid
+                        Expanded(
+                          child: ProductGrid(
+                            products: activeState.searchResults,
+                            quantitiesInCart: quantities,
+                            onProductTap: _handleAddToCart,
+                            isLoading: state is PosInitial,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            
-            // Right Side: Products Search
-            Expanded(
-              flex: 6,
-              child: Container(
-                color: AppColors.background,
-                padding: const EdgeInsets.all(AppSizes.xl),
-                child: Column(
-                  children: [
-                    TextField(
-                      onChanged: (value) => context.read<PosBloc>().add(SearchProductPos(value)),
-                      decoration: InputDecoration(
-                        hintText: 'ابحث عن منتج (باركود / اسم)',
-                        fillColor: Colors.white,
-                        filled: true,
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusLg), borderSide: BorderSide.none),
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.lg),
-                    Expanded(
-                      child: GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 1.2,
-                          crossAxisSpacing: AppSizes.md,
-                          mainAxisSpacing: AppSizes.md,
-                        ),
-                        itemCount: activeState.searchResults.length,
-                        itemBuilder: (context, index) {
-                          final product = activeState.searchResults[index];
-                          return InkWell(
-                            onTap: () => context.read<PosBloc>().add(AddToCart(product)),
-                            child: Card(
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusMd)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(AppSizes.md),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    const Icon(Icons.medication, size: 40, color: AppColors.primary),
-                                    const SizedBox(height: AppSizes.sm),
-                                    Text(product.name, textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
-                                    const Spacer(),
-                                    Text('${product.sellingPrice} ج', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            )
-          ],
+          ),
         );
       },
     );

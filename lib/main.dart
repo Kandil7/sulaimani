@@ -4,22 +4,24 @@ import 'package:window_manager/window_manager.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/di/injection_container.dart' as di;
-import 'assets/images/logo.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize dependency injection
   await di.init();
 
+  // Configure window manager
   await windowManager.ensureInitialized();
-  WindowOptions windowOptions = const WindowOptions(
+
+  const windowOptions = WindowOptions(
     size: Size(1280, 720),
-    minimumSize: Size(1280, 720),
+    minimumSize: Size(1024, 600),
     center: true,
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
-    title: 'صيدلية السليماني',
+    title: 'صيدلية السليماني — نظام إدارة الصيدلية',
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {

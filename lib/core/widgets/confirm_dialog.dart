@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
-import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 
 class ConfirmDialog extends StatelessWidget {

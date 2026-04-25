@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../data/models/customer_model.dart';
 
 abstract class CustomersEvent extends Equatable {
   const CustomersEvent();
@@ -23,18 +24,48 @@ class AddCustomer extends CustomersEvent {
   List<Object?> get props => [name, phone];
 }
 
-class UpdateCustomerDebt extends CustomersEvent {
-  final int customerId;
-  final double amount;
-  const UpdateCustomerDebt({required this.customerId, required this.amount});
+class UpdateCustomer extends CustomersEvent {
+  final CustomerModel customer;
+  const UpdateCustomer(this.customer);
   @override
-  List<Object?> get props => [customerId, amount];
+  List<Object?> get props => [customer];
+}
+
+class DeleteCustomer extends CustomersEvent {
+  final int id;
+  const DeleteCustomer(this.id);
+  @override
+  List<Object?> get props => [id];
+}
+
+class SelectCustomer extends CustomersEvent {
+  final int? id;
+  const SelectCustomer(this.id);
+  @override
+  List<Object?> get props => [id];
+}
+
+class FilterByDebt extends CustomersEvent {
+  final bool showOnlyWithDebt;
+  const FilterByDebt(this.showOnlyWithDebt);
+  @override
+  List<Object?> get props => [showOnlyWithDebt];
+}
+
+class SortCustomers extends CustomersEvent {
+  final String field;
+  final bool ascending;
+  const SortCustomers({required this.field, required this.ascending});
+  @override
+  List<Object?> get props => [field, ascending];
 }
 
 class RecordPayment extends CustomersEvent {
   final int customerId;
   final double amount;
-  const RecordPayment({required this.customerId, required this.amount});
+  final String? note;
+  const RecordPayment(
+      {required this.customerId, required this.amount, this.note});
   @override
-  List<Object?> get props => [customerId, amount];
+  List<Object?> get props => [customerId, amount, note];
 }
