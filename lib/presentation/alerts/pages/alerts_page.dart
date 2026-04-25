@@ -282,50 +282,83 @@ class AlertsView extends StatelessWidget {
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, index) {
               final alert = alerts[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: color.withValues(alpha: 0.1),
-                  child: Icon(
-                    Icons.inventory_2_outlined,
-                    color: color,
-                    size: 20,
+              return Dismissible(
+                key: Key('${alert.productId}_${alert.type}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  color: AppColors.error.withValues(alpha: 0.1),
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: AppSizes.md),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    color: AppColors.error,
                   ),
                 ),
-                title: Text(
-                  alert.productName,
-                  style: AppTextStyles.bodyL,
-                ),
-                subtitle: Text(
-                  alert.type,
-                  style: AppTextStyles.caption,
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (alert.expiryDate != null) ...[
+                onDismissed: (_) {
+                  context.read<AlertsBloc>().add(DismissAlert(
+                        productId: alert.productId,
+                        alertType: alert.type,
+                      ));
+                },
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: color.withValues(alpha: 0.1),
+                    child: Icon(
+                      Icons.inventory_2_outlined,
+                      color: color,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    alert.productName,
+                    style: AppTextStyles.bodyL,
+                  ),
+                  subtitle: Text(
+                    alert.type,
+                    style: AppTextStyles.caption,
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.check_circle_outline,
+                          size: 20,
+                          color: AppColors.textSecondary,
+                        ),
+                        tooltip: 'تجاهل',
+                        onPressed: () {
+                          context.read<AlertsBloc>().add(DismissAlert(
+                                productId: alert.productId,
+                                alertType: alert.type,
+                              ));
+                        },
+                      ),
+                      if (alert.expiryDate != null) ...[
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: AppSizes.xs),
+                        Text(
+                          '${alert.expiryDate!.day}/${alert.expiryDate!.month}/${alert.expiryDate!.year}',
+                          style: AppTextStyles.caption,
+                        ),
+                      ],
+                      const SizedBox(width: AppSizes.md),
                       const Icon(
-                        Icons.calendar_today,
+                        Icons.inventory_2_outlined,
                         size: 16,
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: AppSizes.xs),
                       Text(
-                        '${alert.expiryDate!.day}/${alert.expiryDate!.month}/${alert.expiryDate!.year}',
-                        style: AppTextStyles.caption,
+                        '${alert.quantity}',
+                        style: AppTextStyles.bodyM,
                       ),
                     ],
-                    const SizedBox(width: AppSizes.md),
-                    const Icon(
-                      Icons.inventory_2_outlined,
-                      size: 16,
-                      color: AppColors.textSecondary,
-                    ),
-                    const SizedBox(width: AppSizes.xs),
-                    Text(
-                      '${alert.quantity}',
-                      style: AppTextStyles.bodyM,
-                    ),
-                  ],
+                  ),
                 ),
               );
             },

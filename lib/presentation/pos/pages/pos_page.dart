@@ -17,7 +17,16 @@ import '../widgets/cart_panel.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/invoice_preview_dialog.dart';
 
-/// Dialog for applying discount
+/// Result of discount dialog
+class DiscountDialogResult {
+  final double discountAmount;
+  final bool isPercentage;
+
+  DiscountDialogResult(
+      {required this.discountAmount, required this.isPercentage});
+}
+
+/// Dialog for applying discount (fixed amount or percentage)
 class _DiscountDialog extends StatefulWidget {
   final double total;
 
@@ -29,12 +38,19 @@ class _DiscountDialog extends StatefulWidget {
 
 class _DiscountDialogState extends State<_DiscountDialog> {
   final _controller = TextEditingController();
+  bool _isPercentage = false;
 
   @override
   void dispose() {
     _controller.dispose();
     super.dispose();
   }
+
+  double get _value => double.tryParse(_controller.text) ?? 0;
+
+  double get _previewDiscount => _isPercentage
+      ? (widget.total * _value / 100).clamp(0, widget.total)
+      : _value;
 
   @override
   Widget build(BuildContext context) {
@@ -45,11 +61,85 @@ class _DiscountDialogState extends State<_DiscountDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'الحد الأقصى: ${CurrencyUtils.format(widget.total)}',
+            'الإجمالي قبل الخصم: ${CurrencyUtils.format(widget.total)}',
             style: const TextStyle(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
+          ),
+          const SizedBox(height: AppSizes.md),
+          // Toggle between fixed and percentage
+          Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isPercentage = false),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+                    decoration: BoxDecoration(
+                      color: !_isPercentage
+                          ? AppColors.primary
+                          : AppColors.surface,
+                      borderRadius: const BorderRadius.only(
+                        topRight: Radius.circular(AppSizes.radiusSm),
+                        bottomRight: Radius.circular(AppSizes.radiusSm),
+                      ),
+                      border: Border.all(
+                        color: !_isPercentage
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      'مبلغ ثابت',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: !_isPercentage
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                        fontWeight: !_isPercentage
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _isPercentage = true),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+                    decoration: BoxDecoration(
+                      color:
+                          _isPercentage ? AppColors.primary : AppColors.surface,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(AppSizes.radiusSm),
+                        bottomLeft: Radius.circular(AppSizes.radiusSm),
+                      ),
+                      border: Border.all(
+                        color: _isPercentage
+                            ? AppColors.primary
+                            : AppColors.border,
+                      ),
+                    ),
+                    child: Text(
+                      'نسبة مئوية',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: _isPercentage
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                        fontWeight:
+                            _isPercentage ? FontWeight.bold : FontWeight.normal,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: AppSizes.md),
           TextField(
@@ -59,14 +149,51 @@ class _DiscountDialogState extends State<_DiscountDialog> {
               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
             ],
             autofocus: true,
+            onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              labelText: 'مبلغ الخصم',
+              labelText: _isPercentage ? 'نسبة الخصم (%)' : 'مبلغ الخصم',
               prefixIcon: const Icon(Icons.discount),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
+              suffixText: _isPercentage ? '%' : null,
             ),
           ),
+          if (_value > 0) ...[
+            const SizedBox(height: AppSizes.sm),
+            Container(
+              padding: const EdgeInsets.all(AppSizes.sm),
+              decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'قيمة الخصم:',
+                    style: TextStyle(fontSize: 12, color: AppColors.success),
+                  ),
+                  Text(
+                    CurrencyUtils.format(_previewDiscount),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.success,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.xs),
+            Text(
+              'الإجمالي بعد الخصم: ${CurrencyUtils.format(widget.total - _previewDiscount)}',
+              style: const TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
         ],
       ),
       actions: [
@@ -75,12 +202,14 @@ class _DiscountDialogState extends State<_DiscountDialog> {
           child: const Text('إلغاء'),
         ),
         ElevatedButton(
-          onPressed: () {
-            final discount = double.tryParse(_controller.text) ?? 0;
-            if (discount > 0 && discount <= widget.total) {
-              Navigator.of(context).pop(discount);
-            }
-          },
+          onPressed: _value > 0
+              ? () {
+                  Navigator.of(context).pop(DiscountDialogResult(
+                    discountAmount: _previewDiscount,
+                    isPercentage: _isPercentage,
+                  ));
+                }
+              : null,
           child: const Text('تطبيق'),
         ),
       ],
@@ -259,12 +388,12 @@ class _PosViewState extends State<_PosView> {
     final state = context.read<PosBloc>().state;
     if (state is PosActive) {
       // Show discount dialog and get discount amount from user
-      final discount = await showDialog<double>(
+      final result = await showDialog<DiscountDialogResult>(
         context: context,
         builder: (context) => _DiscountDialog(total: state.total),
       );
-      if (discount != null && discount > 0) {
-        context.read<PosBloc>().add(ApplyDiscount(discount));
+      if (result != null && result.discountAmount > 0) {
+        context.read<PosBloc>().add(ApplyDiscount(result.discountAmount));
       }
     }
   }

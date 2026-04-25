@@ -3,12 +3,40 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../presentation/alerts/bloc/alerts_bloc.dart';
-import '../../../presentation/alerts/bloc/alerts_state.dart';
+import '../../../core/di/injection_container.dart';
+import '../../../data/repositories/settings_repository.dart';
+import '../../alerts/bloc/alerts_bloc.dart';
+import '../../alerts/bloc/alerts_state.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
-class TopBar extends StatelessWidget {
+class TopBar extends StatefulWidget {
   const TopBar({super.key});
+
+  @override
+  State<TopBar> createState() => _TopBarState();
+}
+
+class _TopBarState extends State<TopBar> {
+  String _pharmacyName = 'صيدلية السليماني';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    try {
+      final settings = await sl<SettingsRepository>().getSettings();
+      if (mounted) {
+        setState(() {
+          _pharmacyName = settings.pharmacyName;
+        });
+      }
+    } catch (_) {
+      // Use default name
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,49 +59,18 @@ class TopBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Search Bar (optional for later)
-              Container(
-                width: 300,
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.md),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    hintText: 'بحث سريع (F3)',
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search, color: AppColors.textSecondary),
-                  ),
+              // Left: Pharmacy name
+              Text(
+                _pharmacyName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
                 ),
               ),
-
               // Right side actions
               Row(
                 children: [
-                  // Sync status
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.sm, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-                    ),
-                    child: const Row(
-                      children: [
-                        Icon(Icons.cloud_done,
-                            color: AppColors.success, size: 16),
-                        SizedBox(width: 4),
-                        Text(
-                          'متصل',
-                          style:
-                              TextStyle(color: AppColors.success, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.lg),
-
                   // Current Date/Time
                   StreamBuilder(
                       stream: Stream.periodic(const Duration(seconds: 1)),
@@ -110,9 +107,12 @@ class TopBar extends StatelessWidget {
                   const SizedBox(width: AppSizes.lg),
 
                   // User Profile Placeholder
-                  const CircleAvatar(
+                  CircleAvatar(
                     backgroundColor: AppColors.primary,
-                    child: Text('A', style: TextStyle(color: Colors.white)),
+                    child: Text(
+                      _pharmacyName.isNotEmpty ? _pharmacyName[0] : 'A',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               )

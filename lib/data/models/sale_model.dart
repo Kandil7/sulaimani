@@ -22,6 +22,10 @@ class SaleModel {
   /// Link to customer for credit sales
   final customer = IsarLink<CustomerModel>();
 
+  /// Customer ID for efficient querying (populated for credit sales)
+  @Index()
+  int? customerId;
+
   /// Customer name for easy display without loading the link
   String? customerName;
 

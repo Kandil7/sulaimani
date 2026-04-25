@@ -441,6 +441,17 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       // Generate receipt number
       final receiptNumber = await _generateReceiptNumber();
 
+      // Get customer info for credit sales (needed before creating sale)
+      String? customerName;
+      String? customerPhone;
+      if (event.paymentType == 'credit' && event.customerId != null) {
+        final customer = await customerRepository.getById(event.customerId!);
+        if (customer != null) {
+          customerName = customer.name;
+          customerPhone = customer.phone;
+        }
+      }
+
       // Create sale model
       final sale = SaleModel()
         ..receiptNumber = receiptNumber
@@ -450,7 +461,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         ..finalAmount = currentState.finalTotal
         ..paymentMethod = event.paymentType
         ..createdAt = DateTime.now()
-        ..updatedAt = DateTime.now();
+        ..updatedAt = DateTime.now()
+        ..customerId = event.paymentType == 'credit' ? event.customerId : null
+        ..customerName = customerName;
 
       // Create sale items
       final saleItems = <SaleItemModel>[];
@@ -476,18 +489,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         emit(const PosError('فشل في إنشاء الفاتورة'));
         emit(currentState);
         return;
-      }
-
-      // Get customer info for PDF
-      String? customerName;
-      String? customerPhone;
-
-      if (event.paymentType == 'credit' && event.customerId != null) {
-        final customer = await customerRepository.getById(event.customerId!);
-        if (customer != null) {
-          customerName = customer.name;
-          customerPhone = customer.phone;
-        }
       }
 
       final pdfBytes = await InvoiceGenerator.generatePdfBytes(

@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/report_exporter.dart';
 import '../bloc/reports_bloc.dart';
 import '../bloc/reports_event.dart';
 import '../bloc/reports_state.dart';
@@ -82,6 +83,109 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
     bloc.add(LoadReport(from: from, to: to, filter: filter));
   }
 
+  Widget _buildExportButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onExport,
+  }) {
+    return ElevatedButton.icon(
+      onPressed: onExport,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.md,
+          vertical: AppSizes.sm,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _exportReport(String type) async {
+    final state = context.read<ReportsBloc>().state;
+    if (state is! ReportsLoaded || state.data.invoices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('لا توجد بيانات للتصدير'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      return;
+    }
+
+    final data = state.data;
+    final sales = data.invoices
+        .map((inv) => ReportSaleData(
+              receiptNumber: inv.invoiceNumber,
+              date: inv.date,
+              paymentMethod: inv.paymentType,
+              totalAmount: inv.amount,
+              discount: 0,
+              finalAmount: inv.amount,
+            ))
+        .toList();
+
+    try {
+      final filePath = await ReportExporter.getReportPath(type: type);
+      final title = _getFilterTitle(data.filter);
+
+      if (type == 'pdf') {
+        await ReportExporter.exportToPdf(
+          sales: sales,
+          title: title,
+          fromDate: data.fromDate,
+          toDate: data.toDate,
+          totalSales: data.totalSales,
+          totalProfit: data.totalProfit,
+          filePath: filePath,
+        );
+      } else {
+        await ReportExporter.exportToCsv(
+          sales: sales,
+          title: title,
+          fromDate: data.fromDate,
+          toDate: data.toDate,
+          filePath: filePath,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تم تصدير التقرير إلى: $filePath'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل التصدير: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  String _getFilterTitle(ReportFilter filter) {
+    switch (filter) {
+      case ReportFilter.today:
+        return 'تقرير اليوم';
+      case ReportFilter.thisWeek:
+        return 'تقرير الأسبوع';
+      case ReportFilter.thisMonth:
+        return 'تقرير الشهر';
+      case ReportFilter.custom:
+        return 'تقرير مخصص';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -94,18 +198,36 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('التقارير', style: AppTextStyles.h1),
-              IconButton(
-                onPressed: () {
-                  if (context.read<ReportsBloc>().state is ReportsLoaded) {
-                    final currentFilter =
-                        (context.read<ReportsBloc>().state as ReportsLoaded)
-                            .data
-                            .filter;
-                    _loadReport(currentFilter);
-                  }
-                },
-                icon: const Icon(Icons.refresh),
-                tooltip: 'تحديث',
+              Row(
+                children: [
+                  _buildExportButton(
+                    label: 'تصدير PDF',
+                    icon: Icons.picture_as_pdf,
+                    color: AppColors.danger,
+                    onExport: () => _exportReport('pdf'),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  _buildExportButton(
+                    label: 'تصدير CSV',
+                    icon: Icons.table_chart,
+                    color: AppColors.success,
+                    onExport: () => _exportReport('csv'),
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  IconButton(
+                    onPressed: () {
+                      if (context.read<ReportsBloc>().state is ReportsLoaded) {
+                        final currentFilter =
+                            (context.read<ReportsBloc>().state as ReportsLoaded)
+                                .data
+                                .filter;
+                        _loadReport(currentFilter);
+                      }
+                    },
+                    icon: const Icon(Icons.refresh),
+                    tooltip: 'تحديث',
+                  ),
+                ],
               ),
             ],
           ),

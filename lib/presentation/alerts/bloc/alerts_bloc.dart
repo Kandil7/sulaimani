@@ -9,6 +9,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
 
   AlertsBloc({required this.repository}) : super(AlertsInitial()) {
     on<LoadAlerts>(_onLoadAlerts);
+    on<DismissAlert>(_onDismissAlert);
   }
 
   Future<void> _onLoadAlerts(
@@ -24,13 +25,25 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
       final expired = <ProductAlert>[];
       final expiringSoon = <ProductAlert>[];
       final lowStock = <ProductAlert>[];
+      final processedProductIds = <int>{};
 
       for (final p in products) {
         final expDate = p.expiryDate;
-        if (expDate != null) {
-          final expiryDay = DateTime(expDate.year, expDate.month, expDate.day);
+        final isExpired = expDate != null &&
+            today.isAfter(DateTime(expDate.year, expDate.month, expDate.day));
+        final isExpiringSoon = expDate != null &&
+            !isExpired &&
+            DateTime(expDate.year, expDate.month, expDate.day)
+                    .difference(today)
+                    .inDays <=
+                30;
+        final isLowStock = p.stockQuantity <= p.minimumStock;
 
-          if (today.isAfter(expiryDay)) {
+        // Priority: expired > expiring > low stock
+        // A product can only appear in ONE category (deduplication)
+        if (isExpired) {
+          // Deduplication: if product is expired, don't also show as low stock
+          if (!processedProductIds.contains(p.id)) {
             expired.add(ProductAlert(
               productId: p.id,
               productName: p.name,
@@ -39,7 +52,10 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
               quantity: p.stockQuantity,
               minimumStock: p.minimumStock,
             ));
-          } else if (expiryDay.difference(today).inDays <= 30) {
+            processedProductIds.add(p.id);
+          }
+        } else if (isExpiringSoon) {
+          if (!processedProductIds.contains(p.id)) {
             expiringSoon.add(ProductAlert(
               productId: p.id,
               productName: p.name,
@@ -48,17 +64,19 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
               quantity: p.stockQuantity,
               minimumStock: p.minimumStock,
             ));
+            processedProductIds.add(p.id);
           }
-        }
-
-        if (p.stockQuantity <= p.minimumStock) {
-          lowStock.add(ProductAlert(
-            productId: p.id,
-            productName: p.name,
-            type: 'Low Stock',
-            quantity: p.stockQuantity,
-            minimumStock: p.minimumStock,
-          ));
+        } else if (isLowStock) {
+          if (!processedProductIds.contains(p.id)) {
+            lowStock.add(ProductAlert(
+              productId: p.id,
+              productName: p.name,
+              type: 'Low Stock',
+              quantity: p.stockQuantity,
+              minimumStock: p.minimumStock,
+            ));
+            processedProductIds.add(p.id);
+          }
         }
       }
 
@@ -69,6 +87,44 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
       ));
     } catch (e) {
       emit(AlertsError(e.toString()));
+    }
+  }
+
+  void _onDismissAlert(DismissAlert event, Emitter<AlertsState> emit) {
+    if (state is AlertsLoaded) {
+      final currentState = state as AlertsLoaded;
+      switch (event.alertType) {
+        case 'Expired':
+          final updatedExpired = currentState.expiredProducts
+              .where((a) => a.productId != event.productId)
+              .toList();
+          emit(AlertsLoaded(
+            expiredProducts: updatedExpired,
+            expiringSoonProducts: currentState.expiringSoonProducts,
+            lowStockProducts: currentState.lowStockProducts,
+          ));
+          break;
+        case 'Expiring Soon':
+          final updatedExpiring = currentState.expiringSoonProducts
+              .where((a) => a.productId != event.productId)
+              .toList();
+          emit(AlertsLoaded(
+            expiredProducts: currentState.expiredProducts,
+            expiringSoonProducts: updatedExpiring,
+            lowStockProducts: currentState.lowStockProducts,
+          ));
+          break;
+        case 'Low Stock':
+          final updatedLowStock = currentState.lowStockProducts
+              .where((a) => a.productId != event.productId)
+              .toList();
+          emit(AlertsLoaded(
+            expiredProducts: currentState.expiredProducts,
+            expiringSoonProducts: currentState.expiringSoonProducts,
+            lowStockProducts: updatedLowStock,
+          ));
+          break;
+      }
     }
   }
 }

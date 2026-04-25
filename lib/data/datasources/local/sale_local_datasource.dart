@@ -102,4 +102,14 @@ class SaleLocalDatasource {
     await sale.items.load();
     return sale.items.toList();
   }
+
+  Future<List<SaleModel>> getByCustomerId(int customerId) async {
+    // Use indexed customerId field for efficient querying
+    return await isar
+        .collection<SaleModel>()
+        .filter()
+        .customerIdEqualTo(customerId)
+        .sortByDateDesc()
+        .findAll();
+  }
 }

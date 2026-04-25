@@ -7,3 +7,13 @@ abstract class AlertsEvent extends Equatable {
 }
 
 class LoadAlerts extends AlertsEvent {}
+
+class DismissAlert extends AlertsEvent {
+  final int productId;
+  final String alertType; // 'Expired', 'Expiring Soon', 'Low Stock'
+
+  const DismissAlert({required this.productId, required this.alertType});
+
+  @override
+  List<Object?> get props => [productId, alertType];
+}

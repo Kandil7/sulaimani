@@ -22,38 +22,48 @@ const SaleModelSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'date': PropertySchema(
+    r'customerId': PropertySchema(
       id: 1,
+      name: r'customerId',
+      type: IsarType.long,
+    ),
+    r'customerName': PropertySchema(
+      id: 2,
+      name: r'customerName',
+      type: IsarType.string,
+    ),
+    r'date': PropertySchema(
+      id: 3,
       name: r'date',
       type: IsarType.dateTime,
     ),
     r'discount': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'discount',
       type: IsarType.double,
     ),
     r'finalAmount': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'finalAmount',
       type: IsarType.double,
     ),
     r'paymentMethod': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'paymentMethod',
       type: IsarType.string,
     ),
     r'receiptNumber': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'receiptNumber',
       type: IsarType.string,
     ),
     r'totalAmount': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'updatedAt': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -76,9 +86,28 @@ const SaleModelSchema = CollectionSchema(
           caseSensitive: true,
         )
       ],
+    ),
+    r'customerId': IndexSchema(
+      id: 1498639901530368639,
+      name: r'customerId',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'customerId',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
     )
   },
   links: {
+    r'customer': LinkSchema(
+      id: 684696268298061235,
+      name: r'customer',
+      target: r'CustomerModel',
+      single: true,
+    ),
     r'items': LinkSchema(
       id: -6545213190154193919,
       name: r'items',
@@ -100,6 +129,12 @@ int _saleModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.customerName;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.paymentMethod.length * 3;
   bytesCount += 3 + object.receiptNumber.length * 3;
   return bytesCount;
@@ -112,13 +147,15 @@ void _saleModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeDateTime(offsets[1], object.date);
-  writer.writeDouble(offsets[2], object.discount);
-  writer.writeDouble(offsets[3], object.finalAmount);
-  writer.writeString(offsets[4], object.paymentMethod);
-  writer.writeString(offsets[5], object.receiptNumber);
-  writer.writeDouble(offsets[6], object.totalAmount);
-  writer.writeDateTime(offsets[7], object.updatedAt);
+  writer.writeLong(offsets[1], object.customerId);
+  writer.writeString(offsets[2], object.customerName);
+  writer.writeDateTime(offsets[3], object.date);
+  writer.writeDouble(offsets[4], object.discount);
+  writer.writeDouble(offsets[5], object.finalAmount);
+  writer.writeString(offsets[6], object.paymentMethod);
+  writer.writeString(offsets[7], object.receiptNumber);
+  writer.writeDouble(offsets[8], object.totalAmount);
+  writer.writeDateTime(offsets[9], object.updatedAt);
 }
 
 SaleModel _saleModelDeserialize(
@@ -129,14 +166,16 @@ SaleModel _saleModelDeserialize(
 ) {
   final object = SaleModel();
   object.createdAt = reader.readDateTime(offsets[0]);
-  object.date = reader.readDateTime(offsets[1]);
-  object.discount = reader.readDouble(offsets[2]);
-  object.finalAmount = reader.readDouble(offsets[3]);
+  object.customerId = reader.readLongOrNull(offsets[1]);
+  object.customerName = reader.readStringOrNull(offsets[2]);
+  object.date = reader.readDateTime(offsets[3]);
+  object.discount = reader.readDouble(offsets[4]);
+  object.finalAmount = reader.readDouble(offsets[5]);
   object.id = id;
-  object.paymentMethod = reader.readString(offsets[4]);
-  object.receiptNumber = reader.readString(offsets[5]);
-  object.totalAmount = reader.readDouble(offsets[6]);
-  object.updatedAt = reader.readDateTime(offsets[7]);
+  object.paymentMethod = reader.readString(offsets[6]);
+  object.receiptNumber = reader.readString(offsets[7]);
+  object.totalAmount = reader.readDouble(offsets[8]);
+  object.updatedAt = reader.readDateTime(offsets[9]);
   return object;
 }
 
@@ -150,18 +189,22 @@ P _saleModelDeserializeProp<P>(
     case 0:
       return (reader.readDateTime(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 2:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 3:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
-    case 5:
-      return (reader.readString(offset)) as P;
-    case 6:
       return (reader.readDouble(offset)) as P;
+    case 5:
+      return (reader.readDouble(offset)) as P;
+    case 6:
+      return (reader.readString(offset)) as P;
     case 7:
+      return (reader.readString(offset)) as P;
+    case 8:
+      return (reader.readDouble(offset)) as P;
+    case 9:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -173,11 +216,13 @@ Id _saleModelGetId(SaleModel object) {
 }
 
 List<IsarLinkBase<dynamic>> _saleModelGetLinks(SaleModel object) {
-  return [object.items];
+  return [object.customer, object.items];
 }
 
 void _saleModelAttach(IsarCollection<dynamic> col, Id id, SaleModel object) {
   object.id = id;
+  object.customer
+      .attach(col, col.isar.collection<CustomerModel>(), r'customer', id);
   object.items.attach(col, col.isar.collection<SaleItemModel>(), r'items', id);
 }
 
@@ -242,6 +287,14 @@ extension SaleModelQueryWhereSort
   QueryBuilder<SaleModel, SaleModel, QAfterWhere> anyId() {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhere> anyCustomerId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'customerId'),
+      );
     });
   }
 }
@@ -357,6 +410,116 @@ extension SaleModelQueryWhere
       }
     });
   }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'customerId',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'customerId',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdEqualTo(
+      int? customerId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'customerId',
+        value: [customerId],
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdNotEqualTo(
+      int? customerId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'customerId',
+              lower: [],
+              upper: [customerId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'customerId',
+              lower: [customerId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'customerId',
+              lower: [customerId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'customerId',
+              lower: [],
+              upper: [customerId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdGreaterThan(
+    int? customerId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'customerId',
+        lower: [customerId],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdLessThan(
+    int? customerId, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'customerId',
+        lower: [],
+        upper: [customerId],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterWhereClause> customerIdBetween(
+    int? lowerCustomerId,
+    int? upperCustomerId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'customerId',
+        lower: [lowerCustomerId],
+        includeLower: includeLower,
+        upper: [upperCustomerId],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension SaleModelQueryFilter
@@ -411,6 +574,230 @@ extension SaleModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'customerId',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'customerId',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerIdEqualTo(
+      int? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customerId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerIdGreaterThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customerId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerIdLessThan(
+    int? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customerId',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerIdBetween(
+    int? lower,
+    int? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customerId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'customerName',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'customerName',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerNameEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerNameBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customerName',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customerName',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerNameMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customerName',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customerName',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      customerNameIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customerName',
+        value: '',
       ));
     });
   }
@@ -1041,6 +1428,19 @@ extension SaleModelQueryObject
 
 extension SaleModelQueryLinks
     on QueryBuilder<SaleModel, SaleModel, QFilterCondition> {
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customer(
+      FilterQuery<CustomerModel> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'customer');
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> customerIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'customer', 0, true, 0, true);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> items(
       FilterQuery<SaleItemModel> q) {
     return QueryBuilder.apply(this, (query) {
@@ -1109,6 +1509,30 @@ extension SaleModelQuerySortBy on QueryBuilder<SaleModel, SaleModel, QSortBy> {
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByCustomerId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByCustomerIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByCustomerName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByCustomerNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerName', Sort.desc);
     });
   }
 
@@ -1208,6 +1632,30 @@ extension SaleModelQuerySortThenBy
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByCustomerId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByCustomerIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerId', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByCustomerName() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerName', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByCustomerNameDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customerName', Sort.desc);
     });
   }
 
@@ -1316,6 +1764,19 @@ extension SaleModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByCustomerId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customerId');
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByCustomerName(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customerName', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByDate() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'date');
@@ -1374,6 +1835,18 @@ extension SaleModelQueryProperty
   QueryBuilder<SaleModel, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
+    });
+  }
+
+  QueryBuilder<SaleModel, int?, QQueryOperations> customerIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customerId');
+    });
+  }
+
+  QueryBuilder<SaleModel, String?, QQueryOperations> customerNameProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customerName');
     });
   }
 

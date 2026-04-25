@@ -1,67 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../data/models/sale_item_model.dart';
 import 'cart_item_row.dart';
-
-/// Dialog to apply discount
-Future<double?> _showDiscountDialog(
-    BuildContext context, double maxDiscount) async {
-  final controller = TextEditingController();
-
-  return showDialog<double>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('إضافة خصم'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'الحد الأقصى: ${CurrencyUtils.format(maxDiscount)}',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: AppSizes.md),
-          TextField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-            ],
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: 'مبلغ الخصم',
-              prefixIcon: const Icon(Icons.discount),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-              ),
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('إلغاء'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            final discount = double.tryParse(controller.text) ?? 0;
-            if (discount > 0 && discount <= maxDiscount) {
-              Navigator.of(context).pop(discount);
-            }
-          },
-          child: const Text('تطبيق'),
-        ),
-      ],
-    ),
-  );
-}
 
 class CartPanel extends StatelessWidget {
   final List<SaleItemModel> cartItems;
