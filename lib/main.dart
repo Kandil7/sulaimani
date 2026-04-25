@@ -4,12 +4,13 @@ import 'package:window_manager/window_manager.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/di/injection_container.dart' as di;
+import 'assets/images/logo.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   await di.init();
-  
+
   await windowManager.ensureInitialized();
   WindowOptions windowOptions = const WindowOptions(
     size: Size(1280, 720),
@@ -20,7 +21,7 @@ void main() async {
     titleBarStyle: TitleBarStyle.normal,
     title: 'صيدلية السليماني',
   );
-  
+
   windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
@@ -38,7 +39,7 @@ class MyApp extends StatelessWidget {
       title: 'صيدلية السليماني',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      
+
       // Localization
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -49,7 +50,7 @@ class MyApp extends StatelessWidget {
         Locale('ar', 'EG'), // Arabic, Egypt
       ],
       locale: const Locale('ar', 'EG'), // Default to Arabic
-      
+
       // Routing
       routerConfig: AppRouter.router,
     );
