@@ -16,7 +16,7 @@ class PaymentDialog extends StatefulWidget {
           String paymentType, double paidAmount, int? customerId, String? notes)
       onConfirm;
   final VoidCallback onCancel;
-  final Function(double) onDiscountChanged;
+  final Function(String name, String phone) onCreateCustomer;
 
   const PaymentDialog({
     super.key,
@@ -27,7 +27,7 @@ class PaymentDialog extends StatefulWidget {
     this.customerDebt,
     required this.onConfirm,
     required this.onCancel,
-    required this.onDiscountChanged,
+    required this.onCreateCustomer,
     this.isLoading = false,
   });
 
@@ -38,7 +38,6 @@ class PaymentDialog extends StatefulWidget {
 class _PaymentDialogState extends State<PaymentDialog> {
   String _paymentType = 'cash';
   final _paidAmountController = TextEditingController();
-  final _discountController = TextEditingController();
   final _notesController = TextEditingController();
   final _newCustomerNameController = TextEditingController();
   final _newCustomerPhoneController = TextEditingController();
@@ -51,15 +50,11 @@ class _PaymentDialogState extends State<PaymentDialog> {
     _paymentType = widget.selectedCustomerId != null ? 'credit' : 'cash';
     _selectedCustomerId = widget.selectedCustomerId;
     _paidAmountController.text = widget.totalAmount.toStringAsFixed(2);
-    if (widget.discount > 0) {
-      _discountController.text = widget.discount.toStringAsFixed(2);
-    }
   }
 
   @override
   void dispose() {
     _paidAmountController.dispose();
-    _discountController.dispose();
     _notesController.dispose();
     _newCustomerNameController.dispose();
     _newCustomerPhoneController.dispose();
@@ -67,8 +62,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
   }
 
   double get _finalTotal {
-    return widget.totalAmount -
-        (double.tryParse(_discountController.text) ?? 0);
+    return widget.totalAmount - widget.discount;
   }
 
   double get _paidAmount => double.tryParse(_paidAmountController.text) ?? 0;
@@ -172,27 +166,6 @@ class _PaymentDialogState extends State<PaymentDialog> {
               _buildCashPaymentFields()
             else
               _buildCreditPaymentFields(),
-
-            // Discount field
-            const SizedBox(height: AppSizes.md),
-            TextField(
-              controller: _discountController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-              ],
-              decoration: InputDecoration(
-                labelText: 'الخصم (اختياري)',
-                prefixIcon: const Icon(Icons.discount),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                ),
-              ),
-              onChanged: (value) {
-                final discount = double.tryParse(value) ?? 0;
-                widget.onDiscountChanged(discount);
-              },
-            ),
 
             // Notes field
             const SizedBox(height: AppSizes.md),
@@ -478,7 +451,11 @@ class _PaymentDialogState extends State<PaymentDialog> {
                     ElevatedButton(
                       onPressed: _newCustomerNameController.text.isNotEmpty
                           ? () {
-                              // Handle new customer creation
+                              // Call the onCreateCustomer callback
+                              widget.onCreateCustomer(
+                                _newCustomerNameController.text,
+                                _newCustomerPhoneController.text,
+                              );
                               setState(() => _showAddCustomer = false);
                             }
                           : null,

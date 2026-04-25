@@ -25,6 +25,8 @@ import '../../presentation/pos/bloc/pos_bloc.dart';
 import '../../presentation/dashboard/bloc/dashboard_bloc.dart';
 import '../../presentation/customers/bloc/customers_bloc.dart';
 import '../../presentation/alerts/bloc/alerts_bloc.dart';
+import '../../presentation/reports/bloc/reports_bloc.dart';
+import '../../presentation/settings/bloc/settings_bloc.dart';
 import '../usecases/get_product_stats.dart';
 import '../usecases/search_products.dart';
 import '../usecases/get_expiring_products.dart';
@@ -116,7 +118,7 @@ Future<void> init() async {
         saleRepository: sl(),
         saleItemRepository: sl(),
         customerRepository: sl(),
-        productRepo: sl(),
+        saleDatasource: sl<SaleLocalDatasource>(),
       ));
   sl.registerFactory(() => DashboardBloc(
         productRepository: sl(),
@@ -125,6 +127,12 @@ Future<void> init() async {
       ));
   sl.registerFactory(() => CustomersBloc(repository: sl()));
   sl.registerFactory(() => AlertsBloc(repository: sl()));
+  sl.registerFactory(() => ReportsBloc(
+        saleRepository: sl<GenericRepository<SaleModel>>(),
+        saleItemRepository: sl<GenericRepository<SaleItemModel>>(),
+        customerRepository: sl<GenericRepository<CustomerModel>>(),
+      ));
+  sl.registerFactory(() => SettingsBloc(repository: sl<SettingsRepository>()));
 
   // Settings Repository
   sl.registerLazySingleton(

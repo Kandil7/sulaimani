@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import 'sale_item_model.dart';
+import 'customer_model.dart';
 
 part 'sale_model.g.dart';
 
@@ -16,7 +17,13 @@ class SaleModel {
   late double discount;
   late double finalAmount;
 
-  late String paymentMethod; // 'cash', 'card'
+  late String paymentMethod; // 'cash', 'card', 'credit'
+
+  /// Link to customer for credit sales
+  final customer = IsarLink<CustomerModel>();
+
+  /// Customer name for easy display without loading the link
+  String? customerName;
 
   @Backlink(to: 'sale')
   final items = IsarLinks<SaleItemModel>();

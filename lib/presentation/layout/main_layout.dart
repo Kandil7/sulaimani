@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'widgets/side_menu.dart';
 import 'widgets/top_bar.dart';
+import '../alerts/bloc/alerts_bloc.dart';
+import '../alerts/bloc/alerts_state.dart';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -9,25 +12,32 @@ class MainLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          const SideMenu(),
-          Expanded(
-            child: Column(
-              children: [
-                const TopBar(),
-                Expanded(
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surface,
-                    child: child,
-                  ),
+    return BlocBuilder<AlertsBloc, AlertsState>(
+      builder: (context, alertsState) {
+        final alertCount =
+            alertsState is AlertsLoaded ? alertsState.totalCount : 0;
+
+        return Scaffold(
+          body: Row(
+            children: [
+              SideMenu(alertCount: alertCount),
+              Expanded(
+                child: Column(
+                  children: [
+                    const TopBar(),
+                    Expanded(
+                      child: Container(
+                        color: Theme.of(context).colorScheme.surface,
+                        child: child,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

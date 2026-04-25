@@ -1,9 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../data/models/sale_item_model.dart';
 import 'cart_item_row.dart';
+
+/// Dialog to apply discount
+Future<double?> _showDiscountDialog(
+    BuildContext context, double maxDiscount) async {
+  final controller = TextEditingController();
+
+  return showDialog<double>(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('إضافة خصم'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'الحد الأقصى: ${CurrencyUtils.format(maxDiscount)}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: AppSizes.md),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+            ],
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'مبلغ الخصم',
+              prefixIcon: const Icon(Icons.discount),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final discount = double.tryParse(controller.text) ?? 0;
+            if (discount > 0 && discount <= maxDiscount) {
+              Navigator.of(context).pop(discount);
+            }
+          },
+          child: const Text('تطبيق'),
+        ),
+      ],
+    ),
+  );
+}
 
 class CartPanel extends StatelessWidget {
   final List<SaleItemModel> cartItems;
@@ -14,6 +72,8 @@ class CartPanel extends StatelessWidget {
   final Function(int) onRemove;
   final VoidCallback onClearCart;
   final VoidCallback onOpenPayment;
+  final VoidCallback onRemoveDiscount;
+  final VoidCallback onAddDiscount;
   final bool isProcessing;
 
   const CartPanel({
@@ -26,6 +86,8 @@ class CartPanel extends StatelessWidget {
     required this.onRemove,
     required this.onClearCart,
     required this.onOpenPayment,
+    required this.onRemoveDiscount,
+    required this.onAddDiscount,
     this.isProcessing = false,
   });
 
@@ -128,7 +190,7 @@ class CartPanel extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Discount row
+                // Discount row (show when discount > 0)
                 if (discount > 0) ...[
                   const SizedBox(height: AppSizes.xs),
                   Row(
@@ -154,7 +216,7 @@ class CartPanel extends StatelessWidget {
                         ],
                       ),
                       InkWell(
-                        onTap: () {},
+                        onTap: onRemoveDiscount,
                         child: const Icon(
                           Icons.delete_outline,
                           size: 18,
@@ -162,6 +224,23 @@ class CartPanel extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                ] else if (total > 0) ...[
+                  // Show "Add Discount" button when no discount and total > 0
+                  const SizedBox(height: AppSizes.xs),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: onAddDiscount,
+                      icon: const Icon(Icons.discount, size: 16),
+                      label: const Text('إضافة خصم'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                    ),
                   ),
                 ],
                 const Divider(height: AppSizes.lg),

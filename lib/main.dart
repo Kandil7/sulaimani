@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:window_manager/window_manager.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/di/injection_container.dart' as di;
+import 'presentation/alerts/bloc/alerts_bloc.dart';
+import 'presentation/alerts/bloc/alerts_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,24 +40,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'صيدلية السليماني',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+    return BlocProvider(
+      create: (_) => di.sl<AlertsBloc>()..add(LoadAlerts()),
+      child: MaterialApp.router(
+        title: 'صيدلية السليماني',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
 
-      // Localization
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('ar', 'EG'), // Arabic, Egypt
-      ],
-      locale: const Locale('ar', 'EG'), // Default to Arabic
+        // Localization
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ar', 'EG'), // Arabic, Egypt
+        ],
+        locale: const Locale('ar', 'EG'), // Default to Arabic
 
-      // Routing
-      routerConfig: AppRouter.router,
+        // Routing
+        routerConfig: AppRouter.router,
+      ),
     );
   }
 }

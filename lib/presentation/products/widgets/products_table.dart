@@ -19,6 +19,7 @@ class ProductsTable extends StatefulWidget {
   final ValueChanged<int>? onPageChanged;
   final String? sortColumn;
   final bool sortAscending;
+  final void Function(String field)? onSort;
 
   const ProductsTable({
     super.key,
@@ -32,10 +33,47 @@ class ProductsTable extends StatefulWidget {
     this.onPageChanged,
     this.sortColumn,
     this.sortAscending = true,
+    this.onSort,
   });
 
   @override
   State<ProductsTable> createState() => _ProductsTableState();
+}
+
+class _SortHeader extends StatelessWidget {
+  final String label;
+  final String field;
+  final String? sortColumn;
+  final bool sortAscending;
+  final void Function(String)? onSort;
+
+  const _SortHeader({
+    required this.label,
+    required this.field,
+    this.sortColumn,
+    required this.sortAscending,
+    this.onSort,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSorted = sortColumn == field;
+    return InkWell(
+      onTap: onSort != null ? () => onSort!(field) : null,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          if (isSorted)
+            Icon(
+              sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 14,
+              color: AppColors.primary,
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _ProductsTableState extends State<ProductsTable> {
@@ -81,15 +119,31 @@ class _ProductsTableState extends State<ProductsTable> {
                   color: AppColors.border.withValues(alpha: 0.5),
                 ),
               ),
-              columns: const [
+              columns: [
                 DataColumn2(label: Text('#'), size: ColumnSize.S),
                 DataColumn2(label: Text('الكود'), size: ColumnSize.M),
                 DataColumn2(label: Text('اسم المنتج'), size: ColumnSize.L),
                 DataColumn2(label: Text('المادة الفعالة'), size: ColumnSize.L),
                 DataColumn2(
                     label: Text('السعر'), size: ColumnSize.S, numeric: true),
-                DataColumn2(label: Text('الكمية'), size: ColumnSize.M),
-                DataColumn2(label: Text('الصلاحية'), size: ColumnSize.M),
+                DataColumn2(
+                  label: _SortHeader(
+                      label: 'الكمية',
+                      field: 'quantity',
+                      sortColumn: widget.sortColumn,
+                      sortAscending: widget.sortAscending,
+                      onSort: widget.onSort),
+                  size: ColumnSize.M,
+                ),
+                DataColumn2(
+                  label: _SortHeader(
+                      label: 'الصلاحية',
+                      field: 'expiry',
+                      sortColumn: widget.sortColumn,
+                      sortAscending: widget.sortAscending,
+                      onSort: widget.onSort),
+                  size: ColumnSize.M,
+                ),
                 DataColumn2(label: Text('الحالة'), size: ColumnSize.S),
                 DataColumn2(label: Text('إجراءات'), size: ColumnSize.S),
               ],

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
+import '../../../core/utils/currency_utils.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/customer_model.dart';
@@ -13,7 +14,79 @@ import '../bloc/pos_state.dart';
 import '../widgets/pos_search_bar.dart';
 import '../widgets/product_grid.dart';
 import '../widgets/cart_panel.dart';
+import '../widgets/payment_dialog.dart';
 import '../widgets/invoice_preview_dialog.dart';
+
+/// Dialog for applying discount
+class _DiscountDialog extends StatefulWidget {
+  final double total;
+
+  const _DiscountDialog({required this.total});
+
+  @override
+  State<_DiscountDialog> createState() => _DiscountDialogState();
+}
+
+class _DiscountDialogState extends State<_DiscountDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('إضافة خصم'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'الحد الأقصى: ${CurrencyUtils.format(widget.total)}',
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: AppSizes.md),
+          TextField(
+            controller: _controller,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+            ],
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: 'مبلغ الخصم',
+              prefixIcon: const Icon(Icons.discount),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('إلغاء'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final discount = double.tryParse(_controller.text) ?? 0;
+            if (discount > 0 && discount <= widget.total) {
+              Navigator.of(context).pop(discount);
+            }
+          },
+          child: const Text('تطبيق'),
+        ),
+      ],
+    );
+  }
+}
 
 class PosPage extends StatefulWidget {
   const PosPage({super.key});
@@ -67,6 +140,17 @@ class _PosPageState extends State<PosPage> {
         customers: _customers,
         customerDebts: _customerDebts,
         onCustomerDebtRequest: _loadCustomers,
+        onCreateCustomer: (name, phone) async {
+          final customerRepo = sl<GenericRepository<CustomerModel>>();
+          final newCustomer = CustomerModel()
+            ..name = name
+            ..phone = phone
+            ..debtBalance = 0.0
+            ..createdAt = DateTime.now()
+            ..updatedAt = DateTime.now();
+          await customerRepo.insert(newCustomer);
+          _loadCustomers();
+        },
       ),
     );
   }
@@ -77,12 +161,14 @@ class _PosView extends StatefulWidget {
   final List<CustomerModel> customers;
   final Map<int, double> customerDebts;
   final VoidCallback onCustomerDebtRequest;
+  final Function(String name, String phone) onCreateCustomer;
 
   const _PosView({
     required this.searchFocusNode,
     required this.customers,
     required this.customerDebts,
     required this.onCustomerDebtRequest,
+    required this.onCreateCustomer,
   });
 
   @override
@@ -98,6 +184,47 @@ class _PosViewState extends State<_PosView> {
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _showPaymentDialog(BuildContext context, PosActive state) {
+    // Get customer debt if selected
+    double? customerDebt;
+    if (state.selectedCustomerId != null) {
+      customerDebt = widget.customerDebts[state.selectedCustomerId];
+    }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BlocProvider.value(
+        value: context.read<PosBloc>(),
+        child: PaymentDialog(
+          totalAmount: state.total,
+          discount: state.discount,
+          customers: widget.customers,
+          selectedCustomerId: state.selectedCustomerId,
+          customerDebt: customerDebt,
+          onConfirm: (paymentType, paidAmount, customerId, notes) {
+            // Close dialog first
+            Navigator.of(context).pop();
+            // Then confirm sale
+            context.read<PosBloc>().add(ConfirmSale(
+                  paymentType: paymentType,
+                  paidAmount: paidAmount,
+                  customerId: customerId,
+                  notes: notes,
+                ));
+          },
+          onCancel: () {
+            Navigator.of(context).pop();
+            context.read<PosBloc>().add(ClosePaymentDialog());
+          },
+          onCreateCustomer: (name, phone) {
+            widget.onCreateCustomer(name, phone);
+          },
+        ),
+      ),
+    );
   }
 
   void _handleSearch(String query) {
@@ -124,6 +251,24 @@ class _PosViewState extends State<_PosView> {
     context.read<PosBloc>().add(OpenPaymentDialog());
   }
 
+  void _handleRemoveDiscount() {
+    context.read<PosBloc>().add(RemoveDiscount());
+  }
+
+  void _handleAddDiscount() async {
+    final state = context.read<PosBloc>().state;
+    if (state is PosActive) {
+      // Show discount dialog and get discount amount from user
+      final discount = await showDialog<double>(
+        context: context,
+        builder: (context) => _DiscountDialog(total: state.total),
+      );
+      if (discount != null && discount > 0) {
+        context.read<PosBloc>().add(ApplyDiscount(discount));
+      }
+    }
+  }
+
   void _quickSale() {
     final state = context.read<PosBloc>().state;
     if (state is PosActive && state.cartItems.isNotEmpty) {
@@ -131,6 +276,7 @@ class _PosViewState extends State<_PosView> {
             paymentType: 'cash',
             paidAmount: state.finalTotal,
             customerId: null,
+            notes: '',
           ));
     }
   }
@@ -162,6 +308,11 @@ class _PosViewState extends State<_PosView> {
               backgroundColor: AppColors.error,
             ),
           );
+        }
+
+        // Handle opening payment dialog
+        if (state is PosActive && state.isPaymentDialogOpen) {
+          _showPaymentDialog(context, state);
         }
       },
       builder: (context, state) {
@@ -218,6 +369,8 @@ class _PosViewState extends State<_PosView> {
                     onRemove: _handleRemoveFromCart,
                     onClearCart: _handleClearCart,
                     onOpenPayment: _handleOpenPayment,
+                    onRemoveDiscount: _handleRemoveDiscount,
+                    onAddDiscount: _handleAddDiscount,
                     isProcessing: isProcessing,
                   ),
                 ),

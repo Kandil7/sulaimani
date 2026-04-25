@@ -187,7 +187,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         String paymentTypeArabic;
         if (sale.paymentMethod == 'cash') {
           paymentTypeArabic = 'نقدي';
-        } else if (sale.paymentMethod == 'deferred') {
+        } else if (sale.paymentMethod == 'deferred' ||
+            sale.paymentMethod == 'credit') {
           paymentTypeArabic = 'آجل';
         } else {
           paymentTypeArabic = sale.paymentMethod;
@@ -196,8 +197,8 @@ class ReportsBloc extends Bloc<ReportsEvent, ReportsState> {
         return InvoiceReportItem(
           id: sale.id,
           invoiceNumber: sale.receiptNumber,
-          customerName: null,
-          amount: sale.totalAmount,
+          customerName: sale.customerName,
+          amount: sale.finalAmount,
           paymentType: paymentTypeArabic,
           date: sale.createdAt,
         );

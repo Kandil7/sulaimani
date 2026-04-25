@@ -5,6 +5,7 @@ import '../../models/product_model.dart';
 import '../../models/sale_model.dart';
 import '../../models/sale_item_model.dart';
 import '../../models/customer_model.dart';
+import '../../models/settings_model.dart';
 
 class DatabaseService {
   late Isar _isar;
@@ -23,6 +24,7 @@ class DatabaseService {
         SaleModelSchema,
         SaleItemModelSchema,
         CustomerModelSchema,
+        SettingsModelSchema,
       ],
       directory: dir.path,
       name: 'sulaimani_db',

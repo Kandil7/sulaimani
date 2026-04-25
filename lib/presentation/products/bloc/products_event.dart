@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../data/models/product_model.dart';
+import '../../../domain/entities/product.dart';
 
 abstract class ProductsEvent extends Equatable {
   const ProductsEvent();
@@ -39,9 +40,30 @@ class DeleteProduct extends ProductsEvent {
 
 class SearchProducts extends ProductsEvent {
   final String query;
-  
+
   const SearchProducts(this.query);
 
   @override
   List<Object?> get props => [query];
+}
+
+/// Filter products by type (medicine / pesticide).
+class FilterByType extends ProductsEvent {
+  final ProductType? type;
+
+  const FilterByType(this.type);
+
+  @override
+  List<Object?> get props => [type];
+}
+
+/// Sort products by a given field.
+class SortProducts extends ProductsEvent {
+  final String field;
+  final bool ascending;
+
+  const SortProducts({required this.field, required this.ascending});
+
+  @override
+  List<Object?> get props => [field, ascending];
 }

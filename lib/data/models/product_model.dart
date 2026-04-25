@@ -14,7 +14,7 @@ class ProductModel {
   late String name;
 
   late String scientificName;
-  
+
   String? description;
 
   late double purchasePrice;
@@ -25,8 +25,17 @@ class ProductModel {
 
   DateTime? expiryDate;
 
+  /// Product type: 'medicine' or 'pesticide'. Defaults to 'medicine'.
+  late String productType;
+
   final category = IsarLink<CategoryModel>();
 
   late DateTime createdAt;
   late DateTime updatedAt;
+
+  ProductModel() {
+    productType = 'medicine';
+    createdAt = DateTime.now();
+    updatedAt = DateTime.now();
+  }
 }

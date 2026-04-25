@@ -14,7 +14,9 @@ class AppRouter {
     routes: [
       ShellRoute(
         builder: (context, state, child) {
-          return MainLayout(child: child);
+          return MainLayout(
+            child: child,
+          );
         },
         routes: [
           GoRoute(

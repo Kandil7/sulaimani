@@ -72,6 +72,12 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     _notesController =
         TextEditingController(text: widget.product?.description ?? '');
     _expiryDate = widget.product?.expiryDate;
+    // Load product type from model
+    if (widget.product != null) {
+      _productType = widget.product!.productType == 'pesticide'
+          ? ProductType.pesticide
+          : ProductType.medicine;
+    }
   }
 
   @override
@@ -127,6 +133,8 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     product.expiryDate = _expiryDate;
     product.description =
         _notesController.text.isNotEmpty ? _notesController.text : null;
+    product.productType =
+        _productType == ProductType.medicine ? 'medicine' : 'pesticide';
 
     widget.onSave?.call(product);
     Navigator.of(context).pop();

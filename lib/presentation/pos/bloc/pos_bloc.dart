@@ -1,12 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:isar/isar.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/sale_model.dart';
 import '../../../data/models/sale_item_model.dart';
 import '../../../data/models/customer_model.dart';
+import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../../../core/utils/invoice_generator.dart';
-import '../../../core/di/injection_container.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
 
@@ -15,14 +14,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final GenericRepository<SaleModel> saleRepository;
   final GenericRepository<SaleItemModel> saleItemRepository;
   final GenericRepository<CustomerModel> customerRepository;
-  final GenericRepository<ProductModel> productRepo;
+  final SaleLocalDatasource saleDatasource;
 
   PosBloc({
     required this.productRepository,
     required this.saleRepository,
     required this.saleItemRepository,
     required this.customerRepository,
-    required this.productRepo,
+    required this.saleDatasource,
   }) : super(PosInitial()) {
     on<LoadAllProducts>(_onLoadAllProducts);
     on<SearchProductPos>(_onSearchProductPos);
@@ -63,31 +62,17 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   /// Generate unique receipt number
   Future<String> _generateReceiptNumber() async {
     final now = DateTime.now();
-    final year = now.year;
-    final month = now.month.toString().padLeft(2, '0');
-    final day = now.day.toString().padLeft(2, '0');
-    final datePrefix = '$year$month$day';
+    final dateStr =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
 
-    // Get the last sale for today to increment sequence
-    final allSales = await saleRepository.getAll();
+    // Count today's sales directly via datasource
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
     final todaySales =
-        allSales.where((s) => s.receiptNumber.contains(datePrefix)).toList();
+        await saleDatasource.getByDateRange(todayStart, todayEnd);
 
-    int sequence = 1;
-    if (todaySales.isNotEmpty) {
-      // Find highest sequence
-      for (final sale in todaySales) {
-        final parts = sale.receiptNumber.split('-');
-        if (parts.length == 3) {
-          final seq = int.tryParse(parts[2]) ?? 0;
-          if (seq >= sequence) {
-            sequence = seq + 1;
-          }
-        }
-      }
-    }
-
-    return 'INV-$datePrefix-${sequence.toString().padLeft(3, '0')}';
+    final sequence = (todaySales.length + 1).toString().padLeft(3, '0');
+    return 'INV-$dateStr-$sequence';
   }
 
   /// Load all products on init
@@ -478,44 +463,22 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         saleItems.add(saleItem);
       }
 
-      // Get Isar instance for atomic operations
-      final isar = sl<Isar>();
+      // Use atomic transaction from datasource (does sale insert + item linking + stock decrement)
+      final saleId = await saleDatasource.createSaleWithItems(
+        saleItems: saleItems,
+        sale: sale,
+        customerId: event.paymentType == 'credit' ? event.customerId : null,
+      );
 
-      // Atomic transaction
-      await isar.writeTxn(() async {
-        // Insert sale
-        await saleRepository.insert(sale);
+      // Get the created sale with updated ID
+      final createdSale = await saleDatasource.getById(saleId);
+      if (createdSale == null) {
+        emit(const PosError('فشل في إنشاء الفاتورة'));
+        emit(currentState);
+        return;
+      }
 
-        // Link items to sale and insert
-        for (final item in saleItems) {
-          item.sale.value = sale;
-          await saleItemRepository.insert(item);
-          sale.items.add(item);
-        }
-        await sale.items.save();
-
-        // Update product stock
-        for (final cartItem in currentState.cartItems) {
-          final product = cartItem.product.value;
-          if (product != null) {
-            product.stockQuantity -= cartItem.quantity;
-            product.updatedAt = DateTime.now();
-            await productRepository.update(product);
-          }
-        }
-
-        // Update customer debt for credit sales
-        if (event.paymentType == 'credit' && event.customerId != null) {
-          final customer = await customerRepository.getById(event.customerId!);
-          if (customer != null) {
-            customer.debtBalance += currentState.finalTotal;
-            customer.updatedAt = DateTime.now();
-            await customerRepository.update(customer);
-          }
-        }
-      });
-
-      // Generate PDF
+      // Get customer info for PDF
       String? customerName;
       String? customerPhone;
 
@@ -528,14 +491,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       }
 
       final pdfBytes = await InvoiceGenerator.generatePdfBytes(
-        sale: sale,
+        sale: createdSale,
         items: saleItems,
         customerName: customerName,
         customerPhone: customerPhone,
       );
 
       emit(PosSaleSuccess(
-        sale: sale,
+        sale: createdSale,
         items: saleItems,
         pdfBytes: pdfBytes,
       ));

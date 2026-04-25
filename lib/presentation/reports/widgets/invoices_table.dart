@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -52,32 +53,90 @@ class _InvoicesTableState extends State<InvoicesTable> {
 
   Future<void> _saveCsvFile(String csvContent) async {
     try {
+      // Get documents directory for saving
+      final dir = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().toIso8601String().replaceAll(':', '-');
-      final fileName = 'تقرير-المبيعات-$timestamp.csv';
+      final fileName = 'تقرير_المبيعات_$timestamp.csv';
+      final filePath = '${dir.path}/$fileName';
 
-      // Try to save using file_picker or save directly
-      final directory = Directory.current.path;
-      final file = File('$directory/$fileName');
+      // Write file
+      final file = File(filePath);
       await file.writeAsString(csvContent);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('تم تصدير الملف: $fileName'),
+            content: Text('تم تصدير الملف: $filePath'),
             backgroundColor: AppColors.success,
+            action: SnackBarAction(
+              label: 'نسخ المسار',
+              textColor: Colors.white,
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: filePath));
+              },
+            ),
           ),
         );
       }
     } catch (e) {
+      // Fallback: show dialog with CSV content and copy to clipboard
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('فشل تصدير الملف: $e'),
-            backgroundColor: AppColors.danger,
-          ),
-        );
+        _showCsvDialog(csvContent);
       }
     }
+  }
+
+  void _showCsvDialog(String csvContent) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('تصدير CSV'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 400,
+          child: Column(
+            children: [
+              const Text('يمكن نسخ المحتوى أدناه:'),
+              const SizedBox(height: AppSizes.md),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(AppSizes.sm),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  child: SingleChildScrollView(
+                    child: SelectableText(
+                      csvContent,
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: csvContent));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('تم النسخ إلى الحافظة'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            child: const Text('نسخ'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

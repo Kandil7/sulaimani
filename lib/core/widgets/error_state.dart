@@ -24,7 +24,7 @@ class ErrorState extends StatelessWidget {
             Container(
               width: 80,
               height: 80,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.dangerSurface,
                 shape: BoxShape.circle,
               ),
@@ -35,7 +35,7 @@ class ErrorState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSizes.lg),
-            Text(
+            const Text(
               'حدث خطأ',
               style: AppTextStyles.h3,
               textAlign: TextAlign.center,

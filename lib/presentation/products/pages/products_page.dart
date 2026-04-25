@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
@@ -42,8 +43,17 @@ class _ProductsViewState extends State<ProductsView> {
   ProductType? _selectedFilter;
   int _currentPage = 0;
   ProductModel? _selectedProduct;
+  String? _sortField;
+  bool _sortAscending = true;
 
+  Timer? _debounceTimer;
   static const int _itemsPerPage = 20;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +83,6 @@ class _ProductsViewState extends State<ProductsView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Page Title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -84,8 +93,6 @@ class _ProductsViewState extends State<ProductsView> {
               ],
             ),
             const SizedBox(height: AppSizes.lg),
-
-            // Toolbar
             ProductsToolbar(
               searchQuery: _searchQuery,
               selectedFilter: _selectedFilter,
@@ -95,8 +102,6 @@ class _ProductsViewState extends State<ProductsView> {
               onExportPressed: _exportProducts,
             ),
             const SizedBox(height: AppSizes.lg),
-
-            // Main Content
             Expanded(
               child: BlocBuilder<ProductsBloc, ProductsState>(
                 builder: (context, state) {
@@ -155,10 +160,8 @@ class _ProductsViewState extends State<ProductsView> {
   }
 
   Widget _buildLoadedState(List<ProductModel> products) {
-    // Apply filters
-    var filteredProducts = _applyFilters(products);
+    var filteredProducts = _applyLocalFilters(products);
 
-    // Pagination
     final totalPages = (filteredProducts.length / _itemsPerPage).ceil();
     final startIndex = _currentPage * _itemsPerPage;
     final endIndex =
@@ -167,7 +170,6 @@ class _ProductsViewState extends State<ProductsView> {
         ? <ProductModel>[]
         : filteredProducts.sublist(startIndex, endIndex);
 
-    // Reset page if out of bounds
     if (pageProducts.isEmpty && _currentPage > 0) {
       _currentPage = 0;
     }
@@ -175,7 +177,6 @@ class _ProductsViewState extends State<ProductsView> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Products Table
         Expanded(
           flex: 5,
           child: ProductsTable(
@@ -189,11 +190,12 @@ class _ProductsViewState extends State<ProductsView> {
             onPageChanged: (page) {
               setState(() => _currentPage = page);
             },
+            sortColumn: _sortField,
+            sortAscending: _sortAscending,
+            onSort: _onSort,
           ),
         ),
         const SizedBox(width: AppSizes.md),
-
-        // Detail Panel
         ProductDetailPanel(
           product: _selectedProduct,
           onClose: () {
@@ -214,32 +216,19 @@ class _ProductsViewState extends State<ProductsView> {
     );
   }
 
-  List<ProductModel> _applyFilters(List<ProductModel> products) {
-    var result = products;
-
-    // Apply search filter
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      result = result.where((p) {
-        return p.name.toLowerCase().contains(query) ||
-            p.barcode.toLowerCase().contains(query) ||
-            p.scientificName.toLowerCase().contains(query);
-      }).toList();
-    }
-
-    // Apply type filter
-    // Note: ProductModel doesn't have type field, so we would need to add it
-    // For now, we just return the search filtered results
-
-    return result;
+  List<ProductModel> _applyLocalFilters(List<ProductModel> products) {
+    return products;
   }
 
   void _onSearch(String query) {
-    setState(() {
-      _searchQuery = query;
-      _currentPage = 0;
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _searchQuery = query;
+        _currentPage = 0;
+      });
+      context.read<ProductsBloc>().add(SearchProducts(query));
     });
-    context.read<ProductsBloc>().add(SearchProducts(query));
   }
 
   void _onFilterChanged(ProductType? type) {
@@ -247,7 +236,22 @@ class _ProductsViewState extends State<ProductsView> {
       _selectedFilter = type;
       _currentPage = 0;
     });
-    // Note: Would need to add filter event to ProductsBloc
+    context.read<ProductsBloc>().add(FilterByType(type));
+  }
+
+  void _onSort(String field) {
+    setState(() {
+      if (_sortField == field) {
+        _sortAscending = !_sortAscending;
+      } else {
+        _sortField = field;
+        _sortAscending = true;
+      }
+    });
+    context.read<ProductsBloc>().add(SortProducts(
+          field: field,
+          ascending: _sortAscending,
+        ));
   }
 
   void _onProductSelected(ProductModel product) {
@@ -306,7 +310,6 @@ class _ProductsViewState extends State<ProductsView> {
   }
 
   void _exportProducts() {
-    // TODO: Implement export functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('جاري تصدير المنتجات...'),

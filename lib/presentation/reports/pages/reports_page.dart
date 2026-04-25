@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../bloc/reports_bloc.dart';
 import '../bloc/reports_event.dart';
@@ -24,13 +25,27 @@ class _ReportsPageState extends State<ReportsPage> {
   String? _paymentTypeFilter;
 
   @override
-  void initState() {
-    super.initState();
-    // Load today's report on page open
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadReport(ReportFilter.today);
-    });
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) {
+        final bloc = sl<ReportsBloc>();
+        bloc.add(ChangeFilter(ReportFilter.today));
+        return bloc;
+      },
+      child: const _ReportsPageContent(),
+    );
   }
+}
+
+class _ReportsPageContent extends StatefulWidget {
+  const _ReportsPageContent();
+
+  @override
+  State<_ReportsPageContent> createState() => _ReportsPageContentState();
+}
+
+class _ReportsPageContentState extends State<_ReportsPageContent> {
+  String? _paymentTypeFilter;
 
   void _loadReport(ReportFilter filter) {
     final bloc = context.read<ReportsBloc>();
@@ -55,11 +70,11 @@ class _ReportsPageState extends State<ReportsPage> {
         to = now;
         break;
       case ReportFilter.custom:
-        from = context.read<ReportsBloc>().state is ReportsLoaded
-            ? (context.read<ReportsBloc>().state as ReportsLoaded).data.fromDate
+        from = bloc.state is ReportsLoaded
+            ? (bloc.state as ReportsLoaded).data.fromDate
             : DateTime(now.year, now.month, 1);
-        to = context.read<ReportsBloc>().state is ReportsLoaded
-            ? (context.read<ReportsBloc>().state as ReportsLoaded).data.toDate
+        to = bloc.state is ReportsLoaded
+            ? (bloc.state as ReportsLoaded).data.toDate
             : now;
         break;
     }
@@ -131,7 +146,7 @@ class _ReportsPageState extends State<ReportsPage> {
             child: BlocBuilder<ReportsBloc, ReportsState>(
               builder: (context, state) {
                 if (state is ReportsLoading || state is ReportsInitial) {
-                  return _LoadingState();
+                  return const _LoadingState();
                 }
 
                 if (state is ReportsError) {
@@ -199,6 +214,8 @@ class _ReportsPageState extends State<ReportsPage> {
 }
 
 class _LoadingState extends StatelessWidget {
+  const _LoadingState();
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -279,13 +296,13 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.error_outline,
             size: 64,
             color: AppColors.danger,
           ),
           const SizedBox(height: AppSizes.md),
-          Text(
+          const Text(
             'خطأ في تحميل التقارير',
             style: AppTextStyles.h3,
           ),
