@@ -56,7 +56,7 @@ class ProductDetailPanel extends StatelessWidget {
       );
     }
 
-    final isMedicine = product!.scientificName.contains('م');
+    final isMedicine = product!.productType == 'medicine';
     final profit = product!.sellingPrice - product!.purchasePrice;
     final profitPercentage = product!.purchasePrice > 0
         ? (profit / product!.purchasePrice) * 100

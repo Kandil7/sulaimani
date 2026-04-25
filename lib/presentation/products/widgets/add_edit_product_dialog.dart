@@ -286,10 +286,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                           ),
                           const SizedBox(width: AppSizes.md),
                           Expanded(
-                            child: _buildDropdown(
-                              label: 'الفئة',
-                              hint: 'اختر الفئة',
-                            ),
+                            child: _buildProductTypeDropdown(),
                           ),
                         ],
                       ),
@@ -538,14 +535,11 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     );
   }
 
-  Widget _buildDropdown({
-    required String label,
-    String? hint,
-  }) {
+  Widget _buildProductTypeDropdown() {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
+        labelText: 'الفئة',
+        hintText: 'اختر الفئة',
         filled: true,
         fillColor: AppColors.surface,
         border: OutlineInputBorder(
@@ -564,11 +558,20 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           vertical: AppSizes.md,
         ),
       ),
+      value: _productType == ProductType.medicine ? 'medicine' : 'pesticide',
       items: const [
         DropdownMenuItem(value: 'medicine', child: Text('أدوية')),
         DropdownMenuItem(value: 'pesticide', child: Text('مبيدات')),
       ],
-      onChanged: (value) {},
+      onChanged: (value) {
+        if (value != null) {
+          setState(() {
+            _productType = value == 'medicine'
+                ? ProductType.medicine
+                : ProductType.pesticide;
+          });
+        }
+      },
     );
   }
 
