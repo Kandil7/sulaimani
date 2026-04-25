@@ -3,11 +3,15 @@ import '../../data/datasources/local/database_service.dart';
 import '../../data/models/product_model.dart';
 import '../../data/models/category_model.dart';
 import '../../data/models/sale_model.dart';
+import '../../data/models/sale_item_model.dart';
+import '../../data/models/customer_model.dart';
 import '../../data/repositories/isar_generic_repository.dart';
 import '../../domain/repositories/generic_repository.dart';
 import '../../presentation/products/bloc/products_bloc.dart';
-import '../../data/models/sale_item_model.dart';
 import '../../presentation/pos/bloc/pos_bloc.dart';
+import '../../presentation/dashboard/bloc/dashboard_bloc.dart';
+import '../../presentation/customers/bloc/customers_bloc.dart';
+import '../../presentation/alerts/bloc/alerts_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -27,12 +31,24 @@ Future<void> init() async {
   sl.registerLazySingleton<GenericRepository<SaleModel>>(
     () => IsarGenericRepository<SaleModel>(sl<DatabaseService>().isar),
   );
-
   sl.registerLazySingleton<GenericRepository<SaleItemModel>>(
     () => IsarGenericRepository<SaleItemModel>(sl<DatabaseService>().isar),
   );
+  sl.registerLazySingleton<GenericRepository<CustomerModel>>(
+    () => IsarGenericRepository<CustomerModel>(sl<DatabaseService>().isar),
+  );
 
-  // Blocs
+// Blocs
   sl.registerFactory(() => ProductsBloc(repository: sl()));
-  sl.registerFactory(() => PosBloc(sl(), sl(), sl()));
+  sl.registerFactory(() => PosBloc(
+        productRepository: sl(),
+        saleRepository: sl(),
+      ));
+  sl.registerFactory(() => DashboardBloc(
+        productRepository: sl(),
+        saleRepository: sl(),
+        customerRepository: sl(),
+      ));
+  sl.registerFactory(() => CustomersBloc(repository: sl()));
+  sl.registerFactory(() => AlertsBloc(repository: sl()));
 }

@@ -1,9 +1,10 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
-import '../models/category_model.dart';
-import '../models/product_model.dart';
-import '../models/sale_model.dart';
-import '../models/sale_item_model.dart';
+import '../../models/category_model.dart';
+import '../../models/product_model.dart';
+import '../../models/sale_model.dart';
+import '../../models/sale_item_model.dart';
+import '../../models/customer_model.dart';
 
 class DatabaseService {
   late Isar _isar;
@@ -13,7 +14,7 @@ class DatabaseService {
 
   Future<void> init() async {
     if (_isInitialized) return;
-    
+
     final dir = await getApplicationDocumentsDirectory();
     _isar = await Isar.open(
       [
@@ -21,6 +22,7 @@ class DatabaseService {
         ProductModelSchema,
         SaleModelSchema,
         SaleItemModelSchema,
+        CustomerModelSchema,
       ],
       directory: dir.path,
       name: 'sulaimani_db',
