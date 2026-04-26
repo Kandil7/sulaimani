@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -461,8 +462,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     emit(PosProcessing());
 
     try {
+      log('Starting sale confirmation process...');
       // Generate receipt number
       final receiptNumber = await _generateReceiptNumber();
+      log('Generated receipt number: $receiptNumber');
 
       // Get customer info for credit sales (needed before creating sale)
       String? customerName;
@@ -474,6 +477,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           customerPhone = customer.phone;
         }
       }
+
+      log('Creating sale record in database...');
 
       // Create sale model
       final change = event.paidAmount - currentState.finalTotal;
@@ -493,6 +498,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         ..customerId = event.paymentType == 'credit' ? event.customerId : null
         ..customerName = customerName;
 
+      log('Sale model created: ${sale.toString()}');
+
       // Create sale items
       final saleItems = <SaleItemModel>[];
       for (final cartItem in currentState.cartItems) {
@@ -504,12 +511,16 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         saleItems.add(saleItem);
       }
 
+      log('Prepared ${saleItems.length} sale items for insertion');
+
       // Use atomic transaction from datasource (does sale insert + item linking + stock decrement)
       final saleId = await saleDatasource.createSaleWithItems(
         saleItems: saleItems,
         sale: sale,
         customerId: event.paymentType == 'credit' ? event.customerId : null,
       );
+
+      log('Sale created with ID: $saleId');
 
       // Get the created sale with updated ID
       final createdSale = await saleDatasource.getById(saleId);
@@ -518,9 +529,12 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         emit(currentState);
         return;
       }
+      log('Fetched created sale from database: ${createdSale.toString()}');
 
       // Fetch shop settings for invoice customization
       final shopSettings = await settingsRepository.getSettings();
+
+      log('Generating invoice PDF...');
 
       final pdfBytes = await InvoiceGenerator.generatePdfBytes(
         sale: createdSale,
@@ -535,6 +549,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         logoPath: shopSettings.invoiceLogoPath,
       );
 
+      log('Invoice PDF generated successfully, size: ${pdfBytes.length} bytes');
+
       emit(PosSaleSuccess(
         sale: createdSale,
         items: saleItems,
@@ -547,6 +563,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
           allProducts: currentState.allProducts,
           searchResults: currentState.allProducts));
     } catch (e) {
+      log('Sale confirmation error: $e');
       emit(PosError('فشل في إتمام البيع: $e'));
       emit(currentState);
     }

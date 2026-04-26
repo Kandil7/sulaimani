@@ -257,13 +257,13 @@ class _PaymentDialogState extends State<PaymentDialog> {
             ),
             const SizedBox(height: AppSizes.md),
 
-            // Conditional content based on payment type
+            // // Conditional content based on payment type
             if (_paymentType == 'cash')
               _buildCashPaymentFields()
             else
               _buildCreditPaymentFields(),
 
-            // Notes field
+            // // Notes field
             const SizedBox(height: AppSizes.md),
             TextField(
               controller: _notesController,
@@ -278,7 +278,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
             ),
             const SizedBox(height: AppSizes.lg),
 
-            // Action buttons
+            // // Action buttons
             Row(
               children: [
                 Expanded(
@@ -296,14 +296,14 @@ class _PaymentDialogState extends State<PaymentDialog> {
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: _isValid && !widget.isLoading
-                        ? widget.onConfirm(
-                            _paymentType,
-                            _paidAmount,
-                            _selectedCustomerId,
-                            _notesController.text.isEmpty
-                                ? null
-                                : _notesController.text,
-                          )
+                        ? () => widget.onConfirm(
+                              _paymentType,
+                              _paidAmount,
+                              _selectedCustomerId,
+                              _notesController.text.isEmpty
+                                  ? null
+                                  : _notesController.text,
+                            )
                         : null,
                     style: ElevatedButton.styleFrom(
                       padding:

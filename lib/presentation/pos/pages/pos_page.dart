@@ -1,6 +1,9 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
@@ -338,8 +341,9 @@ class _PosViewState extends State<_PosView> {
           customerDebt: customerDebt,
           onConfirm: (paymentType, paidAmount, customerId, notes) {
             // Close dialog first
-            Navigator.of(context).pop();
+            // Navigator.of(context).pop();
             // Then confirm sale
+            // context.pop();
             context.read<PosBloc>().add(ConfirmSale(
                   paymentType: paymentType,
                   paidAmount: paidAmount,
@@ -348,7 +352,8 @@ class _PosViewState extends State<_PosView> {
                 ));
           },
           onCancel: () {
-            Navigator.of(context).pop();
+            // Navigator.of(context).pop();
+            context.pop();
             context.read<PosBloc>().add(ClosePaymentDialog());
           },
           onCreateCustomer: (name, phone) {

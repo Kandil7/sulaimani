@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -14,14 +15,15 @@ class InvoiceGenerator {
   static pw.Font? _arabicFontBold;
 
   static Future<void> _ensureFonts() async {
-    if (_arabicFont != null) return;
+    if (_arabicFont != null && _arabicFontBold != null) return;
+
     final fontData =
         await rootBundle.load('assets/fonts/Cairo/Cairo-Regular.ttf');
-    final fontBytes = fontData.buffer.asByteData();
+
     final boldData = await rootBundle.load('assets/fonts/Cairo/Cairo-Bold.ttf');
-    final boldBytes = boldData.buffer.asByteData();
-    _arabicFont = pw.Font.ttf(fontBytes);
-    _arabicFontBold = pw.Font.ttf(boldBytes);
+
+    _arabicFont = pw.Font.ttf(fontData);
+    _arabicFontBold = pw.Font.ttf(boldData);
   }
 
   static pw.Widget _cell(
@@ -56,11 +58,17 @@ class InvoiceGenerator {
     String? header,
     String? footer,
     String? logoPath,
+    required pw.Font font,
   }) async {
     await _ensureFonts();
     final pdf = pw.Document();
     final font = _arabicFont!;
     final fontBold = _arabicFontBold!;
+
+    final theme = pw.ThemeData.withFont(
+      base: font,
+      bold: font,
+    );
 
     // Load logo image if path provided
     pw.ImageProvider? logoImage;
@@ -79,6 +87,7 @@ class InvoiceGenerator {
 
     pdf.addPage(
       pw.Page(
+        theme: theme,
         pageFormat: PdfPageFormat.a5,
         margin: const pw.EdgeInsets.all(16),
         build: (pw.Context context) {
@@ -393,19 +402,20 @@ class InvoiceGenerator {
     String? header,
     String? footer,
     String? logoPath,
+    required pw.Font font,
   }) async {
     final pdf = await generateInvoice(
-      sale: sale,
-      items: items,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      shopName: shopName,
-      shopAddress: shopAddress,
-      shopPhone: shopPhone,
-      header: header,
-      footer: footer,
-      logoPath: logoPath,
-    );
+        sale: sale,
+        items: items,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        shopName: shopName,
+        shopAddress: shopAddress,
+        shopPhone: shopPhone,
+        header: header,
+        footer: footer,
+        logoPath: logoPath,
+        font: font);
     await Printing.layoutPdf(onLayout: (format) async => pdf.save());
   }
 
@@ -421,18 +431,39 @@ class InvoiceGenerator {
     String? footer,
     String? logoPath,
   }) async {
-    final pdf = await generateInvoice(
-      sale: sale,
-      items: items,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      shopName: shopName,
-      shopAddress: shopAddress,
-      shopPhone: shopPhone,
-      header: header,
-      footer: footer,
-      logoPath: logoPath,
-    );
-    return pdf.save();
+    try {
+      log('PDF: loading font');
+
+      final fontData =
+          await rootBundle.load('assets/fonts/Cairo/Cairo-Regular.ttf');
+      final arabicFont = pw.Font.ttf(fontData);
+
+      log('PDF: before generateInvoice');
+
+      final pdf = await generateInvoice(
+        sale: sale,
+        items: items,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        shopName: shopName,
+        shopAddress: shopAddress,
+        shopPhone: shopPhone,
+        header: header,
+        footer: footer,
+        logoPath: logoPath,
+        font: arabicFont, // add this parameter
+      );
+
+      log('PDF: before save');
+
+      final bytes = await pdf.save();
+
+      log('PDF: after save, size: ${bytes.length}');
+      return bytes;
+    } catch (e, st) {
+      log('PDF generatePdfBytes error: $e');
+      log('PDF stack trace: $st');
+      rethrow;
+    }
   }
 }
