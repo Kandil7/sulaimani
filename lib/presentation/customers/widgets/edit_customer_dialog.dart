@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
@@ -26,9 +27,11 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   late final TextEditingController _phoneController;
   String? _phoneError;
 
-  _EditCustomerDialogState() {
+  @override
+  void initState() {
     _nameController = TextEditingController(text: widget.customer.name);
     _phoneController = TextEditingController(text: widget.customer.phone);
+    super.initState();
   }
 
   @override
@@ -63,8 +66,10 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     widget.customer.phone = newPhone;
     widget.customer.updatedAt = DateTime.now();
 
-    context.read<CustomersBloc>().add(UpdateCustomer(widget.customer));
-    Navigator.of(context).pop();
+    if (mounted) {
+      context.read<CustomersBloc>().add(UpdateCustomer(widget.customer));
+      context.pop();
+    }
   }
 
   @override

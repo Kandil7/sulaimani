@@ -343,7 +343,7 @@ class _PosViewState extends State<_PosView> {
             // Close dialog first
             // Navigator.of(context).pop();
             // Then confirm sale
-            // context.pop();
+            context.pop();
             context.read<PosBloc>().add(ConfirmSale(
                   paymentType: paymentType,
                   paidAmount: paidAmount,
