@@ -119,6 +119,7 @@ Future<void> init() async {
         saleItemRepository: sl(),
         customerRepository: sl(),
         saleDatasource: sl<SaleLocalDatasource>(),
+        settingsRepository: sl<SettingsRepository>(),
       ));
   sl.registerFactory(() => DashboardBloc(
         productRepository: sl(),

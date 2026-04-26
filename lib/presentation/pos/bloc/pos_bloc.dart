@@ -5,6 +5,7 @@ import '../../../data/models/sale_model.dart';
 import '../../../data/models/sale_item_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
+import '../../../data/repositories/settings_repository.dart';
 import '../../../core/utils/invoice_generator.dart';
 import 'pos_event.dart';
 import 'pos_state.dart';
@@ -15,6 +16,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
   final GenericRepository<SaleItemModel> saleItemRepository;
   final GenericRepository<CustomerModel> customerRepository;
   final SaleLocalDatasource saleDatasource;
+  final SettingsRepository settingsRepository;
 
   PosBloc({
     required this.productRepository,
@@ -22,6 +24,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     required this.saleItemRepository,
     required this.customerRepository,
     required this.saleDatasource,
+    required this.settingsRepository,
   }) : super(PosInitial()) {
     on<LoadAllProducts>(_onLoadAllProducts);
     on<SearchProductPos>(_onSearchProductPos);
@@ -496,11 +499,19 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         return;
       }
 
+      // Fetch shop settings for invoice customization
+      final shopSettings = await settingsRepository.getSettings();
+
       final pdfBytes = await InvoiceGenerator.generatePdfBytes(
         sale: createdSale,
         items: saleItems,
         customerName: customerName,
         customerPhone: customerPhone,
+        shopName: shopSettings.pharmacyName,
+        shopAddress: shopSettings.pharmacyAddress,
+        shopPhone: shopSettings.pharmacyPhone,
+        header: shopSettings.invoiceHeader,
+        footer: shopSettings.invoiceFooter,
       );
 
       emit(PosSaleSuccess(

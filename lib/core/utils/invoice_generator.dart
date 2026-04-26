@@ -15,6 +15,8 @@ class InvoiceGenerator {
     String? shopName,
     String? shopAddress,
     String? shopPhone,
+    String? header,
+    String? footer,
   }) async {
     final pdf = pw.Document();
 
@@ -171,7 +173,7 @@ class InvoiceGenerator {
               pw.SizedBox(height: 10),
               pw.Center(
                 child: pw.Text(
-                  'شكراً لتعاملكم مع صيدلية السليماني',
+                  footer ?? 'شكراً لتعاملكم مع صيدلية السليماني',
                   style: const pw.TextStyle(fontSize: 10),
                 ),
               ),
@@ -192,6 +194,8 @@ class InvoiceGenerator {
     String? shopName,
     String? shopAddress,
     String? shopPhone,
+    String? header,
+    String? footer,
   }) async {
     final pdf = await generateInvoice(
       sale: sale,
@@ -201,6 +205,8 @@ class InvoiceGenerator {
       shopName: shopName,
       shopAddress: shopAddress,
       shopPhone: shopPhone,
+      header: header,
+      footer: footer,
     );
     await Printing.layoutPdf(onLayout: (format) async => pdf.save());
   }
@@ -213,6 +219,8 @@ class InvoiceGenerator {
     String? shopName,
     String? shopAddress,
     String? shopPhone,
+    String? header,
+    String? footer,
   }) async {
     final pdf = await generateInvoice(
       sale: sale,
@@ -222,6 +230,8 @@ class InvoiceGenerator {
       shopName: shopName,
       shopAddress: shopAddress,
       shopPhone: shopPhone,
+      header: header,
+      footer: footer,
     );
     return pdf.save();
   }

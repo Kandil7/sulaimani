@@ -67,28 +67,30 @@ class SettingsRepository {
     return backupPath;
   }
 
-  Future<void> restoreFromBackup(String backupPath) async {
-    final dir = await getApplicationDocumentsDirectory();
-    final dbDir = Directory('${dir.path}/sulaimani');
+  /// Returns the current database path so callers know where to copy
+  String? get currentDbPath => _isar.path;
 
-    if (!await dbDir.exists()) {
-      await dbDir.create(recursive: true);
-    }
-
+  /// Restore from a backup file. After restore, the app may need a refresh.
+  /// Returns true if restore succeeded.
+  Future<bool> restoreFromBackup(String backupPath) async {
     final backupFile = File(backupPath);
-    if (await backupFile.exists()) {
-      final dbPath = _isar.path;
-      if (dbPath != null) {
-        // Close current DB first
-        await _isar.close();
-
-        // Copy backup over current db
-        final dbFile = File(dbPath);
-        if (await dbFile.exists()) {
-          await dbFile.delete();
-        }
-        await backupFile.copy(dbPath);
-      }
+    if (!await backupFile.exists()) {
+      return false;
     }
+
+    final dbPath = _isar.path;
+    if (dbPath == null) return false;
+
+    // Close the database first
+    await _isar.close();
+
+    // Copy backup over current db
+    final dbFile = File(dbPath);
+    if (await dbFile.exists()) {
+      await dbFile.delete();
+    }
+    await backupFile.copy(dbPath);
+
+    return true;
   }
 }

@@ -80,6 +80,12 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         }
       }
 
+      // Sort by nearest expiry first (most urgent first)
+      expired.sort((a, b) => (a.expiryDate ?? DateTime.now())
+          .compareTo(b.expiryDate ?? DateTime.now()));
+      expiringSoon.sort((a, b) => (a.expiryDate ?? DateTime.now())
+          .compareTo(b.expiryDate ?? DateTime.now()));
+
       emit(AlertsLoaded(
         expiredProducts: expired,
         expiringSoonProducts: expiringSoon,

@@ -5,6 +5,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../core/utils/report_exporter.dart';
+import '../../../data/repositories/settings_repository.dart';
 import '../bloc/reports_bloc.dart';
 import '../bloc/reports_event.dart';
 import '../bloc/reports_state.dart';
@@ -128,6 +129,10 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
             ))
         .toList();
 
+    // Fetch shop settings for pharmacy name in exported report
+    final settingsRepo = sl<SettingsRepository>();
+    final settings = await settingsRepo.getSettings();
+
     try {
       final filePath = await ReportExporter.getReportPath(type: type);
       final title = _getFilterTitle(data.filter);
@@ -141,6 +146,7 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
           totalSales: data.totalSales,
           totalProfit: data.totalProfit,
           filePath: filePath,
+          shopName: settings.pharmacyName,
         );
       } else {
         await ReportExporter.exportToCsv(

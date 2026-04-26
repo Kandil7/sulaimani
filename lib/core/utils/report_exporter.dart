@@ -15,6 +15,7 @@ class ReportExporter {
     required double totalSales,
     required double totalProfit,
     required String filePath,
+    String? shopName,
   }) async {
     final pdf = pw.Document();
 
@@ -22,7 +23,7 @@ class ReportExporter {
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(20),
-        header: (context) => _buildPdfHeader(title, fromDate, toDate),
+        header: (context) => _buildPdfHeader(title, fromDate, toDate, shopName),
         footer: (context) => _buildPdfFooter(context),
         build: (context) => [
           _buildPdfSummary(totalSales, totalProfit, sales.length),
@@ -37,7 +38,8 @@ class ReportExporter {
     return file;
   }
 
-  static pw.Widget _buildPdfHeader(String title, DateTime from, DateTime to) {
+  static pw.Widget _buildPdfHeader(
+      String title, DateTime from, DateTime to, String? shopName) {
     return pw.Container(
       padding: const pw.EdgeInsets.only(bottom: 10),
       decoration: const pw.BoxDecoration(
@@ -50,7 +52,7 @@ class ReportExporter {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'صيدلية السليماني',
+                shopName ?? 'صيدلية السليماني',
                 style: pw.TextStyle(
                   fontSize: 16,
                   fontWeight: pw.FontWeight.bold,
