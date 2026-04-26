@@ -404,8 +404,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                                 if (value == null || value.isEmpty) {
                                   return 'الكمية مطلوبة';
                                 }
-                                if (int.tryParse(value) == null) {
-                                  return 'قيمة رقمية';
+                                final num = double.tryParse(value);
+                                if (num == null || num < 0) {
+                                  return 'قيمة صحيحة';
                                 }
                                 return null;
                               },
@@ -423,8 +424,9 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                                 if (value == null || value.isEmpty) {
                                   return 'الحد الأدنى مطلوب';
                                 }
-                                if (int.tryParse(value) == null) {
-                                  return 'قيمة رقمية';
+                                final num = double.tryParse(value);
+                                if (num == null || num < 0) {
+                                  return 'قيمة صحيحة';
                                 }
                                 return null;
                               },

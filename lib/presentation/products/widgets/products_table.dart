@@ -125,7 +125,14 @@ class _ProductsTableState extends State<ProductsTable> {
                 DataColumn2(label: Text('اسم المنتج'), size: ColumnSize.L),
                 DataColumn2(label: Text('المادة الفعالة'), size: ColumnSize.L),
                 DataColumn2(
-                    label: Text('السعر'), size: ColumnSize.S, numeric: true),
+                    label: _SortHeader(
+                        label: 'السعر',
+                        field: 'price',
+                        sortColumn: widget.sortColumn,
+                        sortAscending: widget.sortAscending,
+                        onSort: widget.onSort),
+                    size: ColumnSize.S,
+                    numeric: true),
                 DataColumn2(
                   label: _SortHeader(
                       label: 'الكمية',

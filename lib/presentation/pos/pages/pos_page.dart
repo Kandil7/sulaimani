@@ -16,6 +16,7 @@ import '../widgets/product_grid.dart';
 import '../widgets/cart_panel.dart';
 import '../widgets/payment_dialog.dart';
 import '../widgets/invoice_preview_dialog.dart';
+import '../widgets/expiry_warning_dialog.dart';
 
 /// Result of discount dialog
 class DiscountDialogResult {
@@ -356,6 +357,27 @@ class _PosViewState extends State<_PosView> {
     );
   }
 
+  void _showExpiryWarningDialog(BuildContext context, PosActive state) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => BlocProvider.value(
+        value: context.read<PosBloc>(),
+        child: ExpiryWarningDialog(
+          product: state.pendingExpiryProduct!,
+          onConfirm: () {
+            Navigator.of(context).pop();
+            context.read<PosBloc>().add(ConfirmExpiryWarning());
+          },
+          onCancel: () {
+            Navigator.of(context).pop();
+            context.read<PosBloc>().add(CloseExpiryWarningDialog());
+          },
+        ),
+      ),
+    );
+  }
+
   void _handleSearch(String query) {
     context.read<PosBloc>().add(SearchProductPos(query));
   }
@@ -442,6 +464,13 @@ class _PosViewState extends State<_PosView> {
         // Handle opening payment dialog
         if (state is PosActive && state.isPaymentDialogOpen) {
           _showPaymentDialog(context, state);
+        }
+
+        // Handle expiry warning dialog
+        if (state is PosActive &&
+            state.isExpiryWarningOpen &&
+            state.pendingExpiryProduct != null) {
+          _showExpiryWarningDialog(context, state);
         }
       },
       builder: (context, state) {

@@ -61,7 +61,21 @@ class InvoiceGenerator {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text('فاتورة رقم: ${sale.receiptNumber}'),
-                  pw.Text(AppDateUtils.formatToDate(sale.date)),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.end,
+                    children: [
+                      pw.Text(AppDateUtils.formatToDate(sale.date)),
+                      pw.Text(
+                        sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل',
+                        style: pw.TextStyle(
+                          fontWeight: pw.FontWeight.bold,
+                          color: sale.paymentMethod == 'cash'
+                              ? PdfColors.green700
+                              : PdfColors.orange700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               pw.SizedBox(height: 20),
