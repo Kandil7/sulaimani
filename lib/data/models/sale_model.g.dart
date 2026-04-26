@@ -47,23 +47,33 @@ const SaleModelSchema = CollectionSchema(
       name: r'finalAmount',
       type: IsarType.double,
     ),
-    r'paymentMethod': PropertySchema(
+    r'paidAmount': PropertySchema(
       id: 6,
+      name: r'paidAmount',
+      type: IsarType.double,
+    ),
+    r'paymentMethod': PropertySchema(
+      id: 7,
       name: r'paymentMethod',
       type: IsarType.string,
     ),
     r'receiptNumber': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'receiptNumber',
       type: IsarType.string,
     ),
+    r'remainingAmount': PropertySchema(
+      id: 9,
+      name: r'remainingAmount',
+      type: IsarType.double,
+    ),
     r'totalAmount': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'updatedAt': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -152,10 +162,12 @@ void _saleModelSerialize(
   writer.writeDateTime(offsets[3], object.date);
   writer.writeDouble(offsets[4], object.discount);
   writer.writeDouble(offsets[5], object.finalAmount);
-  writer.writeString(offsets[6], object.paymentMethod);
-  writer.writeString(offsets[7], object.receiptNumber);
-  writer.writeDouble(offsets[8], object.totalAmount);
-  writer.writeDateTime(offsets[9], object.updatedAt);
+  writer.writeDouble(offsets[6], object.paidAmount);
+  writer.writeString(offsets[7], object.paymentMethod);
+  writer.writeString(offsets[8], object.receiptNumber);
+  writer.writeDouble(offsets[9], object.remainingAmount);
+  writer.writeDouble(offsets[10], object.totalAmount);
+  writer.writeDateTime(offsets[11], object.updatedAt);
 }
 
 SaleModel _saleModelDeserialize(
@@ -172,10 +184,12 @@ SaleModel _saleModelDeserialize(
   object.discount = reader.readDouble(offsets[4]);
   object.finalAmount = reader.readDouble(offsets[5]);
   object.id = id;
-  object.paymentMethod = reader.readString(offsets[6]);
-  object.receiptNumber = reader.readString(offsets[7]);
-  object.totalAmount = reader.readDouble(offsets[8]);
-  object.updatedAt = reader.readDateTime(offsets[9]);
+  object.paidAmount = reader.readDouble(offsets[6]);
+  object.paymentMethod = reader.readString(offsets[7]);
+  object.receiptNumber = reader.readString(offsets[8]);
+  object.remainingAmount = reader.readDouble(offsets[9]);
+  object.totalAmount = reader.readDouble(offsets[10]);
+  object.updatedAt = reader.readDateTime(offsets[11]);
   return object;
 }
 
@@ -199,12 +213,16 @@ P _saleModelDeserializeProp<P>(
     case 5:
       return (reader.readDouble(offset)) as P;
     case 6:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 7:
       return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 9:
+      return (reader.readDouble(offset)) as P;
+    case 10:
+      return (reader.readDouble(offset)) as P;
+    case 11:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1033,6 +1051,69 @@ extension SaleModelQueryFilter
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> paidAmountEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'paidAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      paidAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'paidAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> paidAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'paidAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> paidAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'paidAmount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
       paymentMethodEqualTo(
     String value, {
@@ -1305,6 +1386,72 @@ extension SaleModelQueryFilter
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      remainingAmountEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'remainingAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      remainingAmountGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'remainingAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      remainingAmountLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'remainingAmount',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition>
+      remainingAmountBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'remainingAmount',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> totalAmountEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -1572,6 +1719,18 @@ extension SaleModelQuerySortBy on QueryBuilder<SaleModel, SaleModel, QSortBy> {
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByPaidAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paidAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByPaidAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paidAmount', Sort.desc);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByPaymentMethod() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paymentMethod', Sort.asc);
@@ -1593,6 +1752,18 @@ extension SaleModelQuerySortBy on QueryBuilder<SaleModel, SaleModel, QSortBy> {
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByReceiptNumberDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'receiptNumber', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByRemainingAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remainingAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByRemainingAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remainingAmount', Sort.desc);
     });
   }
 
@@ -1707,6 +1878,18 @@ extension SaleModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByPaidAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paidAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByPaidAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'paidAmount', Sort.desc);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByPaymentMethod() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paymentMethod', Sort.asc);
@@ -1728,6 +1911,18 @@ extension SaleModelQuerySortThenBy
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByReceiptNumberDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'receiptNumber', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByRemainingAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remainingAmount', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByRemainingAmountDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remainingAmount', Sort.desc);
     });
   }
 
@@ -1795,6 +1990,12 @@ extension SaleModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByPaidAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'paidAmount');
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByPaymentMethod(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1808,6 +2009,12 @@ extension SaleModelQueryWhereDistinct
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'receiptNumber',
           caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByRemainingAmount() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'remainingAmount');
     });
   }
 
@@ -1868,6 +2075,12 @@ extension SaleModelQueryProperty
     });
   }
 
+  QueryBuilder<SaleModel, double, QQueryOperations> paidAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'paidAmount');
+    });
+  }
+
   QueryBuilder<SaleModel, String, QQueryOperations> paymentMethodProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'paymentMethod');
@@ -1877,6 +2090,12 @@ extension SaleModelQueryProperty
   QueryBuilder<SaleModel, String, QQueryOperations> receiptNumberProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'receiptNumber');
+    });
+  }
+
+  QueryBuilder<SaleModel, double, QQueryOperations> remainingAmountProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remainingAmount');
     });
   }
 

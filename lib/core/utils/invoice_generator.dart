@@ -155,10 +155,10 @@ class InvoiceGenerator {
                         style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                       ),
                       pw.Text(
-                        'المدفوع: ${CurrencyUtils.format(sale.finalAmount)}',
+                        'المدفوع: ${CurrencyUtils.format(sale.paidAmount)}',
                       ),
                       pw.Text(
-                        'الباقي: ${CurrencyUtils.format(0)}',
+                        'الباقي: ${CurrencyUtils.format(sale.remainingAmount)}',
                       ),
                     ],
                   ),

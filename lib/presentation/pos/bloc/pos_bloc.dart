@@ -453,6 +453,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       }
 
       // Create sale model
+      final change = event.paidAmount - currentState.finalTotal;
       final sale = SaleModel()
         ..receiptNumber = receiptNumber
         ..date = DateTime.now()
@@ -460,6 +461,10 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         ..discount = currentState.discount
         ..finalAmount = currentState.finalTotal
         ..paymentMethod = event.paymentType
+        ..paidAmount = event.paidAmount
+        ..remainingAmount = event.paymentType == 'credit'
+            ? currentState.finalTotal
+            : (change < 0 ? currentState.finalTotal - event.paidAmount : 0)
         ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..customerId = event.paymentType == 'credit' ? event.customerId : null

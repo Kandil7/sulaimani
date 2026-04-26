@@ -19,6 +19,12 @@ class SaleModel {
 
   late String paymentMethod; // 'cash', 'card', 'credit'
 
+  /// Amount actually paid by customer (for cash sales)
+  late double paidAmount;
+
+  /// Remaining amount to be collected (for credit or partial payment)
+  late double remainingAmount;
+
   /// Link to customer for credit sales
   final customer = IsarLink<CustomerModel>();
 

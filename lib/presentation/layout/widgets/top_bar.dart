@@ -99,7 +99,10 @@ class _TopBarState extends State<TopBar> {
                     offset: const Offset(0, 50),
                     itemBuilder: (context) => alerts,
                     onSelected: (value) {
-                      if (value == 'view_all') {
+                      if (value.startsWith('alert_')) {
+                        // Navigate to alerts page with specific tab
+                        context.go('/alerts');
+                      } else if (value == 'view_all') {
                         context.go('/alerts');
                       }
                     },
