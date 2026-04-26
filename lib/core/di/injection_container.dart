@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'package:isar/isar.dart';
 import '../../data/datasources/local/database_service.dart';
 import '../../data/datasources/local/product_local_datasource.dart';
 import '../../data/datasources/local/customer_local_datasource.dart';
@@ -27,6 +28,7 @@ import '../../presentation/customers/bloc/customers_bloc.dart';
 import '../../presentation/alerts/bloc/alerts_bloc.dart';
 import '../../presentation/reports/bloc/reports_bloc.dart';
 import '../../presentation/settings/bloc/settings_bloc.dart';
+import '../../presentation/invoices/bloc/invoices_bloc.dart';
 import '../usecases/get_product_stats.dart';
 import '../usecases/search_products.dart';
 import '../usecases/get_expiring_products.dart';
@@ -135,8 +137,17 @@ Future<void> init() async {
       ));
   sl.registerLazySingleton(() => SettingsRepository(sl<DatabaseService>()));
 
-  sl.registerFactory(() => SettingsBloc(
+  sl.registerLazySingleton(() => SettingsBloc(
         repository: sl<SettingsRepository>(),
         databaseService: sl<DatabaseService>(),
       ));
+
+  sl.registerFactory(() => InvoicesBloc(
+        saleDatasource: sl<SaleLocalDatasource>(),
+        isar: sl<DatabaseService>().isar,
+        settingsRepository: sl<SettingsRepository>(),
+      ));
+
+  // Expose Isar directly for clients that need it
+  sl.registerLazySingleton<Isar>(() => sl<DatabaseService>().isar);
 }

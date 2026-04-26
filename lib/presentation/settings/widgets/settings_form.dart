@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -38,6 +40,9 @@ class _SettingsFormState extends State<SettingsForm> {
   bool _enableNotificationSounds = true;
   bool _enableWindowsNotifications = true;
   bool _autoBackupEnabled = false;
+  int _backupIntervalHours = 24;
+  String? _selectedLogoPath;
+  String? _tempLogoPreview; // Base64 or temp path for preview
 
   @override
   void initState() {
@@ -63,6 +68,8 @@ class _SettingsFormState extends State<SettingsForm> {
     _enableNotificationSounds = s.enableNotificationSounds;
     _enableWindowsNotifications = s.enableWindowsNotifications;
     _autoBackupEnabled = s.autoBackupEnabled;
+    _backupIntervalHours = s.backupIntervalHours;
+    _selectedLogoPath = s.invoiceLogoPath;
   }
 
   @override
@@ -106,18 +113,78 @@ class _SettingsFormState extends State<SettingsForm> {
       s.enableNotificationSounds = _enableNotificationSounds;
       s.enableWindowsNotifications = _enableWindowsNotifications;
       s.autoBackupEnabled = _autoBackupEnabled;
+      s.backupIntervalHours = _backupIntervalHours;
+      s.invoiceLogoPath = _selectedLogoPath;
 
       widget.onSave(s);
     }
   }
 
-  void _pickLogo() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('ميزة اختيار الشعار ستُضاف قريباً'),
-        backgroundColor: AppColors.warning,
-      ),
-    );
+  Future<void> _pickLogo() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('حجم الملف كبير جداً. الحد الأقصى 2 ميجابايت.'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+          return;
+        }
+
+        // Validate extension
+        final ext = file.extension?.toLowerCase();
+        if (ext == null ||
+            !['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'].contains(ext)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content:
+                    Text('يرجى اختيار ملف صورة (PNG, JPG, GIF, BMP, WEBP)'),
+                backgroundColor: AppColors.danger,
+              ),
+            );
+          }
+          return;
+        }
+
+        // Store the path for saving
+        setState(() {
+          _selectedLogoPath = file.path;
+          _tempLogoPreview = file.path;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('تم اختيار: ${file.name}'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل في اختيار الصورة: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -234,24 +301,41 @@ class _SettingsFormState extends State<SettingsForm> {
             ),
           ],
         ),
-        if (widget.settings.invoiceLogoPath != null) ...[
+        if (_selectedLogoPath != null) ...[
           const SizedBox(height: AppSizes.md),
           Container(
-            padding: const EdgeInsets.all(AppSizes.sm),
+            padding: const EdgeInsets.all(AppSizes.md),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              color: AppColors.primary.withOpacity(0.05),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.check_circle, color: AppColors.success),
-                const SizedBox(width: AppSizes.sm),
-                Expanded(
-                  child: Text(
-                    'الشعار الحالي: ${widget.settings.invoiceLogoPath!.split('/').last}',
-                    style: AppTextStyles.bodyM,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                Row(
+                  children: [
+                    const Icon(Icons.check_circle,
+                        color: AppColors.success, size: 20),
+                    const SizedBox(width: AppSizes.sm),
+                    Expanded(
+                      child: Text(
+                        'الشعار: ${_selectedLogoPath!.split(Platform.pathSeparator).last}',
+                        style: AppTextStyles.bodyM,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => setState(() {
+                        _selectedLogoPath = null;
+                        _tempLogoPreview = null;
+                      }),
+                      icon: const Icon(Icons.delete_outline,
+                          color: AppColors.danger),
+                      tooltip: 'إزالة الشعار',
+                      iconSize: 20,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -365,12 +449,92 @@ class _SettingsFormState extends State<SettingsForm> {
           ),
         const SizedBox(height: AppSizes.md),
         SwitchListTile(
-          title: const Text('تفعيل النسخ الاحتياطي التلقائي (يومياً)'),
+          title: const Text('تفعيل النسخ الاحتياطي التلقائي'),
+          subtitle: const Text('إنشاء نسخة احتياطية تلقائياً كل فترة محددة'),
           value: _autoBackupEnabled,
           onChanged: (v) => setState(() => _autoBackupEnabled = v),
           contentPadding: EdgeInsets.zero,
         ),
+        if (_autoBackupEnabled) ...[
+          const SizedBox(height: AppSizes.sm),
+          Container(
+            padding: const EdgeInsets.all(AppSizes.md),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'فترة النسخ الاحتياطي التلقائي',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: AppSizes.sm),
+                Row(
+                  children: [
+                    _buildIntervalChip(6, 'كل 6 ساعات'),
+                    const SizedBox(width: AppSizes.sm),
+                    _buildIntervalChip(12, 'كل 12 ساعة'),
+                    const SizedBox(width: AppSizes.sm),
+                    _buildIntervalChip(24, 'يومياً'),
+                    const SizedBox(width: AppSizes.sm),
+                    _buildIntervalChip(72, 'كل 3 أيام'),
+                    const SizedBox(width: AppSizes.sm),
+                    _buildIntervalChip(168, 'أسبوعياً'),
+                  ],
+                ),
+                if (widget.settings.nextScheduledBackup != null) ...[
+                  const SizedBox(height: AppSizes.sm),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule,
+                          size: 14, color: AppColors.textSecondary),
+                      const SizedBox(width: AppSizes.xs),
+                      Text(
+                        'النسخة القادمة: ${_formatDate(widget.settings.nextScheduledBackup!)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildIntervalChip(int hours, String label) {
+    final isSelected = _backupIntervalHours == hours;
+    return GestureDetector(
+      onTap: () => setState(() => _backupIntervalHours = hours),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isSelected ? Colors.white : AppColors.textPrimary,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
     );
   }
 
@@ -444,7 +608,7 @@ class _SettingsFormState extends State<SettingsForm> {
       builder: (context) => InvoicePreviewCard(
         header: _invoiceHeaderController.text,
         footer: _invoiceFooterController.text,
-        logoPath: widget.settings.invoiceLogoPath,
+        logoPath: _selectedLogoPath ?? widget.settings.invoiceLogoPath,
         pharmacyName: _pharmacyNameController.text,
       ),
     );

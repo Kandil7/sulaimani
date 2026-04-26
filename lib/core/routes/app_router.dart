@@ -7,6 +7,7 @@ import '../../presentation/reports/pages/reports_page.dart';
 import '../../presentation/settings/pages/settings_page.dart';
 import '../../presentation/alerts/pages/alerts_page.dart';
 import '../../presentation/customers/pages/customers_page.dart';
+import '../../presentation/invoices/pages/invoices_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -46,6 +47,10 @@ class AppRouter {
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsPage(),
+          ),
+          GoRoute(
+            path: '/invoices',
+            builder: (context, state) => const InvoicesPage(),
           ),
         ],
       ),

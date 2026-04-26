@@ -1,13 +1,19 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
+import '../../../core/services/notification_service.dart';
 import 'alerts_event.dart';
 import 'alerts_state.dart';
 
 class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
   final GenericRepository<ProductModel> repository;
+  final NotificationService _notificationService;
 
-  AlertsBloc({required this.repository}) : super(AlertsInitial()) {
+  AlertsBloc({
+    required this.repository,
+    NotificationService? notificationService,
+  })  : _notificationService = notificationService ?? NotificationService(),
+        super(AlertsInitial()) {
     on<LoadAlerts>(_onLoadAlerts);
     on<DismissAlert>(_onDismissAlert);
   }
@@ -91,6 +97,22 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
         expiringSoonProducts: expiringSoon,
         lowStockProducts: lowStock,
       ));
+
+      // Trigger Windows native notifications if there are alerts
+      final totalAlerts =
+          expired.length + expiringSoon.length + lowStock.length;
+      if (totalAlerts > 0) {
+        try {
+          await _notificationService.showExpiryNotification([
+            ...expired,
+            ...expiringSoon,
+            ...lowStock,
+          ]);
+        } catch (e) {
+          // Notification failures should not crash the app
+          print('NotificationService: Failed to show notification: $e');
+        }
+      }
     } catch (e) {
       emit(AlertsError(e.toString()));
     }

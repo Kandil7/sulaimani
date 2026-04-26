@@ -5,12 +5,19 @@ import 'package:window_manager/window_manager.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/di/injection_container.dart' as di;
+import 'core/services/notification_service.dart';
+import 'core/services/backup_scheduler.dart';
+import 'data/repositories/settings_repository.dart';
 import 'presentation/alerts/bloc/alerts_bloc.dart';
 import 'presentation/alerts/bloc/alerts_event.dart';
+import 'presentation/alerts/bloc/alerts_state.dart';
 import 'presentation/dashboard/bloc/dashboard_bloc.dart';
 import 'presentation/dashboard/bloc/dashboard_event.dart';
 import 'presentation/settings/bloc/settings_bloc.dart';
 import 'presentation/settings/bloc/settings_event.dart';
+import 'presentation/settings/bloc/settings_state.dart';
+import 'domain/repositories/generic_repository.dart';
+import 'data/models/product_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,8 +46,25 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final BackupScheduler _backupScheduler;
+
+  @override
+  void initState() {
+    super.initState();
+    _backupScheduler = BackupScheduler();
+    // Start backup scheduler with settings repository
+    _backupScheduler.start(
+      settingsRepository: di.sl<SettingsRepository>(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,24 +80,38 @@ class MyApp extends StatelessWidget {
           create: (_) => di.sl<SettingsBloc>()..add(LoadSettings()),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'صيدلية السليماني',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
+      child: BlocListener<SettingsBloc, SettingsState>(
+        listener: (context, state) {
+          if (state is SettingsLoaded) {
+            // Sync backup scheduler with settings changes
+            if (state.settings.autoBackupEnabled) {
+              _backupScheduler.start(
+                settingsRepository: di.sl<SettingsRepository>(),
+              );
+            } else {
+              _backupScheduler.stop();
+            }
+          }
+        },
+        child: MaterialApp.router(
+          title: 'صيدلية السليماني',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
 
-        // Localization
-        localizationsDelegates: const [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: const [
-          Locale('ar', 'EG'), // Arabic, Egypt
-        ],
-        locale: const Locale('ar', 'EG'), // Default to Arabic
+          // Localization
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('ar', 'EG'), // Arabic, Egypt
+          ],
+          locale: const Locale('ar', 'EG'), // Default to Arabic
 
-        // Routing
-        routerConfig: AppRouter.router,
+          // Routing
+          routerConfig: AppRouter.router,
+        ),
       ),
     );
   }

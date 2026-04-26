@@ -86,6 +86,13 @@ class _SideMenuState extends State<SideMenu> {
                     onTap: () => context.go('/reports'),
                   ),
                   _MenuItem(
+                    icon: Icons.description_outlined,
+                    title: 'الفواتير',
+                    isExpanded: _isExpanded,
+                    isActive: currentPath.startsWith('/invoices'),
+                    onTap: () => context.go('/invoices'),
+                  ),
+                  _MenuItem(
                     icon: Icons.settings_outlined,
                     title: 'الإعدادات',
                     isExpanded: _isExpanded,

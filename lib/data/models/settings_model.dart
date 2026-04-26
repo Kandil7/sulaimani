@@ -21,7 +21,9 @@ class SettingsModel {
 
   // Backup Settings
   bool autoBackupEnabled = false;
+  int backupIntervalHours = 24;
   DateTime? lastBackupDate;
+  DateTime? nextScheduledBackup;
 
   late DateTime createdAt;
   late DateTime updatedAt;
@@ -38,7 +40,9 @@ class SettingsModel {
     ..enableNotificationSounds = true
     ..enableWindowsNotifications = true
     ..autoBackupEnabled = false
+    ..backupIntervalHours = 24
     ..lastBackupDate = null
+    ..nextScheduledBackup = null
     ..createdAt = DateTime.now()
     ..updatedAt = DateTime.now();
 }

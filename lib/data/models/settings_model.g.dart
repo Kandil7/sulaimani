@@ -22,68 +22,78 @@ const SettingsModelSchema = CollectionSchema(
       name: r'autoBackupEnabled',
       type: IsarType.bool,
     ),
-    r'createdAt': PropertySchema(
+    r'backupIntervalHours': PropertySchema(
       id: 1,
+      name: r'backupIntervalHours',
+      type: IsarType.long,
+    ),
+    r'createdAt': PropertySchema(
+      id: 2,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'enableNotificationSounds': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'enableNotificationSounds',
       type: IsarType.bool,
     ),
     r'enableWindowsNotifications': PropertySchema(
-      id: 3,
+      id: 4,
       name: r'enableWindowsNotifications',
       type: IsarType.bool,
     ),
     r'expiryWarningDays': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'expiryWarningDays',
       type: IsarType.long,
     ),
     r'invoiceFooter': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'invoiceFooter',
       type: IsarType.string,
     ),
     r'invoiceHeader': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'invoiceHeader',
       type: IsarType.string,
     ),
     r'invoiceLogoPath': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'invoiceLogoPath',
       type: IsarType.string,
     ),
     r'lastBackupDate': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'lastBackupDate',
       type: IsarType.dateTime,
     ),
     r'lowStockWarning': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'lowStockWarning',
       type: IsarType.long,
     ),
+    r'nextScheduledBackup': PropertySchema(
+      id: 11,
+      name: r'nextScheduledBackup',
+      type: IsarType.dateTime,
+    ),
     r'pharmacyAddress': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'pharmacyAddress',
       type: IsarType.string,
     ),
     r'pharmacyName': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'pharmacyName',
       type: IsarType.string,
     ),
     r'pharmacyPhone': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'pharmacyPhone',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -149,19 +159,21 @@ void _settingsModelSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeBool(offsets[0], object.autoBackupEnabled);
-  writer.writeDateTime(offsets[1], object.createdAt);
-  writer.writeBool(offsets[2], object.enableNotificationSounds);
-  writer.writeBool(offsets[3], object.enableWindowsNotifications);
-  writer.writeLong(offsets[4], object.expiryWarningDays);
-  writer.writeString(offsets[5], object.invoiceFooter);
-  writer.writeString(offsets[6], object.invoiceHeader);
-  writer.writeString(offsets[7], object.invoiceLogoPath);
-  writer.writeDateTime(offsets[8], object.lastBackupDate);
-  writer.writeLong(offsets[9], object.lowStockWarning);
-  writer.writeString(offsets[10], object.pharmacyAddress);
-  writer.writeString(offsets[11], object.pharmacyName);
-  writer.writeString(offsets[12], object.pharmacyPhone);
-  writer.writeDateTime(offsets[13], object.updatedAt);
+  writer.writeLong(offsets[1], object.backupIntervalHours);
+  writer.writeDateTime(offsets[2], object.createdAt);
+  writer.writeBool(offsets[3], object.enableNotificationSounds);
+  writer.writeBool(offsets[4], object.enableWindowsNotifications);
+  writer.writeLong(offsets[5], object.expiryWarningDays);
+  writer.writeString(offsets[6], object.invoiceFooter);
+  writer.writeString(offsets[7], object.invoiceHeader);
+  writer.writeString(offsets[8], object.invoiceLogoPath);
+  writer.writeDateTime(offsets[9], object.lastBackupDate);
+  writer.writeLong(offsets[10], object.lowStockWarning);
+  writer.writeDateTime(offsets[11], object.nextScheduledBackup);
+  writer.writeString(offsets[12], object.pharmacyAddress);
+  writer.writeString(offsets[13], object.pharmacyName);
+  writer.writeString(offsets[14], object.pharmacyPhone);
+  writer.writeDateTime(offsets[15], object.updatedAt);
 }
 
 SettingsModel _settingsModelDeserialize(
@@ -172,20 +184,22 @@ SettingsModel _settingsModelDeserialize(
 ) {
   final object = SettingsModel();
   object.autoBackupEnabled = reader.readBool(offsets[0]);
-  object.createdAt = reader.readDateTime(offsets[1]);
-  object.enableNotificationSounds = reader.readBool(offsets[2]);
-  object.enableWindowsNotifications = reader.readBool(offsets[3]);
-  object.expiryWarningDays = reader.readLong(offsets[4]);
+  object.backupIntervalHours = reader.readLong(offsets[1]);
+  object.createdAt = reader.readDateTime(offsets[2]);
+  object.enableNotificationSounds = reader.readBool(offsets[3]);
+  object.enableWindowsNotifications = reader.readBool(offsets[4]);
+  object.expiryWarningDays = reader.readLong(offsets[5]);
   object.id = id;
-  object.invoiceFooter = reader.readStringOrNull(offsets[5]);
-  object.invoiceHeader = reader.readStringOrNull(offsets[6]);
-  object.invoiceLogoPath = reader.readStringOrNull(offsets[7]);
-  object.lastBackupDate = reader.readDateTimeOrNull(offsets[8]);
-  object.lowStockWarning = reader.readLong(offsets[9]);
-  object.pharmacyAddress = reader.readStringOrNull(offsets[10]);
-  object.pharmacyName = reader.readString(offsets[11]);
-  object.pharmacyPhone = reader.readStringOrNull(offsets[12]);
-  object.updatedAt = reader.readDateTime(offsets[13]);
+  object.invoiceFooter = reader.readStringOrNull(offsets[6]);
+  object.invoiceHeader = reader.readStringOrNull(offsets[7]);
+  object.invoiceLogoPath = reader.readStringOrNull(offsets[8]);
+  object.lastBackupDate = reader.readDateTimeOrNull(offsets[9]);
+  object.lowStockWarning = reader.readLong(offsets[10]);
+  object.nextScheduledBackup = reader.readDateTimeOrNull(offsets[11]);
+  object.pharmacyAddress = reader.readStringOrNull(offsets[12]);
+  object.pharmacyName = reader.readString(offsets[13]);
+  object.pharmacyPhone = reader.readStringOrNull(offsets[14]);
+  object.updatedAt = reader.readDateTime(offsets[15]);
   return object;
 }
 
@@ -199,30 +213,34 @@ P _settingsModelDeserializeProp<P>(
     case 0:
       return (reader.readBool(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
       return (reader.readStringOrNull(offset)) as P;
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 9:
-      return (reader.readLong(offset)) as P;
-    case 10:
       return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 10:
+      return (reader.readLong(offset)) as P;
     case 11:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 12:
       return (reader.readStringOrNull(offset)) as P;
     case 13:
+      return (reader.readString(offset)) as P;
+    case 14:
+      return (reader.readStringOrNull(offset)) as P;
+    case 15:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -331,6 +349,62 @@ extension SettingsModelQueryFilter
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'autoBackupEnabled',
         value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      backupIntervalHoursEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'backupIntervalHours',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      backupIntervalHoursGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'backupIntervalHours',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      backupIntervalHoursLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'backupIntervalHours',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      backupIntervalHoursBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'backupIntervalHours',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
       ));
     });
   }
@@ -1114,6 +1188,80 @@ extension SettingsModelQueryFilter
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      nextScheduledBackupIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'nextScheduledBackup',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      nextScheduledBackupIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'nextScheduledBackup',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      nextScheduledBackupEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'nextScheduledBackup',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      nextScheduledBackupGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'nextScheduledBackup',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      nextScheduledBackupLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'nextScheduledBackup',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      nextScheduledBackupBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'nextScheduledBackup',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
       pharmacyAddressIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1636,6 +1784,20 @@ extension SettingsModelQuerySortBy
     });
   }
 
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByBackupIntervalHours() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'backupIntervalHours', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByBackupIntervalHoursDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'backupIntervalHours', Sort.desc);
+    });
+  }
+
   QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1762,6 +1924,20 @@ extension SettingsModelQuerySortBy
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByNextScheduledBackup() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nextScheduledBackup', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByNextScheduledBackupDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nextScheduledBackup', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
       sortByPharmacyAddress() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'pharmacyAddress', Sort.asc);
@@ -1830,6 +2006,20 @@ extension SettingsModelQuerySortThenBy
       thenByAutoBackupEnabledDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'autoBackupEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByBackupIntervalHours() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'backupIntervalHours', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByBackupIntervalHoursDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'backupIntervalHours', Sort.desc);
     });
   }
 
@@ -1971,6 +2161,20 @@ extension SettingsModelQuerySortThenBy
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByNextScheduledBackup() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nextScheduledBackup', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByNextScheduledBackupDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'nextScheduledBackup', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
       thenByPharmacyAddress() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'pharmacyAddress', Sort.asc);
@@ -2032,6 +2236,13 @@ extension SettingsModelQueryWhereDistinct
       distinctByAutoBackupEnabled() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'autoBackupEnabled');
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QDistinct>
+      distinctByBackupIntervalHours() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'backupIntervalHours');
     });
   }
 
@@ -2101,6 +2312,13 @@ extension SettingsModelQueryWhereDistinct
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QDistinct>
+      distinctByNextScheduledBackup() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'nextScheduledBackup');
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QDistinct>
       distinctByPharmacyAddress({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'pharmacyAddress',
@@ -2142,6 +2360,13 @@ extension SettingsModelQueryProperty
       autoBackupEnabledProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'autoBackupEnabled');
+    });
+  }
+
+  QueryBuilder<SettingsModel, int, QQueryOperations>
+      backupIntervalHoursProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'backupIntervalHours');
     });
   }
 
@@ -2203,6 +2428,13 @@ extension SettingsModelQueryProperty
   QueryBuilder<SettingsModel, int, QQueryOperations> lowStockWarningProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lowStockWarning');
+    });
+  }
+
+  QueryBuilder<SettingsModel, DateTime?, QQueryOperations>
+      nextScheduledBackupProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'nextScheduledBackup');
     });
   }
 
