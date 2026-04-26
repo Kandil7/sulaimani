@@ -67,6 +67,15 @@ class _ProductPOSCardState extends State<ProductPOSCard>
     return AppColors.success;
   }
 
+  bool get _isExpired {
+    final expiry = widget.product.expiryDate;
+    if (expiry == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiryDate = DateTime(expiry.year, expiry.month, expiry.day);
+    return today.isAfter(expiryDate);
+  }
+
   IconData _getProductIcon() {
     final name = widget.product.name.toLowerCase();
     if (name.contains('حبوب') ||
@@ -90,6 +99,7 @@ class _ProductPOSCardState extends State<ProductPOSCard>
     final isOutOfStock = widget.product.stockQuantity <= 0;
     final hasLowStock =
         widget.product.stockQuantity <= widget.product.minimumStock;
+    final isExpired = _isExpired;
 
     return AnimatedBuilder(
       animation: _controller,
@@ -97,7 +107,7 @@ class _ProductPOSCardState extends State<ProductPOSCard>
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Opacity(
-            opacity: isOutOfStock ? 0.5 : 1.0,
+            opacity: isOutOfStock ? 0.5 : (isExpired ? 0.7 : 1.0),
             child: Card(
               elevation: _elevationAnimation.value,
               shape: RoundedRectangleBorder(
@@ -105,10 +115,12 @@ class _ProductPOSCardState extends State<ProductPOSCard>
                 side: BorderSide(
                   color: _showCheckmark
                       ? AppColors.success
-                      : (hasLowStock
-                          ? AppColors.warning.withOpacity(0.5)
-                          : Colors.transparent),
-                  width: _showCheckmark || hasLowStock ? 2 : 0,
+                      : isExpired
+                          ? AppColors.danger.withOpacity(0.5)
+                          : (hasLowStock
+                              ? AppColors.warning.withOpacity(0.5)
+                              : Colors.transparent),
+                  width: _showCheckmark || isExpired || hasLowStock ? 2 : 0,
                 ),
               ),
               child: InkWell(
@@ -209,6 +221,26 @@ class _ProductPOSCardState extends State<ProductPOSCard>
                           ),
                           child: const Text(
                             'نفد',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      if (isExpired)
+                        Container(
+                          margin: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.danger,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: const Text(
+                            'منتهي',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 10,

@@ -114,13 +114,22 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     final picked = await showDatePicker(
       context: context,
       initialDate: _expiryDate ?? DateTime.now().add(const Duration(days: 365)),
-      firstDate: DateTime.now(),
+      firstDate: DateTime(2000),
       lastDate: DateTime.now().add(const Duration(days: 3650)),
       locale: locale,
     );
     if (picked != null) {
       setState(() => _expiryDate = picked);
     }
+  }
+
+  bool get _hasExpiredDate {
+    if (_expiryDate == null) return false;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final expiry =
+        DateTime(_expiryDate!.year, _expiryDate!.month, _expiryDate!.day);
+    return today.isAfter(expiry);
   }
 
   void _save() {
@@ -169,6 +178,49 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
       return;
     }
 
+    // Warn if expiry date is in the past
+    if (_hasExpiredDate) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.warning, color: AppColors.warning),
+              const SizedBox(width: 8),
+              const Text('تنبيه'),
+            ],
+          ),
+          content: Text(
+            'تاريخ الصلاحية "${DateFormat('dd/MM/yyyy').format(_expiryDate!)}" قد مر بالفعل!\n\nهل تريد المتابعة مع ذلك؟',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('إلغاء'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _performSave(
+                    purchasePrice, sellingPrice, stockQuantity, minimumStock);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.warning,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('متابعة'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    _performSave(purchasePrice, sellingPrice, stockQuantity, minimumStock);
+  }
+
+  void _performSave(double purchasePrice, double sellingPrice,
+      int stockQuantity, int minimumStock) {
     final product = widget.product ?? ProductModel();
     product.barcode = _barcodeController.text;
     product.name = _nameController.text;
@@ -634,6 +686,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   }
 
   Widget _buildDatePicker() {
+    final isExpired = _hasExpiredDate;
     return InkWell(
       onTap: _selectDate,
       borderRadius: BorderRadius.circular(AppSizes.radiusMd),
@@ -647,11 +700,17 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            borderSide: const BorderSide(color: AppColors.border),
+            borderSide: BorderSide(
+              color: isExpired ? AppColors.danger : AppColors.border,
+              width: isExpired ? 2 : 1,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+            borderSide: BorderSide(
+              color: isExpired ? AppColors.danger : AppColors.primary,
+              width: 2,
+            ),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: AppSizes.md,
@@ -661,19 +720,29 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              _expiryDate != null
-                  ? DateFormat('dd/MM/yyyy').format(_expiryDate!)
-                  : 'اختر التاريخ',
-              style: AppTextStyles.bodyL.copyWith(
-                color: _expiryDate != null
-                    ? AppColors.textPrimary
-                    : AppColors.textSecondary,
-              ),
+            Row(
+              children: [
+                if (isExpired) ...[
+                  const Icon(Icons.warning, color: AppColors.danger, size: 18),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  _expiryDate != null
+                      ? DateFormat('dd/MM/yyyy').format(_expiryDate!)
+                      : 'اختر التاريخ',
+                  style: AppTextStyles.bodyL.copyWith(
+                    color: isExpired
+                        ? AppColors.danger
+                        : (_expiryDate != null
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary),
+                  ),
+                ),
+              ],
             ),
-            const Icon(
+            Icon(
               Icons.calendar_today,
-              color: AppColors.textSecondary,
+              color: isExpired ? AppColors.danger : AppColors.textSecondary,
               size: 20,
             ),
           ],

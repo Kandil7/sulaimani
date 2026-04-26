@@ -6,6 +6,8 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/toast_notification.dart';
+import '../../../data/models/sale_model.dart';
+import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
 import '../bloc/customers_state.dart';
@@ -16,6 +18,7 @@ import '../widgets/add_customer_dialog.dart';
 import '../widgets/record_payment_dialog.dart';
 import '../widgets/edit_customer_dialog.dart';
 import '../widgets/debt_statistics_card.dart';
+import '../widgets/invoice_details_dialog.dart';
 
 class CustomersPage extends StatelessWidget {
   const CustomersPage({super.key});
@@ -134,6 +137,7 @@ class CustomersView extends StatelessWidget {
                       _showEditCustomerDialog(context, customer),
                   onDelete: (customer) =>
                       _showDeleteConfirmation(context, customer),
+                  onInvoiceTap: (sale) => _showInvoiceDetails(context, sale),
                 ),
               ),
             ],
@@ -264,6 +268,15 @@ class CustomersView extends StatelessWidget {
           Navigator.of(context).pop();
         },
       ),
+    );
+  }
+
+  void _showInvoiceDetails(BuildContext context, SaleModel sale) async {
+    final items = await sl<SaleLocalDatasource>().getSaleItems(sale.id);
+    if (!context.mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => InvoiceDetailsDialog(sale: sale, items: items),
     );
   }
 }

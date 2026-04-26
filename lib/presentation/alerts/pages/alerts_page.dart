@@ -227,9 +227,8 @@ class AlertsView extends StatelessWidget {
   }
 
   void _onAlertTap(BuildContext context, int productId) {
-    // Navigate to products page - the product detail panel will show
-    context.go('/products');
-    // TODO: In a future iteration, pass productId to pre-select the product
+    // Navigate to products page with the product pre-selected
+    context.go('/products?preselect=$productId');
   }
 
   Widget _buildAlertSection({

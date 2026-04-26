@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../data/models/sale_model.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
 import '../bloc/customers_state.dart';
@@ -12,12 +13,14 @@ class CustomerDetailPanel extends StatelessWidget {
   final VoidCallback onRecordPayment;
   final Function(Customer) onEdit;
   final Function(Customer) onDelete;
+  final Function(SaleModel)? onInvoiceTap;
 
   const CustomerDetailPanel({
     super.key,
     required this.onRecordPayment,
     required this.onEdit,
     required this.onDelete,
+    this.onInvoiceTap,
   });
 
   @override
@@ -99,7 +102,10 @@ class CustomerDetailPanel extends StatelessWidget {
               const Text('سجل المشتريات', style: AppTextStyles.h3),
               const SizedBox(height: AppSizes.sm),
               Expanded(
-                child: CustomerPaymentHistory(customerId: customer.id),
+                child: CustomerPaymentHistory(
+                  customerId: customer.id,
+                  onInvoiceTap: onInvoiceTap,
+                ),
               ),
               const SizedBox(height: AppSizes.md),
               _buildQuickActions(context, customer),

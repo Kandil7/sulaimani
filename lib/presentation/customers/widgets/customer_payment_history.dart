@@ -11,10 +11,12 @@ import 'package:isar/isar.dart';
 
 class CustomerPaymentHistory extends StatefulWidget {
   final int customerId;
+  final Function(SaleModel)? onInvoiceTap;
 
   const CustomerPaymentHistory({
     super.key,
     required this.customerId,
+    this.onInvoiceTap,
   });
 
   @override
@@ -74,6 +76,7 @@ class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
         amount: sale.finalAmount,
         isPositive: sale.paymentMethod == 'credit',
         notes: null,
+        sale: sale,
       ));
     }
 
@@ -182,7 +185,12 @@ class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = timeline[index];
-                return _TimelineTile(item: item);
+                return _TimelineTile(
+                  item: item,
+                  onTap: item.sale != null
+                      ? () => widget.onInvoiceTap?.call(item.sale!)
+                      : null,
+                );
               },
             ),
           ),
@@ -200,6 +208,7 @@ class _TimelineItem {
   final double amount;
   final bool isPositive; // sale=credit adds to debt, payment reduces debt
   final String? notes;
+  final SaleModel? sale; // for clickable invoice
 
   _TimelineItem({
     required this.date,
@@ -209,23 +218,22 @@ class _TimelineItem {
     required this.amount,
     required this.isPositive,
     this.notes,
+    this.sale,
   });
 }
 
 class _TimelineTile extends StatelessWidget {
   final _TimelineItem item;
+  final VoidCallback? onTap;
 
-  const _TimelineTile({required this.item});
+  const _TimelineTile({required this.item, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isSale = item.type == 'sale';
     final isPayment = item.type == 'payment';
     final isCreditSale = isSale && item.isPositive;
-
-    // Sale with cash = positive (cash in)
-    // Sale with credit = neutral-ish (shows in red for debt)
-    // Payment = positive (debt reduction, shown in green)
+    final isClickable = isSale && item.sale != null;
 
     Color iconColor;
     IconData icon;
@@ -240,100 +248,116 @@ class _TimelineTile extends StatelessWidget {
       icon = Icons.receipt;
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.xs,
-        vertical: AppSizes.xs,
-      ),
-      child: Row(
-        children: [
-          // Type icon
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
+    return InkWell(
+      onTap: isClickable ? onTap : null,
+      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.xs,
+          vertical: AppSizes.xs,
+        ),
+        child: Row(
+          children: [
+            // Type icon
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Icon(icon, size: 14, color: iconColor),
             ),
-            child: Icon(icon, size: 14, color: iconColor),
-          ),
-          const SizedBox(width: AppSizes.sm),
-          // Description
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: isCreditSale
-                        ? AppColors.warning
-                        : AppColors.textPrimary,
+            const SizedBox(width: AppSizes.sm),
+            // Description
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        item.label,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: isCreditSale
+                              ? AppColors.warning
+                              : AppColors.textPrimary,
+                        ),
+                      ),
+                      if (isClickable) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.open_in_new,
+                          size: 10,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ],
                   ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  '${_formatDate(item.date)}${item.receiptNumber != null ? ' • ${item.receiptNumber}' : ''}',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                if (item.notes != null) ...[
                   const SizedBox(height: 1),
                   Text(
-                    item.notes!,
-                    style: TextStyle(
+                    '${_formatDate(item.date)}${item.receiptNumber != null ? ' • ${item.receiptNumber}' : ''}',
+                    style: const TextStyle(
                       fontSize: 9,
-                      fontStyle: FontStyle.italic,
                       color: AppColors.textSecondary,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (item.notes != null) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      item.notes!,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontStyle: FontStyle.italic,
+                        color: AppColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Amount
+            SizedBox(
+              width: 80,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    CurrencyUtils.format(item.amount),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isPayment
+                          ? AppColors.success
+                          : isCreditSale
+                              ? AppColors.warning
+                              : AppColors.success,
+                    ),
+                  ),
+                  Text(
+                    isPayment
+                        ? 'سداد'
+                        : isCreditSale
+                            ? 'آجل'
+                            : 'نقدي',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: isPayment
+                          ? AppColors.success
+                          : isCreditSale
+                              ? AppColors.warning
+                              : AppColors.success,
+                    ),
                   ),
                 ],
-              ],
+              ),
             ),
-          ),
-          // Amount
-          SizedBox(
-            width: 80,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  CurrencyUtils.format(item.amount),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: isPayment
-                        ? AppColors.success
-                        : isCreditSale
-                            ? AppColors.warning
-                            : AppColors.success,
-                  ),
-                ),
-                Text(
-                  isPayment
-                      ? 'سداد'
-                      : isCreditSale
-                          ? 'آجل'
-                          : 'نقدي',
-                  style: TextStyle(
-                    fontSize: 9,
-                    color: isPayment
-                        ? AppColors.success
-                        : isCreditSale
-                            ? AppColors.warning
-                            : AppColors.success,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

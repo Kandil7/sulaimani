@@ -337,6 +337,26 @@ class _SettingsFormState extends State<SettingsForm> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSizes.sm),
+                // Logo preview
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                  child: Image.file(
+                    File(_selectedLogoPath!),
+                    height: 80,
+                    width: 80,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 80,
+                        width: 80,
+                        color: Colors.grey.shade200,
+                        child:
+                            const Icon(Icons.broken_image, color: Colors.grey),
+                      );
+                    },
+                  ),
+                ),
               ],
             ),
           ),

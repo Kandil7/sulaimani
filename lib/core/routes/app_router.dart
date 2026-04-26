@@ -26,7 +26,13 @@ class AppRouter {
           ),
           GoRoute(
             path: '/products',
-            builder: (context, state) => const ProductsPage(),
+            builder: (context, state) {
+              final preselectedId = state.uri.queryParameters['preselect'];
+              return ProductsPage(
+                  preselectedProductId: preselectedId != null
+                      ? int.tryParse(preselectedId)
+                      : null);
+            },
           ),
           GoRoute(
             path: '/pos',

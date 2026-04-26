@@ -41,8 +41,10 @@ class _PaymentDialogState extends State<PaymentDialog> {
   final _notesController = TextEditingController();
   final _newCustomerNameController = TextEditingController();
   final _newCustomerPhoneController = TextEditingController();
+  final _customerSearchController = TextEditingController();
   int? _selectedCustomerId;
   bool _showAddCustomer = false;
+  String _customerSearchQuery = '';
 
   @override
   void initState() {
@@ -58,7 +60,101 @@ class _PaymentDialogState extends State<PaymentDialog> {
     _notesController.dispose();
     _newCustomerNameController.dispose();
     _newCustomerPhoneController.dispose();
+    _customerSearchController.dispose();
     super.dispose();
+  }
+
+  List<CustomerModel> get _filteredCustomers {
+    if (_customerSearchQuery.isEmpty) return widget.customers;
+    final q = _customerSearchQuery.toLowerCase();
+    return widget.customers
+        .where((c) =>
+            c.name.toLowerCase().contains(q) ||
+            c.phone.contains(_customerSearchQuery))
+        .toList();
+  }
+
+  Widget _buildSearchableCustomerDropdown() {
+    return Column(
+      children: [
+        TextField(
+          controller: _customerSearchController,
+          decoration: InputDecoration(
+            hintText: 'ابحث بالاسم أو التليفون...',
+            prefixIcon: const Icon(Icons.search, size: 20),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.md,
+              vertical: AppSizes.sm,
+            ),
+            suffixIcon: _customerSearchQuery.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () {
+                      _customerSearchController.clear();
+                      setState(() => _customerSearchQuery = '');
+                    },
+                  )
+                : null,
+          ),
+          onChanged: (value) => setState(() => _customerSearchQuery = value),
+        ),
+        const SizedBox(height: AppSizes.sm),
+        Container(
+          constraints: const BoxConstraints(maxHeight: 200),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border),
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
+          child: _filteredCustomers.isEmpty
+              ? const Padding(
+                  padding: EdgeInsets.all(AppSizes.md),
+                  child: Text(
+                    'لا توجد نتائج',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _filteredCustomers.length,
+                  itemBuilder: (context, index) {
+                    final customer = _filteredCustomers[index];
+                    final isSelected = _selectedCustomerId == customer.id;
+                    return ListTile(
+                      dense: true,
+                      selected: isSelected,
+                      selectedTileColor:
+                          AppColors.primary.withValues(alpha: 0.1),
+                      title: Text(
+                        customer.name,
+                        style: TextStyle(
+                          fontWeight: isSelected ? FontWeight.bold : null,
+                          color: isSelected ? AppColors.primary : null,
+                        ),
+                      ),
+                      subtitle: Text(
+                        customer.phone,
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      trailing: isSelected
+                          ? const Icon(Icons.check,
+                              color: AppColors.primary, size: 18)
+                          : null,
+                      onTap: () {
+                        setState(() {
+                          _selectedCustomerId = customer.id;
+                          _customerSearchController.clear();
+                          _customerSearchQuery = '';
+                        });
+                      },
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
   }
 
   double get _finalTotal {
@@ -356,7 +452,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Customer dropdown
+        // Customer search field
         const Text(
           'اختر العميل:',
           style: TextStyle(
@@ -367,30 +463,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
         const SizedBox(height: AppSizes.sm),
 
         if (!_showAddCustomer) ...[
-          DropdownButtonFormField<int>(
-            value: _selectedCustomerId,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.md,
-                vertical: AppSizes.sm,
-              ),
-            ),
-            hint: const Text('اختر عميل...'),
-            items: widget.customers.map((customer) {
-              return DropdownMenuItem<int>(
-                value: customer.id,
-                child: Text(customer.name),
-              );
-            }).toList(),
-            onChanged: (value) {
-              setState(() {
-                _selectedCustomerId = value;
-              });
-            },
-          ),
+          _buildSearchableCustomerDropdown(),
           const SizedBox(height: AppSizes.sm),
 
           // Add new customer button

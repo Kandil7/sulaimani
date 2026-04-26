@@ -23,19 +23,26 @@ import '../../products/widgets/products_table.dart';
 import '../../products/widgets/products_toolbar.dart';
 
 class ProductsPage extends StatelessWidget {
-  const ProductsPage({super.key});
+  final int? preselectedProductId;
+
+  const ProductsPage({super.key, this.preselectedProductId});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<ProductsBloc>()..add(LoadProducts()),
-      child: const ProductsView(),
+      create: (_) {
+        final bloc = sl<ProductsBloc>()..add(LoadProducts());
+        return bloc;
+      },
+      child: ProductsView(preselectedProductId: preselectedProductId),
     );
   }
 }
 
 class ProductsView extends StatefulWidget {
-  const ProductsView({super.key});
+  final int? preselectedProductId;
+
+  const ProductsView({super.key, this.preselectedProductId});
 
   @override
   State<ProductsView> createState() => _ProductsViewState();
@@ -48,9 +55,19 @@ class _ProductsViewState extends State<ProductsView> {
   ProductModel? _selectedProduct;
   String? _sortField;
   bool _sortAscending = true;
+  bool _hasPreselected = false;
 
   Timer? _debounceTimer;
   static const int _itemsPerPage = 20;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-select product from alert if provided
+    if (widget.preselectedProductId != null) {
+      // We'll preselect once products are loaded via bloc listener
+    }
+  }
 
   @override
   void dispose() {
@@ -79,6 +96,19 @@ class _ProductsViewState extends State<ProductsView> {
               backgroundColor: AppColors.danger,
             ),
           );
+        } else if (state is ProductsLoaded &&
+            widget.preselectedProductId != null &&
+            !_hasPreselected) {
+          // Pre-select the product passed from alerts
+          final preselectedId = widget.preselectedProductId;
+          final preselectedProduct =
+              state.products.where((p) => p.id == preselectedId).toList();
+          if (preselectedProduct.isNotEmpty) {
+            setState(() {
+              _selectedProduct = preselectedProduct.first;
+              _hasPreselected = true;
+            });
+          }
         }
       },
       child: Padding(
