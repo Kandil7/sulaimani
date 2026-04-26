@@ -105,7 +105,7 @@ class AlertsPanel extends StatelessWidget {
               child: TextButton(
                 onPressed: onViewAllTap,
                 child: Text(
-                  'عرض كل ا��تنبيهات (${alerts.length})',
+                  'عرض كل التنبيهات (${alerts.length})',
                   style: AppTextStyles.bodyM.copyWith(
                     color: AppColors.primary,
                   ),

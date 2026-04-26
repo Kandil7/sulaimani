@@ -20,7 +20,9 @@ class ProductRepositoryImpl implements ProductRepository {
       stockQuantity: model.stockQuantity,
       minimumStock: model.minimumStock,
       expiryDate: model.expiryDate,
-      type: ProductType.medicine,
+      type: model.productType == 'pesticide'
+          ? ProductType.pesticide
+          : ProductType.medicine,
       createdAt: model.createdAt,
       updatedAt: model.updatedAt,
     );

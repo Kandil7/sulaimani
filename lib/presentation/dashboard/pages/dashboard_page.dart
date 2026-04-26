@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -197,14 +198,30 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   void _navigateTo(String route) {
-    // TODO: Implement navigation using GoRouter
-    // For now, we'll use a placeholder
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('الانتقال إلى: $route'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    // Use GoRouter for navigation
+    switch (route) {
+      case '/pos':
+        context.go('/pos');
+        break;
+      case '/products':
+      case '/products/new':
+        context.go('/products');
+        break;
+      case '/customers':
+        context.go('/customers');
+        break;
+      case '/alerts':
+        context.go('/alerts');
+        break;
+      case '/reports':
+        context.go('/reports');
+        break;
+      case '/settings':
+        context.go('/settings');
+        break;
+      default:
+        context.go(route);
+    }
   }
 
   void _showAddProductDialog() {

@@ -7,6 +7,8 @@ import 'core/routes/app_router.dart';
 import 'core/di/injection_container.dart' as di;
 import 'presentation/alerts/bloc/alerts_bloc.dart';
 import 'presentation/alerts/bloc/alerts_event.dart';
+import 'presentation/dashboard/bloc/dashboard_bloc.dart';
+import 'presentation/dashboard/bloc/dashboard_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,8 +42,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => di.sl<AlertsBloc>()..add(LoadAlerts()),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AlertsBloc>(
+          create: (_) => di.sl<AlertsBloc>()..add(LoadAlerts()),
+        ),
+        BlocProvider<DashboardBloc>(
+          create: (_) => di.sl<DashboardBloc>()..add(LoadDashboard()),
+        ),
+      ],
       child: MaterialApp.router(
         title: 'صيدلية السليماني',
         debugShowCheckedModeBanner: false,

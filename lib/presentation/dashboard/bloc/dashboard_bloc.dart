@@ -88,6 +88,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           .map((s) => RecentSale(
                 id: s.id,
                 invoiceNumber: s.receiptNumber,
+                customerName: s.customerName,
                 amount: s.finalAmount,
                 paymentType: s.paymentMethod == 'cash' ? 'نقدي' : 'آجل',
                 createdAt: s.createdAt,
