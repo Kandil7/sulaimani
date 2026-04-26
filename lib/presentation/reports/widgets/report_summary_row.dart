@@ -10,6 +10,11 @@ class ReportSummaryRow extends StatelessWidget {
   const ReportSummaryRow({super.key, required this.data});
 
   String _formatCurrency(double amount) {
+    if (amount >= 1000000) {
+      return '${(amount / 1000000).toStringAsFixed(1)}م';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}ك';
+    }
     return amount.toStringAsFixed(0);
   }
 
@@ -47,6 +52,17 @@ class ReportSummaryRow extends StatelessWidget {
             value: _formatCurrency(data.averageInvoice),
             label: 'متوسط الفاتورة',
             backgroundColor: AppColors.warningSurface,
+          ),
+        ),
+        const SizedBox(width: AppSizes.md),
+        // Total profit card
+        Expanded(
+          child: _SummaryCard(
+            icon: Icons.savings,
+            iconColor: AppColors.success,
+            value: _formatCurrency(data.totalProfit),
+            label: 'إجمالي الربح',
+            backgroundColor: AppColors.successSurface,
           ),
         ),
       ],

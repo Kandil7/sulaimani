@@ -31,4 +31,15 @@ class DatabaseService {
     );
     _isInitialized = true;
   }
+
+  /// Reopens the database after a restore operation.
+  /// Returns the new Isar instance.
+  Future<Isar> reopen() async {
+    if (_isInitialized && _isar.isOpen) {
+      await _isar.close();
+    }
+    _isInitialized = false;
+    await init();
+    return _isar;
+  }
 }

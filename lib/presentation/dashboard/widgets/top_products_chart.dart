@@ -3,6 +3,7 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../reports/bloc/reports_state.dart';
 
 class TopProductsChart extends StatelessWidget {
   final List<ProductSalesData> products;
@@ -59,7 +60,7 @@ class TopProductsChart extends StatelessWidget {
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
                   maxY: products.isNotEmpty
-                      ? products.first.salesCount.toDouble() * 1.2
+                      ? products.first.quantitySold.toDouble() * 1.2
                       : 100,
                   barTouchData: BarTouchData(enabled: false),
                   titlesData: FlTitlesData(
@@ -74,9 +75,9 @@ class TopProductsChart extends StatelessWidget {
                             return Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
-                                products[index].name.length > 8
-                                    ? '${products[index].name.substring(0, 8)}...'
-                                    : products[index].name,
+                                products[index].productName.length > 8
+                                    ? '${products[index].productName.substring(0, 8)}...'
+                                    : products[index].productName,
                                 style: AppTextStyles.caption,
                                 textAlign: TextAlign.center,
                               ),
@@ -103,7 +104,7 @@ class TopProductsChart extends StatelessWidget {
                       x: entry.key,
                       barRods: [
                         BarChartRodData(
-                          toY: entry.value.salesCount.toDouble(),
+                          toY: entry.value.quantitySold.toDouble(),
                           color: AppColors.primary,
                           width: 20,
                           borderRadius: const BorderRadius.vertical(
@@ -120,14 +121,4 @@ class TopProductsChart extends StatelessWidget {
       ),
     );
   }
-}
-
-class ProductSalesData {
-  final String name;
-  final int salesCount;
-
-  const ProductSalesData({
-    required this.name,
-    required this.salesCount,
-  });
 }

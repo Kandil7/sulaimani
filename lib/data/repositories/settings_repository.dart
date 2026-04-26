@@ -2,11 +2,14 @@ import 'dart:io';
 import 'package:isar/isar.dart';
 import '../models/settings_model.dart';
 import 'package:path_provider/path_provider.dart';
+import '../datasources/local/database_service.dart';
 
 class SettingsRepository {
-  final Isar _isar;
+  final DatabaseService _databaseService;
 
-  SettingsRepository(this._isar);
+  SettingsRepository(this._databaseService);
+
+  Isar get _isar => _databaseService.isar;
 
   Future<SettingsModel> getSettings() async {
     final settings = await _isar.settingsModels.get(1);
@@ -70,16 +73,16 @@ class SettingsRepository {
   /// Returns the current database path so callers know where to copy
   String? get currentDbPath => _isar.path;
 
-  /// Restore from a backup file. After restore, the app may need a refresh.
-  /// Returns true if restore succeeded.
-  Future<bool> restoreFromBackup(String backupPath) async {
+  /// Restore from a backup file. The database will be closed and caller must reopen.
+  /// Returns the path to the restored db so caller can reopen.
+  Future<String?> restoreFromBackup(String backupPath) async {
     final backupFile = File(backupPath);
     if (!await backupFile.exists()) {
-      return false;
+      return null;
     }
 
     final dbPath = _isar.path;
-    if (dbPath == null) return false;
+    if (dbPath == null) return null;
 
     // Close the database first
     await _isar.close();
@@ -91,6 +94,6 @@ class SettingsRepository {
     }
     await backupFile.copy(dbPath);
 
-    return true;
+    return dbPath;
   }
 }

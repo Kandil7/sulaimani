@@ -133,9 +133,10 @@ Future<void> init() async {
         saleItemRepository: sl<GenericRepository<SaleItemModel>>(),
         customerRepository: sl<GenericRepository<CustomerModel>>(),
       ));
-  sl.registerFactory(() => SettingsBloc(repository: sl<SettingsRepository>()));
+  sl.registerLazySingleton(() => SettingsRepository(sl<DatabaseService>()));
 
-  // Settings Repository
-  sl.registerLazySingleton(
-      () => SettingsRepository(sl<DatabaseService>().isar));
+  sl.registerFactory(() => SettingsBloc(
+        repository: sl<SettingsRepository>(),
+        databaseService: sl<DatabaseService>(),
+      ));
 }

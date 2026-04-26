@@ -1,13 +1,18 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../data/datasources/local/database_service.dart';
 import '../../../data/repositories/settings_repository.dart';
 import 'settings_event.dart';
 import 'settings_state.dart';
 
 class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   final SettingsRepository _repository;
+  final DatabaseService _databaseService;
 
-  SettingsBloc({required SettingsRepository repository})
-      : _repository = repository,
+  SettingsBloc({
+    required SettingsRepository repository,
+    required DatabaseService databaseService,
+  })  : _repository = repository,
+        _databaseService = databaseService,
         super(SettingsInitial()) {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateSettings>(_onUpdateSettings);
@@ -76,10 +81,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     emit(SettingsLoading());
     try {
-      final success = await _repository.restoreFromBackup(event.backupPath);
-      if (success) {
-        // DB was closed after restore - emit with success flag for UI to handle
-        emit(BackupRestored(success: true));
+      final dbPath = await _repository.restoreFromBackup(event.backupPath);
+      if (dbPath != null) {
+        // DB was closed after restore - reopen it
+        await _databaseService.reopen();
+        // Reload settings from restored DB
+        final settings = await _repository.getSettings();
+        emit(SettingsSaved(settings));
       } else {
         emit(const SettingsError('ملف النسخة الاحتياطية غير موجود'));
       }

@@ -126,14 +126,57 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
 
+    // Validate positive numbers
+    final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
+    final sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0;
+    final stockQuantity = int.tryParse(_stockQuantityController.text) ?? 0;
+    final minimumStock = int.tryParse(_minimumStockController.text) ?? 0;
+
+    if (purchasePrice < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('سعر الشراء يجب أن يكون رقمًا موجبًا'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    if (sellingPrice < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('سعر البيع يجب أن يكون رقمًا موجبًا'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    if (stockQuantity < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('الكمية يجب أن تكون رقمًا موجبًا'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    if (minimumStock < 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('الحد الأدنى يجب أن يكون رقمًا موجبًا'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
     final product = widget.product ?? ProductModel();
     product.barcode = _barcodeController.text;
     product.name = _nameController.text;
     product.scientificName = _scientificNameController.text;
-    product.purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0;
-    product.sellingPrice = double.tryParse(_sellingPriceController.text) ?? 0;
-    product.stockQuantity = int.tryParse(_stockQuantityController.text) ?? 0;
-    product.minimumStock = int.tryParse(_minimumStockController.text) ?? 0;
+    product.purchasePrice = purchasePrice;
+    product.sellingPrice = sellingPrice;
+    product.stockQuantity = stockQuantity;
+    product.minimumStock = minimumStock;
     product.expiryDate = _expiryDate;
     product.description =
         _notesController.text.isNotEmpty ? _notesController.text : null;

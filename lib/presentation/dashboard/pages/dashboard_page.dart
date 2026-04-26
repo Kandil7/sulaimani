@@ -15,7 +15,7 @@ import '../widgets/recent_sales_table.dart';
 import '../widgets/welcome_header.dart';
 import '../widgets/quick_actions_row.dart';
 import '../widgets/loading_skeleton.dart';
-import '../widgets/top_products_chart.dart' as chart;
+import '../widgets/top_products_chart.dart';
 import '../../reports/bloc/reports_state.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -180,20 +180,16 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(width: AppSizes.md),
                 Expanded(
-                  child: chart.TopProductsChart(
+                  child: TopProductsChart(
                     products: state.topProducts.isEmpty
                         ? [
-                            chart.ProductSalesData(
-                              name: 'لا توجد بيانات',
-                              salesCount: 0,
+                            const ProductSalesData(
+                              productName: 'لا توجد بيانات',
+                              quantitySold: 0,
+                              revenue: 0,
                             ),
                           ]
-                        : state.topProducts
-                            .map((p) => chart.ProductSalesData(
-                                  name: p.productName,
-                                  salesCount: p.quantitySold,
-                                ))
-                            .toList(),
+                        : state.topProducts,
                   ),
                 ),
               ],

@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
@@ -317,11 +319,79 @@ class _ProductsViewState extends State<ProductsView> {
     }
   }
 
-  void _exportProducts() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('جاري تصدير المنتجات...'),
-      ),
-    );
+  Future<void> _exportProducts() async {
+    final state = context.read<ProductsBloc>().state;
+    List<ProductModel> products = [];
+    if (state is ProductsLoaded) {
+      products = state.products;
+    }
+
+    if (products.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('لا توجد منتجات للتصدير'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final buffer = StringBuffer();
+      // Header
+      buffer.writeln(
+          'الباركود,اسم المنتج,المادة الفعالة,النوع,سعر الشراء,سعر البيع,الكمية,الحد الأدنى,تاريخ الصلاحية');
+      // Data rows
+      for (final p in products) {
+        buffer.writeln('${_escapeCsv(p.barcode)},'
+            '${_escapeCsv(p.name)},'
+            '${_escapeCsv(p.scientificName)},'
+            '${p.productType == 'medicine' ? 'دواء' : 'مبيد'},'
+            '${p.purchasePrice},'
+            '${p.sellingPrice},'
+            '${p.stockQuantity},'
+            '${p.minimumStock},'
+            '${p.expiryDate != null ? _formatDate(p.expiryDate!) : ''}');
+      }
+
+      // Save to file
+      final dir = await getApplicationDocumentsDirectory();
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final file = File('${dir.path}/products_export_$timestamp.csv');
+      await file.writeAsString(buffer.toString());
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text('تم تصدير ${products.length} منتج إلى:\n${file.path}'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل التصدير: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  String _escapeCsv(String value) {
+    if (value.contains(',') || value.contains('"') || value.contains('\n')) {
+      return '"${value.replaceAll('"', '""')}"';
+    }
+    return value;
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

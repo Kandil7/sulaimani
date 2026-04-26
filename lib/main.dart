@@ -9,6 +9,8 @@ import 'presentation/alerts/bloc/alerts_bloc.dart';
 import 'presentation/alerts/bloc/alerts_event.dart';
 import 'presentation/dashboard/bloc/dashboard_bloc.dart';
 import 'presentation/dashboard/bloc/dashboard_event.dart';
+import 'presentation/settings/bloc/settings_bloc.dart';
+import 'presentation/settings/bloc/settings_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +51,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<DashboardBloc>(
           create: (_) => di.sl<DashboardBloc>()..add(LoadDashboard()),
+        ),
+        BlocProvider<SettingsBloc>(
+          create: (_) => di.sl<SettingsBloc>()..add(LoadSettings()),
         ),
       ],
       child: MaterialApp.router(

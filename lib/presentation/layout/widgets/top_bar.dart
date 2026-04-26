@@ -201,7 +201,9 @@ class TopBar extends StatelessWidget {
       value: 'view_all',
       child: Center(
         child: TextButton(
-          onPressed: () {},
+          onPressed: () {
+            // This will be handled by onSelected
+          },
           child: const Text('عرض كل التنبيهات'),
         ),
       ),
