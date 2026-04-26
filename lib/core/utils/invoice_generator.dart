@@ -2,8 +2,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../../data/models/sale_model.dart';
 import '../../data/models/sale_item_model.dart';
@@ -11,43 +10,22 @@ import 'currency_utils.dart';
 import 'date_utils.dart';
 
 class InvoiceGenerator {
-  static pw.Font? _arabicFont;
-  static pw.Font? _arabicFontBold;
+  static Uint8List? _fontData;
+  static Uint8List? _boldFontData;
 
   static Future<void> _ensureFonts() async {
-    if (_arabicFont != null && _arabicFontBold != null) return;
+    if (_fontData != null && _boldFontData != null) return;
 
-    final fontData =
-        await rootBundle.load('assets/fonts/Cairo/Cairo-Regular.ttf');
+    _fontData = (await rootBundle.load('assets/fonts/Cairo/Cairo-Regular.ttf'))
+        .buffer
+        .asUint8List();
 
-    final boldData = await rootBundle.load('assets/fonts/Cairo/Cairo-Bold.ttf');
-
-    _arabicFont = pw.Font.ttf(fontData);
-    _arabicFontBold = pw.Font.ttf(boldData);
+    _boldFontData = (await rootBundle.load('assets/fonts/Cairo/Cairo-Bold.ttf'))
+        .buffer
+        .asUint8List();
   }
 
-  static pw.Widget _cell(
-    String text, {
-    pw.Font? font,
-    PdfColor? color,
-    bool alignCenter = false,
-    double fontSize = 9,
-  }) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.all(4),
-      child: pw.Text(
-        text,
-        style: pw.TextStyle(
-          font: font ?? _arabicFont,
-          fontSize: fontSize,
-          color: color ?? PdfColors.black,
-        ),
-        textAlign: alignCenter ? pw.TextAlign.center : pw.TextAlign.right,
-      ),
-    );
-  }
-
-  static Future<pw.Document> generateInvoice({
+  static Future<List<int>> generateInvoiceBytes({
     required SaleModel sale,
     required List<SaleItemModel> items,
     String? customerName,
@@ -58,337 +36,254 @@ class InvoiceGenerator {
     String? header,
     String? footer,
     String? logoPath,
-    required pw.Font font,
   }) async {
     await _ensureFonts();
-    final pdf = pw.Document();
-    final font = _arabicFont!;
-    final fontBold = _arabicFontBold!;
 
-    final theme = pw.ThemeData.withFont(
-      base: font,
-      bold: font,
+    // Create a new PDF document
+    final PdfDocument document = PdfDocument();
+    document.pageSettings.size = PdfPageSize.a5;
+    document.pageSettings.margins.all = 20;
+
+    // Add a page to the document
+    final PdfPage page = document.pages.add();
+    final Size pageSize = page.getClientSize();
+
+    // Create fonts
+    final PdfFont arabicFont = PdfTrueTypeFont(_fontData!, 10);
+    final PdfFont arabicFontBold = PdfTrueTypeFont(_boldFontData!, 12);
+    final PdfFont headerFont = PdfTrueTypeFont(_boldFontData!, 16);
+    final PdfFont smallFont = PdfTrueTypeFont(_fontData!, 8);
+
+    // RTL format
+    final PdfStringFormat rtlFormat = PdfStringFormat(
+      textDirection: PdfTextDirection.rightToLeft,
+      alignment: PdfTextAlignment.right,
     );
 
-    // Load logo image if path provided
-    pw.ImageProvider? logoImage;
+    final PdfStringFormat centerRtlFormat = PdfStringFormat(
+      textDirection: PdfTextDirection.rightToLeft,
+      alignment: PdfTextAlignment.center,
+    );
+
+    double yPos = 0;
+
+    // ── Header ──
+    // Load logo if exists
     if (logoPath != null && logoPath.isNotEmpty) {
       try {
-        final file = File(logoPath);
+        final File file = File(logoPath);
         if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          logoImage = pw.MemoryImage(bytes);
+          final Uint8List logoBytes = await file.readAsBytes();
+          final PdfBitmap logoImage = PdfBitmap(logoBytes);
+          page.graphics.drawImage(logoImage, Rect.fromLTWH(0, yPos, 50, 50));
         }
       } catch (e) {
-        // Logo failed to load — continue without it
         debugPrint('Failed to load logo: $e');
       }
     }
 
-    pdf.addPage(
-      pw.Page(
-        theme: theme,
-        pageFormat: PdfPageFormat.a5,
-        margin: const pw.EdgeInsets.all(16),
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
-            children: [
-              // ── Header ──
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  if (logoImage != null)
-                    pw.Container(
-                      width: 50,
-                      height: 50,
-                      child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                    ),
-                  if (logoImage != null) pw.SizedBox(width: 12),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.center,
-                    mainAxisSize: pw.MainAxisSize.min,
-                    children: [
-                      pw.Text(
-                        shopName ?? 'صيدلية السليماني',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 16,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.black,
-                        ),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
-                      if (shopAddress != null)
-                        pw.Text(
-                          shopAddress,
-                          style: pw.TextStyle(font: font, fontSize: 9),
-                          textDirection: pw.TextDirection.rtl,
-                        ),
-                      if (shopPhone != null)
-                        pw.Text(
-                          shopPhone,
-                          style: pw.TextStyle(font: font, fontSize: 9),
-                          textDirection: pw.TextDirection.rtl,
-                        ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 8),
-              pw.Divider(),
-              pw.SizedBox(height: 8),
+    // Shop Info (Centered)
+    page.graphics.drawString(
+      shopName ?? 'صيدلية السليماني',
+      headerFont,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 30),
+      format: centerRtlFormat,
+    );
+    yPos += 25;
 
-              // ── Invoice Info ──
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: [
-                  pw.Text(
-                    'فاتورة رقم: ${sale.receiptNumber}',
-                    style: pw.TextStyle(font: font, fontSize: 10),
-                    textDirection: pw.TextDirection.rtl,
-                  ),
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.end,
-                    children: [
-                      pw.Text(
-                        AppDateUtils.formatToDateTime(sale.date),
-                        style: pw.TextStyle(font: font, fontSize: 10),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
-                      pw.Text(
-                        sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل',
-                        style: pw.TextStyle(
-                          font: fontBold,
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                          color: sale.paymentMethod == 'cash'
-                              ? PdfColors.green700
-                              : PdfColors.orange700,
-                        ),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 12),
+    if (shopAddress != null) {
+      page.graphics.drawString(
+        shopAddress,
+        arabicFont,
+        bounds: Rect.fromLTWH(0, yPos, pageSize.width, 20),
+        format: centerRtlFormat,
+      );
+      yPos += 15;
+    }
 
-              // ── Customer Info ──
-              if (customerName != null) ...[
-                pw.Text(
-                  'العميل: $customerName',
-                  style: pw.TextStyle(font: font, fontSize: 10),
-                  textDirection: pw.TextDirection.rtl,
-                ),
-                if (customerPhone != null)
-                  pw.Text(
-                    'التليفون: $customerPhone',
-                    style: pw.TextStyle(font: font, fontSize: 9),
-                    textDirection: pw.TextDirection.rtl,
-                  ),
-                pw.SizedBox(height: 8),
-              ],
+    if (shopPhone != null) {
+      page.graphics.drawString(
+        shopPhone,
+        arabicFont,
+        bounds: Rect.fromLTWH(0, yPos, pageSize.width, 20),
+        format: centerRtlFormat,
+      );
+      yPos += 15;
+    }
 
-              // ── Notes ──
-              if (sale.notes != null && sale.notes!.isNotEmpty) ...[
-                pw.Container(
-                  padding: const pw.EdgeInsets.all(8),
-                  decoration: pw.BoxDecoration(
-                    color: PdfColors.grey100,
-                    borderRadius: pw.BorderRadius.circular(4),
-                  ),
-                  child: pw.Text(
-                    'ملاحظة: ${sale.notes}',
-                    style: pw.TextStyle(font: font, fontSize: 9),
-                    textDirection: pw.TextDirection.rtl,
-                  ),
-                ),
-                pw.SizedBox(height: 8),
-              ],
+    yPos += 10;
+    page.graphics.drawLine(
+        PdfPens.darkGray, Offset(0, yPos), Offset(pageSize.width, yPos));
+    yPos += 10;
 
-              // ── Items Table ──
-              pw.Table(
-                border: pw.TableBorder.all(color: PdfColors.grey300),
-                columnWidths: {
-                  0: const pw.FlexColumnWidth(3),
-                  1: const pw.FlexColumnWidth(1),
-                  2: const pw.FlexColumnWidth(1.5),
-                  3: const pw.FlexColumnWidth(1.5),
-                },
-                children: [
-                  pw.TableRow(
-                    decoration:
-                        const pw.BoxDecoration(color: PdfColors.grey200),
-                    children: [
-                      _cell('الصنف', font: fontBold),
-                      _cell('الكمية', font: fontBold, alignCenter: true),
-                      _cell('السعر', font: fontBold),
-                      _cell('الإجمالي', font: fontBold),
-                    ],
-                  ),
-                  ...items.map((item) {
-                    return pw.TableRow(
-                      children: [
-                        _cell(item.product.value?.name ?? '—'),
-                        _cell('${item.quantity}', alignCenter: true),
-                        _cell(CurrencyUtils.format(item.unitPrice)),
-                        _cell(
-                          CurrencyUtils.format(item.total),
-                          font: fontBold,
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-              pw.SizedBox(height: 16),
-
-              // ── Summary (right-aligned in RTL) ──
-              pw.Align(
-                alignment: pw.Alignment.centerRight,
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.end,
-                  children: [
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          CurrencyUtils.format(sale.totalAmount),
-                          style: pw.TextStyle(font: font, fontSize: 10),
-                          textDirection: pw.TextDirection.rtl,
-                        ),
-                        pw.SizedBox(width: 8),
-                        pw.SizedBox(
-                          width: 65,
-                          child: pw.Text(
-                            'الإجمالي:',
-                            style: pw.TextStyle(font: font, fontSize: 10),
-                            textDirection: pw.TextDirection.rtl,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (sale.discount > 0)
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.end,
-                        children: [
-                          pw.Text(
-                            '- ${CurrencyUtils.format(sale.discount)}',
-                            style: pw.TextStyle(
-                              font: font,
-                              fontSize: 10,
-                              color: PdfColors.green700,
-                            ),
-                            textDirection: pw.TextDirection.rtl,
-                          ),
-                          pw.SizedBox(width: 8),
-                          pw.SizedBox(
-                            width: 65,
-                            child: pw.Text(
-                              'الخصم:',
-                              style: pw.TextStyle(font: font, fontSize: 10),
-                              textDirection: pw.TextDirection.rtl,
-                            ),
-                          ),
-                        ],
-                      ),
-                    pw.Divider(),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          CurrencyUtils.format(sale.finalAmount),
-                          style: pw.TextStyle(
-                            font: fontBold,
-                            fontSize: 12,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                          textDirection: pw.TextDirection.rtl,
-                        ),
-                        pw.SizedBox(width: 8),
-                        pw.SizedBox(
-                          width: 65,
-                          child: pw.Text(
-                            'الصافي:',
-                            style: pw.TextStyle(
-                              font: fontBold,
-                              fontSize: 12,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                            textDirection: pw.TextDirection.rtl,
-                          ),
-                        ),
-                      ],
-                    ),
-                    pw.SizedBox(height: 4),
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.end,
-                      children: [
-                        pw.Text(
-                          CurrencyUtils.format(sale.paidAmount),
-                          style: pw.TextStyle(font: font, fontSize: 10),
-                          textDirection: pw.TextDirection.rtl,
-                        ),
-                        pw.SizedBox(width: 8),
-                        pw.SizedBox(
-                          width: 65,
-                          child: pw.Text(
-                            'المدفوع:',
-                            style: pw.TextStyle(font: font, fontSize: 10),
-                            textDirection: pw.TextDirection.rtl,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (sale.remainingAmount > 0)
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.end,
-                        children: [
-                          pw.Text(
-                            CurrencyUtils.format(sale.remainingAmount),
-                            style: pw.TextStyle(
-                              font: font,
-                              fontSize: 10,
-                              color: PdfColors.orange700,
-                            ),
-                            textDirection: pw.TextDirection.rtl,
-                          ),
-                          pw.SizedBox(width: 8),
-                          pw.SizedBox(
-                            width: 65,
-                            child: pw.Text(
-                              'الباقي:',
-                              style: pw.TextStyle(font: font, fontSize: 10),
-                              textDirection: pw.TextDirection.rtl,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              pw.Spacer(),
-
-              // ── Footer ──
-              pw.Divider(),
-              pw.SizedBox(height: 4),
-              pw.Center(
-                child: pw.Text(
-                  footer ?? 'شكراً لتعاملكم مع صيدلية السليماني',
-                  style: pw.TextStyle(font: font, fontSize: 8),
-                  textDirection: pw.TextDirection.rtl,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+    // ── Invoice Info ──
+    // Left side: Invoice number
+    page.graphics.drawString(
+      'فاتورة رقم: ${sale.receiptNumber}',
+      arabicFont,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width / 2, 20),
+      format: PdfStringFormat(textDirection: PdfTextDirection.rightToLeft),
     );
 
-    return pdf;
+    // Right side: Date and Payment Method
+    page.graphics.drawString(
+      AppDateUtils.formatToDateTime(sale.date),
+      arabicFont,
+      bounds: Rect.fromLTWH(pageSize.width / 2, yPos, pageSize.width / 2, 20),
+      format: rtlFormat,
+    );
+    yPos += 15;
+
+    final String paymentMethodStr = sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل';
+    final PdfBrush paymentBrush =
+        sale.paymentMethod == 'cash' ? PdfBrushes.green : PdfBrushes.orange;
+
+    page.graphics.drawString(
+      paymentMethodStr,
+      arabicFontBold,
+      brush: paymentBrush,
+      bounds: Rect.fromLTWH(pageSize.width / 2, yPos, pageSize.width / 2, 20),
+      format: rtlFormat,
+    );
+    yPos += 20;
+
+    // ── Customer Info ──
+    if (customerName != null) {
+      page.graphics.drawString(
+        'العميل: $customerName',
+        arabicFont,
+        bounds: Rect.fromLTWH(0, yPos, pageSize.width, 20),
+        format: rtlFormat,
+      );
+      yPos += 15;
+      if (customerPhone != null) {
+        page.graphics.drawString(
+          'التليفون: $customerPhone',
+          arabicFont,
+          bounds: Rect.fromLTWH(0, yPos, pageSize.width, 20),
+          format: rtlFormat,
+        );
+        yPos += 15;
+      }
+      yPos += 5;
+    }
+
+    // ── Notes ──
+    if (sale.notes != null && sale.notes!.isNotEmpty) {
+      final PdfLayoutResult result = PdfTextElement(
+        text: 'ملاحظة: ${sale.notes}',
+        font: arabicFont,
+        format: rtlFormat,
+      ).draw(
+        page: page,
+        bounds: Rect.fromLTWH(0, yPos, pageSize.width, 100),
+      )!;
+      yPos = result.bounds.bottom + 10;
+    }
+
+    // ── Items Table ──
+    final PdfGrid grid = PdfGrid();
+    grid.columns.add(count: 4);
+    grid.headers.add(1);
+
+    PdfGridRow headerRow = grid.headers[0];
+    headerRow.cells[0].value = 'الصنف';
+    headerRow.cells[1].value = 'الكمية';
+    headerRow.cells[2].value = 'السعر';
+    headerRow.cells[3].value = 'الإجمالي';
+
+    // Apply header style
+    for (int i = 0; i < headerRow.cells.count; i++) {
+      headerRow.cells[i].style.font = arabicFontBold;
+      headerRow.cells[i].style.backgroundBrush = PdfBrushes.lightGray;
+      headerRow.cells[i].style.textBrush = PdfBrushes.black;
+      headerRow.cells[i].stringFormat = centerRtlFormat;
+    }
+
+    // Add items
+    for (final item in items) {
+      PdfGridRow row = grid.rows.add();
+      row.cells[0].value = item.product.value?.name ?? '—';
+      row.cells[1].value = '${item.quantity}';
+      row.cells[2].value = CurrencyUtils.format(item.unitPrice);
+      row.cells[3].value = CurrencyUtils.format(item.total);
+
+      for (int i = 0; i < row.cells.count; i++) {
+        row.cells[i].style.font = arabicFont;
+        row.cells[i].stringFormat = i == 1 ? centerRtlFormat : rtlFormat;
+      }
+    }
+
+    // Set column widths
+    grid.columns[0].width = pageSize.width * 0.45;
+    grid.columns[1].width = pageSize.width * 0.15;
+    grid.columns[2].width = pageSize.width * 0.20;
+    grid.columns[3].width = pageSize.width * 0.20;
+
+    grid.style.cellPadding = PdfPaddings(left: 2, right: 2, top: 2, bottom: 2);
+
+    final PdfLayoutResult gridResult = grid.draw(
+      page: page,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 0),
+    )!;
+
+    yPos = gridResult.bounds.bottom + 15;
+
+    // ── Summary ──
+    void drawSummaryRow(String label, String value, PdfFont font,
+        {PdfBrush? brush}) {
+      page.graphics.drawString(
+        label,
+        font,
+        bounds: Rect.fromLTWH(pageSize.width - 150, yPos, 70, 20),
+        format: rtlFormat,
+      );
+      page.graphics.drawString(
+        value,
+        font,
+        brush: brush,
+        bounds: Rect.fromLTWH(pageSize.width - 80, yPos, 80, 20),
+        format: rtlFormat,
+      );
+      yPos += 15;
+    }
+
+    drawSummaryRow('الإجمالي:', CurrencyUtils.format(sale.totalAmount), arabicFont);
+    if (sale.discount > 0) {
+      drawSummaryRow('الخصم:', '- ${CurrencyUtils.format(sale.discount)}',
+          arabicFont, brush: PdfBrushes.green);
+    }
+
+    yPos += 5;
+    page.graphics.drawLine(
+        PdfPens.darkGray, Offset(pageSize.width - 150, yPos), Offset(pageSize.width, yPos));
+    yPos += 5;
+
+    drawSummaryRow(
+        'الصافي:', CurrencyUtils.format(sale.finalAmount), arabicFontBold);
+    drawSummaryRow(
+        'المدفوع:', CurrencyUtils.format(sale.paidAmount), arabicFont);
+
+    if (sale.remainingAmount > 0) {
+      drawSummaryRow('الباقي:', CurrencyUtils.format(sale.remainingAmount),
+          arabicFont, brush: PdfBrushes.orange);
+    }
+
+    // ── Footer ──
+    final double footerY = pageSize.height - 30;
+    page.graphics.drawLine(
+        PdfPens.darkGray, Offset(0, footerY), Offset(pageSize.width, footerY));
+    page.graphics.drawString(
+      footer ?? 'شكراً لتعاملكم مع صيدلية السليماني',
+      smallFont,
+      bounds: Rect.fromLTWH(0, footerY + 5, pageSize.width, 20),
+      format: centerRtlFormat,
+    );
+
+    // Save and dispose
+    final List<int> bytes = await document.save();
+    document.dispose();
+    return bytes;
   }
 
   static Future<void> printInvoice({
@@ -402,21 +297,21 @@ class InvoiceGenerator {
     String? header,
     String? footer,
     String? logoPath,
-    required pw.Font font,
   }) async {
-    final pdf = await generateInvoice(
-        sale: sale,
-        items: items,
-        customerName: customerName,
-        customerPhone: customerPhone,
-        shopName: shopName,
-        shopAddress: shopAddress,
-        shopPhone: shopPhone,
-        header: header,
-        footer: footer,
-        logoPath: logoPath,
-        font: font);
-    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+    final bytes = await generateInvoiceBytes(
+      sale: sale,
+      items: items,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      shopName: shopName,
+      shopAddress: shopAddress,
+      shopPhone: shopPhone,
+      header: header,
+      footer: footer,
+      logoPath: logoPath,
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => Uint8List.fromList(bytes));
   }
 
   static Future<List<int>> generatePdfBytes({
@@ -431,39 +326,17 @@ class InvoiceGenerator {
     String? footer,
     String? logoPath,
   }) async {
-    try {
-      log('PDF: loading font');
-
-      final fontData =
-          await rootBundle.load('assets/fonts/Cairo/Cairo-Regular.ttf');
-      final arabicFont = pw.Font.ttf(fontData);
-
-      log('PDF: before generateInvoice');
-
-      final pdf = await generateInvoice(
-        sale: sale,
-        items: items,
-        customerName: customerName,
-        customerPhone: customerPhone,
-        shopName: shopName,
-        shopAddress: shopAddress,
-        shopPhone: shopPhone,
-        header: header,
-        footer: footer,
-        logoPath: logoPath,
-        font: arabicFont, // add this parameter
-      );
-
-      log('PDF: before save');
-
-      final bytes = await pdf.save();
-
-      log('PDF: after save, size: ${bytes.length}');
-      return bytes;
-    } catch (e, st) {
-      log('PDF generatePdfBytes error: $e');
-      log('PDF stack trace: $st');
-      rethrow;
-    }
+    return await generateInvoiceBytes(
+      sale: sale,
+      items: items,
+      customerName: customerName,
+      customerPhone: customerPhone,
+      shopName: shopName,
+      shopAddress: shopAddress,
+      shopPhone: shopPhone,
+      header: header,
+      footer: footer,
+      logoPath: logoPath,
+    );
   }
 }

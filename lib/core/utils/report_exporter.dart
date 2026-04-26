@@ -1,11 +1,26 @@
 import 'dart:io';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
+import 'package:flutter/services.dart';
+import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
 import 'currency_utils.dart';
 
-/// Exports report data to PDF and CSV formats
+/// Exports report data to PDF and CSV formats using Syncfusion
 class ReportExporter {
+  static Uint8List? _fontData;
+  static Uint8List? _boldFontData;
+
+  static Future<void> _ensureFonts() async {
+    if (_fontData != null && _boldFontData != null) return;
+
+    _fontData = (await rootBundle.load('assets/fonts/Cairo/Cairo-Regular.ttf'))
+        .buffer
+        .asUint8List();
+
+    _boldFontData = (await rootBundle.load('assets/fonts/Cairo/Cairo-Bold.ttf'))
+        .buffer
+        .asUint8List();
+  }
+
   /// Export sales data to a PDF file
   static Future<File> exportToPdf({
     required List<ReportSaleData> sales,
@@ -17,166 +32,133 @@ class ReportExporter {
     required String filePath,
     String? shopName,
   }) async {
-    final pdf = pw.Document();
+    await _ensureFonts();
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(20),
-        header: (context) => _buildPdfHeader(title, fromDate, toDate, shopName),
-        footer: (context) => _buildPdfFooter(context),
-        build: (context) => [
-          _buildPdfSummary(totalSales, totalProfit, sales.length),
-          pw.SizedBox(height: 20),
-          _buildPdfTable(sales),
-        ],
-      ),
+    final PdfDocument document = PdfDocument();
+    document.pageSettings.margins.all = 30;
+
+    final PdfFont arabicFont = PdfTrueTypeFont(_fontData!, 10);
+    final PdfFont arabicFontBold = PdfTrueTypeFont(_boldFontData!, 12);
+    final PdfFont headerFont = PdfTrueTypeFont(_boldFontData!, 18);
+
+    final PdfStringFormat rtlFormat = PdfStringFormat(
+      textDirection: PdfTextDirection.rightToLeft,
+      alignment: PdfTextAlignment.right,
+    );
+
+    final PdfStringFormat centerRtlFormat = PdfStringFormat(
+      textDirection: PdfTextDirection.rightToLeft,
+      alignment: PdfTextAlignment.center,
+    );
+
+    final PdfPage page = document.pages.add();
+    final Size pageSize = page.getClientSize();
+    double yPos = 0;
+
+    // Header
+    page.graphics.drawString(
+      shopName ?? 'صيدلية السليماني',
+      headerFont,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 30),
+      format: centerRtlFormat,
+    );
+    yPos += 30;
+
+    page.graphics.drawString(
+      'تقرير المبيعات - $title',
+      arabicFontBold,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 25),
+      format: centerRtlFormat,
+    );
+    yPos += 25;
+
+    page.graphics.drawString(
+      'من: ${_formatDate(fromDate)} - إلى: ${_formatDate(toDate)}',
+      arabicFont,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 20),
+      format: centerRtlFormat,
+    );
+    yPos += 20;
+
+    page.graphics.drawString(
+      'تاريخ الطباعة: ${_formatDate(DateTime.now())}',
+      arabicFont,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 20),
+      format: rtlFormat,
+    );
+    yPos += 25;
+
+    page.graphics
+        .drawLine(PdfPens.black, Offset(0, yPos), Offset(pageSize.width, yPos));
+    yPos += 15;
+
+    // Summary Box
+    final PdfGrid summaryGrid = PdfGrid();
+    summaryGrid.columns.add(count: 3);
+    PdfGridRow summaryRow = summaryGrid.rows.add();
+
+    summaryRow.cells[0].value =
+        'إجمالي المبيعات\n${CurrencyUtils.format(totalSales)}';
+    summaryRow.cells[1].value =
+        'إجمالي الربح\n${CurrencyUtils.format(totalProfit)}';
+    summaryRow.cells[2].value = 'عدد الفواتير\n${sales.length}';
+
+    for (int i = 0; i < 3; i++) {
+      summaryRow.cells[i].style.font = arabicFontBold;
+      summaryRow.cells[i].stringFormat = centerRtlFormat;
+      summaryRow.cells[i].style.backgroundBrush = PdfBrushes.lightGray;
+    }
+
+    final PdfLayoutResult summaryResult = summaryGrid.draw(
+      page: page,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 0),
+    )!;
+    yPos = summaryResult.bounds.bottom + 20;
+
+    // Sales Table
+    final PdfGrid grid = PdfGrid();
+    grid.columns.add(count: 6);
+    grid.headers.add(1);
+
+    PdfGridRow headerRow = grid.headers[0];
+    headerRow.cells[0].value = 'رقم الفاتورة';
+    headerRow.cells[1].value = 'التاريخ';
+    headerRow.cells[2].value = 'طريقة الدفع';
+    headerRow.cells[3].value = 'الإجمالي';
+    headerRow.cells[4].value = 'الخصم';
+    headerRow.cells[5].value = 'الصافي';
+
+    for (int i = 0; i < 6; i++) {
+      headerRow.cells[i].style.font = arabicFontBold;
+      headerRow.cells[i].style.backgroundBrush = PdfBrushes.darkGray;
+      headerRow.cells[i].style.textBrush = PdfBrushes.white;
+      headerRow.cells[i].stringFormat = centerRtlFormat;
+    }
+
+    for (final sale in sales) {
+      PdfGridRow row = grid.rows.add();
+      row.cells[0].value = sale.receiptNumber;
+      row.cells[1].value = _formatDate(sale.date);
+      row.cells[2].value = sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل';
+      row.cells[3].value = CurrencyUtils.format(sale.totalAmount);
+      row.cells[4].value = CurrencyUtils.format(sale.discount);
+      row.cells[5].value = CurrencyUtils.format(sale.finalAmount);
+
+      for (int i = 0; i < 6; i++) {
+        row.cells[i].style.font = arabicFont;
+        row.cells[i].stringFormat = rtlFormat;
+      }
+    }
+
+    grid.draw(
+      page: page,
+      bounds: Rect.fromLTWH(0, yPos, pageSize.width, 0),
     );
 
     final file = File(filePath);
-    await file.writeAsBytes(await pdf.save());
+    await file.writeAsBytes(await document.save());
+    document.dispose();
     return file;
-  }
-
-  static pw.Widget _buildPdfHeader(
-      String title, DateTime from, DateTime to, String? shopName) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.only(bottom: 10),
-      decoration: const pw.BoxDecoration(
-        border: pw.Border(bottom: pw.BorderSide(width: 1)),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-        children: [
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text(
-                shopName ?? 'صيدلية السليماني',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Text(
-                'تقرير المبيعات',
-                style: pw.TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-          pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.end,
-            children: [
-              pw.Text(
-                title,
-                style: pw.TextStyle(
-                  fontSize: 14,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.Text(
-                'من: ${_formatDate(from)} - إلى: ${_formatDate(to)}',
-                style: const pw.TextStyle(fontSize: 10),
-              ),
-              pw.Text(
-                'تاريخ الطباعة: ${_formatDate(DateTime.now())}',
-                style: const pw.TextStyle(fontSize: 10),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _buildPdfFooter(pw.Context context) {
-    return pw.Container(
-      alignment: pw.Alignment.centerRight,
-      margin: const pw.EdgeInsets.only(top: 10),
-      child: pw.Text(
-        'صفحة ${context.pageNumber} من ${context.pagesCount}',
-        style: const pw.TextStyle(fontSize: 10),
-      ),
-    );
-  }
-
-  static pw.Widget _buildPdfSummary(
-      double totalSales, double totalProfit, int count) {
-    return pw.Container(
-      padding: const pw.EdgeInsets.all(15),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.grey100,
-        borderRadius: pw.BorderRadius.circular(5),
-      ),
-      child: pw.Row(
-        mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
-        children: [
-          _buildSummaryItem(
-              'إجمالي المبيعات', CurrencyUtils.format(totalSales)),
-          _buildSummaryItem('إجمالي الربح', CurrencyUtils.format(totalProfit)),
-          _buildSummaryItem('عدد الفواتير', count.toString()),
-        ],
-      ),
-    );
-  }
-
-  static pw.Widget _buildSummaryItem(String label, String value) {
-    return pw.Column(
-      children: [
-        pw.Text(
-          value,
-          style: pw.TextStyle(
-            fontSize: 16,
-            fontWeight: pw.FontWeight.bold,
-          ),
-        ),
-        pw.SizedBox(height: 4),
-        pw.Text(
-          label,
-          style: const pw.TextStyle(fontSize: 10),
-        ),
-      ],
-    );
-  }
-
-  static pw.Widget _buildPdfTable(List<ReportSaleData> sales) {
-    return pw.TableHelper.fromTextArray(
-      headerStyle: pw.TextStyle(
-        fontWeight: pw.FontWeight.bold,
-        fontSize: 10,
-      ),
-      headerDecoration: const pw.BoxDecoration(
-        color: PdfColors.grey200,
-      ),
-      cellStyle: const pw.TextStyle(fontSize: 9),
-      cellAlignment: pw.Alignment.center,
-      cellAlignments: {
-        0: pw.Alignment.center,
-        1: pw.Alignment.centerRight,
-        2: pw.Alignment.centerRight,
-        3: pw.Alignment.center,
-        4: pw.Alignment.center,
-        5: pw.Alignment.centerRight,
-      },
-      headers: [
-        'رقم الفاتورة',
-        'التاريخ',
-        'طريقة الدفع',
-        'الإجمالي',
-        'الخصم',
-        'الصافي',
-      ],
-      data: sales.map((sale) {
-        return [
-          sale.receiptNumber,
-          _formatDate(sale.date),
-          sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل',
-          CurrencyUtils.format(sale.totalAmount),
-          CurrencyUtils.format(sale.discount),
-          CurrencyUtils.format(sale.finalAmount),
-        ];
-      }).toList(),
-    );
   }
 
   /// Export sales data to a CSV file
