@@ -532,6 +532,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         shopPhone: shopSettings.pharmacyPhone,
         header: shopSettings.invoiceHeader,
         footer: shopSettings.invoiceFooter,
+        logoPath: shopSettings.invoiceLogoPath,
       );
 
       emit(PosSaleSuccess(

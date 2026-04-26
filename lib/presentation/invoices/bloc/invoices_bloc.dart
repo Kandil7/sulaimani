@@ -132,11 +132,13 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
       final pdfBytes = await InvoiceGenerator.generatePdfBytes(
         sale: event.sale,
         items: event.items,
+        customerName: event.sale.customerName,
         shopName: settings.pharmacyName,
         shopAddress: settings.pharmacyAddress,
         shopPhone: settings.pharmacyPhone,
         header: settings.invoiceHeader,
         footer: settings.invoiceFooter,
+        logoPath: settings.invoiceLogoPath,
       );
       emit(currentState.copyWith(
         selectedSale: event.sale,

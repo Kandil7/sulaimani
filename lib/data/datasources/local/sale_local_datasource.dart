@@ -64,18 +64,27 @@ class SaleLocalDatasource {
       // Insert all sale items and link them
       for (final item in saleItems) {
         item.sale.value = sale;
-        await isar.collection<SaleItemModel>().put(item);
 
-        // Update product stock quantity (decrement)
-        if (item.product.value != null) {
-          final product = item.product.value!;
-          product.stockQuantity -= item.quantity;
-          if (product.stockQuantity < 0) {
-            product.stockQuantity = 0;
+        // Ensure product link is set — fetch from DB to guarantee proper ID
+        if (item.product.value != null && item.product.value!.id > 0) {
+          final productFromDb =
+              await isar.collection<ProductModel>().get(item.product.value!.id);
+          if (productFromDb != null) {
+            item.product.value = productFromDb;
+            // Decrement stock on the fresh DB copy
+            productFromDb.stockQuantity -= item.quantity;
+            if (productFromDb.stockQuantity < 0) {
+              productFromDb.stockQuantity = 0;
+            }
+            productFromDb.updatedAt = DateTime.now();
+            await isar.collection<ProductModel>().put(productFromDb);
           }
-          product.updatedAt = DateTime.now();
-          await isar.collection<ProductModel>().put(product);
         }
+
+        await isar.collection<SaleItemModel>().put(item);
+        // Explicitly save IsarLinks
+        await item.sale.save();
+        await item.product.save();
       }
 
       // Update customer debt if credit sale
@@ -100,6 +109,10 @@ class SaleLocalDatasource {
     final sale = await isar.collection<SaleModel>().get(saleId);
     if (sale == null) return [];
     await sale.items.load();
+    // Explicitly load product links for each sale item
+    for (final item in sale.items) {
+      await item.product.load();
+    }
     return sale.items.toList();
   }
 

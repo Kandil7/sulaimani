@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -53,11 +56,27 @@ class InvoiceGenerator {
     String? shopPhone,
     String? header,
     String? footer,
+    String? logoPath,
   }) async {
     await _ensureFonts();
     final pdf = pw.Document();
     final font = _arabicFont!;
     final fontBold = _arabicFontBold!;
+
+    // Load logo image if path provided
+    pw.ImageProvider? logoImage;
+    if (logoPath != null && logoPath.isNotEmpty) {
+      try {
+        final file = File(logoPath);
+        if (await file.exists()) {
+          final bytes = await file.readAsBytes();
+          logoImage = pw.MemoryImage(bytes);
+        }
+      } catch (e) {
+        // Logo failed to load — continue without it
+        debugPrint('Failed to load logo: $e');
+      }
+    }
 
     pdf.addPage(
       pw.Page(
@@ -68,33 +87,46 @@ class InvoiceGenerator {
             crossAxisAlignment: pw.CrossAxisAlignment.stretch,
             children: [
               // ── Header ──
-              pw.Center(
-                child: pw.Column(
-                  children: [
-                    pw.Text(
-                      shopName ?? 'صيدلية السليماني',
-                      style: pw.TextStyle(
-                        font: fontBold,
-                        fontSize: 16,
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.black,
-                      ),
-                      textDirection: pw.TextDirection.rtl,
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                crossAxisAlignment: pw.CrossAxisAlignment.center,
+                children: [
+                  if (logoImage != null)
+                    pw.Container(
+                      width: 50,
+                      height: 50,
+                      child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                     ),
-                    if (shopAddress != null)
+                  if (logoImage != null) pw.SizedBox(width: 12),
+                  pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    mainAxisSize: pw.MainAxisSize.min,
+                    children: [
                       pw.Text(
-                        shopAddress,
-                        style: pw.TextStyle(font: font, fontSize: 9),
+                        shopName ?? 'صيدلية السليماني',
+                        style: pw.TextStyle(
+                          font: fontBold,
+                          fontSize: 16,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.black,
+                        ),
                         textDirection: pw.TextDirection.rtl,
                       ),
-                    if (shopPhone != null)
-                      pw.Text(
-                        shopPhone,
-                        style: pw.TextStyle(font: font, fontSize: 9),
-                        textDirection: pw.TextDirection.rtl,
-                      ),
-                  ],
-                ),
+                      if (shopAddress != null)
+                        pw.Text(
+                          shopAddress,
+                          style: pw.TextStyle(font: font, fontSize: 9),
+                          textDirection: pw.TextDirection.rtl,
+                        ),
+                      if (shopPhone != null)
+                        pw.Text(
+                          shopPhone,
+                          style: pw.TextStyle(font: font, fontSize: 9),
+                          textDirection: pw.TextDirection.rtl,
+                        ),
+                    ],
+                  ),
+                ],
               ),
               pw.SizedBox(height: 8),
               pw.Divider(),
@@ -344,6 +376,7 @@ class InvoiceGenerator {
     String? shopPhone,
     String? header,
     String? footer,
+    String? logoPath,
   }) async {
     final pdf = await generateInvoice(
       sale: sale,
@@ -355,6 +388,7 @@ class InvoiceGenerator {
       shopPhone: shopPhone,
       header: header,
       footer: footer,
+      logoPath: logoPath,
     );
     await Printing.layoutPdf(onLayout: (format) async => pdf.save());
   }
@@ -369,6 +403,7 @@ class InvoiceGenerator {
     String? shopPhone,
     String? header,
     String? footer,
+    String? logoPath,
   }) async {
     final pdf = await generateInvoice(
       sale: sale,
@@ -380,6 +415,7 @@ class InvoiceGenerator {
       shopPhone: shopPhone,
       header: header,
       footer: footer,
+      logoPath: logoPath,
     );
     return pdf.save();
   }
