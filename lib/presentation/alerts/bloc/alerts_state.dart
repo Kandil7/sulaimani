@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../data/models/product_model.dart';
 
 abstract class AlertsState extends Equatable {
   const AlertsState();
@@ -45,6 +46,7 @@ class ProductAlert extends Equatable {
   final DateTime? expiryDate;
   final int quantity;
   final int minimumStock;
+  final ProductModel? product;
 
   const ProductAlert({
     required this.productId,
@@ -53,6 +55,7 @@ class ProductAlert extends Equatable {
     this.expiryDate,
     required this.quantity,
     required this.minimumStock,
+    this.product,
   });
 
   @override

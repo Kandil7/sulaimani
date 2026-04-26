@@ -35,6 +35,9 @@ class SaleModel {
   /// Customer name for easy display without loading the link
   String? customerName;
 
+  /// Optional notes for the sale transaction
+  String? notes;
+
   @Backlink(to: 'sale')
   final items = IsarLinks<SaleItemModel>();
 

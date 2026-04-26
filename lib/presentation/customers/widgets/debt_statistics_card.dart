@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
-import '../bloc/customers_state.dart';
+import '../../../data/models/customer_model.dart';
 
 class DebtStatisticsCard extends StatelessWidget {
-  final List<Customer> customers;
+  final List<CustomerModel> customers;
 
   const DebtStatisticsCard({
     super.key,

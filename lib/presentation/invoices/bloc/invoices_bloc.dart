@@ -1,16 +1,15 @@
+import 'dart:typed_data';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:isar/isar.dart';
 import '../../../core/utils/invoice_generator.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../../../data/models/sale_model.dart';
-import '../../../data/models/sale_item_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import 'invoices_event.dart';
 import 'invoices_state.dart';
 
 class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
   final SaleLocalDatasource _saleDatasource;
-  final Isar _isar;
   final SettingsRepository _settingsRepository;
 
   InvoicesBloc({
@@ -18,7 +17,6 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
     required Isar isar,
     required SettingsRepository settingsRepository,
   })  : _saleDatasource = saleDatasource,
-        _isar = isar,
         _settingsRepository = settingsRepository,
         super(InvoicesInitial()) {
     on<LoadRecentSales>(_onLoadRecentSales);
@@ -27,6 +25,7 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
     on<RegenerateInvoicePdf>(_onRegenerateInvoicePdf);
     on<ClearSelectedSale>(_onClearSelectedSale);
     on<InternalLoadItems>(_onInternalLoadItems);
+    on<UpdateSaleNotes>(_onUpdateSaleNotes);
   }
 
   Future<void> _onLoadRecentSales(
@@ -143,7 +142,8 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
       emit(currentState.copyWith(
         selectedSale: event.sale,
         selectedSaleItems: event.items,
-        pdfBytes: pdfBytes,
+        pdfBytes:
+            pdfBytes is Uint8List ? pdfBytes : Uint8List.fromList(pdfBytes),
         clearSearchError: true,
       ));
     } catch (e) {
@@ -159,6 +159,36 @@ class InvoicesBloc extends Bloc<InvoicesEvent, InvoicesState> {
     if (currentState is InvoicesLoaded) {
       emit(currentState.copyWith(
           clearSelected: true, clearPdf: true, clearSearchError: true));
+    }
+  }
+
+  Future<void> _onUpdateSaleNotes(
+    UpdateSaleNotes event,
+    Emitter<InvoicesState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is! InvoicesLoaded) return;
+
+    try {
+      final sale = await _saleDatasource.getById(event.saleId);
+      if (sale == null) {
+        emit(InvoicesError('لم يتم العثور على الفاتورة'));
+        return;
+      }
+
+      sale.notes = event.notes;
+      sale.updatedAt = DateTime.now();
+      await _saleDatasource.update(sale);
+
+      // Reload and emit updated state
+      final items = await _saleDatasource.getSaleItems(sale.id);
+      emit(currentState.copyWith(
+        selectedSale: sale,
+        selectedSaleItems: items,
+        clearPdf: true,
+      ));
+    } catch (e) {
+      emit(InvoicesError('فشل في تحديث الملاحظات: $e'));
     }
   }
 }

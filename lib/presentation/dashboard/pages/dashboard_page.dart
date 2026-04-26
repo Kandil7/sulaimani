@@ -1,10 +1,15 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../data/datasources/local/sale_local_datasource.dart';
+import '../../../data/models/sale_model.dart';
+import '../../../presentation/invoices/widgets/reprint_invoice_dialog.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
 import '../bloc/dashboard_state.dart';
@@ -17,6 +22,9 @@ import '../widgets/quick_actions_row.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/top_products_chart.dart';
 import '../../reports/bloc/reports_state.dart';
+import '../../invoices/widgets/reprint_invoice_dialog.dart';
+import '../../../core/utils/invoice_generator.dart';
+import '../../../data/repositories/settings_repository.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -176,6 +184,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: RecentSalesTable(
                     sales: state.recentSales,
                     onViewAllTap: () => _navigateTo('/reports'),
+                    onInvoiceTap: (saleId) => _openInvoice(saleId),
                   ),
                 ),
                 const SizedBox(width: AppSizes.md),
@@ -248,5 +257,48 @@ class _DashboardPageState extends State<DashboardPage> {
         ],
       ),
     );
+  }
+
+  void _openInvoice(int saleId) async {
+    try {
+      final saleDatasource = sl<SaleLocalDatasource>();
+      final settingsRepo = sl<SettingsRepository>();
+      final sale = await saleDatasource.getById(saleId);
+      if (sale == null || !mounted) return;
+
+      final settings = await settingsRepo.getSettings();
+      final items = await saleDatasource.getSaleItems(saleId);
+      final pdfBytes = await InvoiceGenerator.generatePdfBytes(
+        sale: sale,
+        items: items,
+        customerName: sale.customerName,
+        shopName: settings.pharmacyName,
+        shopAddress: settings.pharmacyAddress,
+        shopPhone: settings.pharmacyPhone,
+        header: settings.invoiceHeader,
+        footer: settings.invoiceFooter,
+        logoPath: settings.invoiceLogoPath,
+      );
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => ReprintInvoiceDialog(
+          sale: sale,
+          items: items,
+          pdfBytes:
+              pdfBytes is Uint8List ? pdfBytes : Uint8List.fromList(pdfBytes),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل في فتح الفاتورة: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
   }
 }

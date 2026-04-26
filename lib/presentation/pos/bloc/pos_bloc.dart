@@ -485,9 +485,9 @@ class PosBloc extends Bloc<PosEvent, PosState> {
         ..finalAmount = currentState.finalTotal
         ..paymentMethod = event.paymentType
         ..paidAmount = event.paidAmount
-        ..remainingAmount = event.paymentType == 'credit'
-            ? currentState.finalTotal
-            : (change < 0 ? currentState.finalTotal - event.paidAmount : 0)
+        ..remainingAmount =
+            event.paymentType == 'credit' ? currentState.finalTotal : 0.0
+        ..notes = event.notes
         ..createdAt = DateTime.now()
         ..updatedAt = DateTime.now()
         ..customerId = event.paymentType == 'credit' ? event.customerId : null

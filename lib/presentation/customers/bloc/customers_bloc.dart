@@ -3,7 +3,6 @@ import 'package:isar/isar.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/models/customer_payment_model.dart';
-import '../../../data/datasources/local/customer_payment_local_datasource.dart';
 import '../../../data/datasources/local/customer_local_datasource.dart';
 import '../../../core/di/injection_container.dart';
 import 'customers_event.dart';
@@ -11,12 +10,10 @@ import 'customers_state.dart';
 
 class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
   final GenericRepository<CustomerModel> repository;
-  late final CustomerPaymentLocalDatasource _paymentDatasource;
   late final CustomerLocalDatasource _customerDatasource;
   late final Isar _isar;
 
   CustomersBloc({required this.repository}) : super(CustomersInitial()) {
-    _paymentDatasource = CustomerPaymentLocalDatasource(sl<Isar>());
     _customerDatasource = sl<CustomerLocalDatasource>();
     _isar = sl<Isar>();
     on<LoadCustomers>(_onLoadCustomers);
@@ -37,23 +34,11 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     emit(CustomersLoading());
     try {
       final customers = await repository.getAll();
-      final customerList = customers
-          .map((c) => Customer(
-                id: c.id,
-                name: c.name,
-                phone: c.phone,
-                debtBalance: c.debtBalance,
-                createdAt: c.createdAt,
-                updatedAt: c.updatedAt,
-              ))
-          .toList();
-
-      // Sort by name by default
-      customerList.sort((a, b) => a.name.compareTo(b.name));
+      customers.sort((a, b) => a.name.compareTo(b.name));
 
       emit(CustomersLoaded(
-        customers: customerList,
-        filteredCustomers: customerList,
+        customers: customers,
+        filteredCustomers: customers,
       ));
     } catch (e) {
       emit(CustomersError(e.toString()));
@@ -98,7 +83,6 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     Emitter<CustomersState> emit,
   ) async {
     try {
-      // Check for duplicate phone
       if (await _customerDatasource.phoneExists(event.phone)) {
         emit(const CustomersError('رقم التليفون مسجل بالفعل لعميل آخر'));
         return;
@@ -122,7 +106,6 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     Emitter<CustomersState> emit,
   ) async {
     try {
-      // Check for duplicate phone (excluding current customer)
       if (await _customerDatasource.phoneExists(
         event.customer.phone,
         excludeCustomerId: event.customer.id,
@@ -235,7 +218,6 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
       final customers = await repository.getAll();
       final customer = customers.firstWhere((c) => c.id == event.customerId);
 
-      // Validate amount
       if (event.amount <= 0) {
         emit(const CustomersError('يجب أن يكون المبلغ أكبر من صفر'));
         return;
@@ -246,9 +228,7 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
         return;
       }
 
-      // Record the payment as a transaction atomically
       await _isar.writeTxn(() async {
-        // Record the payment
         final payment = CustomerPaymentModel()
           ..customerId = event.customerId
           ..amount = event.amount
@@ -259,13 +239,12 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
           ..note = event.note
           ..createdAt = DateTime.now();
 
+        payment.customer.value = customer;
         await _isar.customerPaymentModels.put(payment);
+        await payment.customer.save();
 
-        // Update customer debt
         customer.debtBalance -= event.amount;
-        if (customer.debtBalance < 0) {
-          customer.debtBalance = 0;
-        }
+        if (customer.debtBalance < 0) customer.debtBalance = 0;
         customer.updatedAt = DateTime.now();
         await _isar.customerModels.put(customer);
       });
@@ -277,8 +256,8 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     }
   }
 
-  List<Customer> _applyFilters(
-    List<Customer> customers,
+  List<CustomerModel> _applyFilters(
+    List<CustomerModel> customers,
     bool showOnlyWithDebt,
     String sortField,
     bool sortAscending,
@@ -289,12 +268,12 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     return _applySorting(filtered, sortField, sortAscending);
   }
 
-  List<Customer> _applySorting(
-    List<Customer> customers,
+  List<CustomerModel> _applySorting(
+    List<CustomerModel> customers,
     String sortField,
     bool ascending,
   ) {
-    final sorted = List<Customer>.from(customers);
+    final sorted = List<CustomerModel>.from(customers);
     switch (sortField) {
       case 'name':
         sorted.sort((a, b) =>

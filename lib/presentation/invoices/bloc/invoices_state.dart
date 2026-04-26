@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import '../../../data/models/sale_model.dart';
 import '../../../data/models/sale_item_model.dart';
 
@@ -11,7 +12,7 @@ class InvoicesLoaded extends InvoicesState {
   final List<SaleModel> sales;
   final SaleModel? selectedSale;
   final List<SaleItemModel>? selectedSaleItems;
-  final List<int>? pdfBytes;
+  final Uint8List? pdfBytes;
   final String? searchError;
 
   InvoicesLoaded({
@@ -26,7 +27,7 @@ class InvoicesLoaded extends InvoicesState {
     List<SaleModel>? sales,
     SaleModel? selectedSale,
     List<SaleItemModel>? selectedSaleItems,
-    List<int>? pdfBytes,
+    Uint8List? pdfBytes,
     String? searchError,
     bool clearSelected = false,
     bool clearPdf = false,

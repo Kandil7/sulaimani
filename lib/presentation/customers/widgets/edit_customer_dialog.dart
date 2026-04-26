@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/di/injection_container.dart';
 import '../../../data/models/customer_model.dart';
+import '../../../data/datasources/local/customer_local_datasource.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
-import '../bloc/customers_state.dart';
 
 class EditCustomerDialog extends StatefulWidget {
-  final Customer customer;
+  final CustomerModel customer;
 
   const EditCustomerDialog({
     super.key,
@@ -23,35 +24,47 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
-  late final TextEditingController _idController;
+  String? _phoneError;
 
   _EditCustomerDialogState() {
     _nameController = TextEditingController(text: widget.customer.name);
     _phoneController = TextEditingController(text: widget.customer.phone);
-    _idController = TextEditingController(text: widget.customer.id.toString());
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _idController.dispose();
     super.dispose();
   }
 
-  void _save() {
-    if (_formKey.currentState!.validate()) {
-      final customerModel = CustomerModel()
-        ..id = widget.customer.id
-        ..name = _nameController.text.trim()
-        ..phone = _phoneController.text.trim()
-        ..debtBalance = widget.customer.debtBalance
-        ..createdAt = widget.customer.createdAt
-        ..updatedAt = DateTime.now();
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      context.read<CustomersBloc>().add(UpdateCustomer(customerModel));
-      Navigator.of(context).pop();
+    final newPhone = _phoneController.text.trim();
+
+    // Check for duplicate phone (excluding current customer)
+    if (newPhone != widget.customer.phone) {
+      final customerDatasource = sl<CustomerLocalDatasource>();
+      final exists = await customerDatasource.phoneExists(
+        newPhone,
+        excludeCustomerId: widget.customer.id,
+      );
+      if (exists) {
+        setState(() {
+          _phoneError = 'رقم التليفون مسجل بالفعل لعميل آخر';
+        });
+        return;
+      }
     }
+
+    // Update the customer model in place
+    widget.customer.name = _nameController.text.trim();
+    widget.customer.phone = newPhone;
+    widget.customer.updatedAt = DateTime.now();
+
+    context.read<CustomersBloc>().add(UpdateCustomer(widget.customer));
+    Navigator.of(context).pop();
   }
 
   @override
@@ -78,19 +91,6 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                 ),
               ),
               const SizedBox(height: AppSizes.xl),
-              TextFormField(
-                controller: _idController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  labelText: 'رقم العميل',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                  ),
-                  filled: true,
-                  fillColor: AppColors.background,
-                ),
-              ),
-              const SizedBox(height: AppSizes.md),
               Row(
                 children: [
                   Expanded(
@@ -116,6 +116,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                       label: 'التليفون',
                       isRequired: true,
                       keyboardType: TextInputType.phone,
+                      errorText: _phoneError,
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'هذا الحقل مطلوب';
@@ -167,6 +168,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     required String label,
     bool isRequired = false,
     TextInputType keyboardType = TextInputType.text,
+    String? errorText,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
@@ -174,6 +176,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
+        errorText: errorText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
         ),

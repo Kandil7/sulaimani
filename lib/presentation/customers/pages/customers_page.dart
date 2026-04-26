@@ -7,6 +7,7 @@ import '../../../core/di/injection_container.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/toast_notification.dart';
 import '../../../data/models/sale_model.dart';
+import '../../../data/models/customer_model.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
@@ -235,7 +236,7 @@ class CustomersView extends StatelessWidget {
     );
   }
 
-  void _showEditCustomerDialog(BuildContext context, Customer customer) {
+  void _showEditCustomerDialog(BuildContext context, CustomerModel customer) {
     showDialog(
       context: context,
       builder: (_) => BlocProvider.value(
@@ -245,7 +246,7 @@ class CustomersView extends StatelessWidget {
     );
   }
 
-  void _showRecordPaymentDialog(BuildContext context, Customer customer) {
+  void _showRecordPaymentDialog(BuildContext context, CustomerModel customer) {
     showDialog(
       context: context,
       builder: (_) => BlocProvider.value(
@@ -255,7 +256,7 @@ class CustomersView extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(BuildContext context, Customer customer) {
+  void _showDeleteConfirmation(BuildContext context, CustomerModel customer) {
     showDialog(
       context: context,
       builder: (_) => ConfirmDialog(

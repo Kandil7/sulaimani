@@ -3,14 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../data/models/customer_model.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
 import '../bloc/customers_state.dart';
 
 class CustomersTable extends StatefulWidget {
-  final Function(Customer) onEdit;
-  final Function(Customer) onPayment;
-  final Function(Customer) onDelete;
+  final Function(CustomerModel) onEdit;
+  final Function(CustomerModel) onPayment;
+  final Function(CustomerModel) onDelete;
 
   const CustomersTable({
     super.key,

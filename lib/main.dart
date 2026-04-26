@@ -5,19 +5,15 @@ import 'package:window_manager/window_manager.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routes/app_router.dart';
 import 'core/di/injection_container.dart' as di;
-import 'core/services/notification_service.dart';
 import 'core/services/backup_scheduler.dart';
 import 'data/repositories/settings_repository.dart';
 import 'presentation/alerts/bloc/alerts_bloc.dart';
 import 'presentation/alerts/bloc/alerts_event.dart';
-import 'presentation/alerts/bloc/alerts_state.dart';
 import 'presentation/dashboard/bloc/dashboard_bloc.dart';
 import 'presentation/dashboard/bloc/dashboard_event.dart';
 import 'presentation/settings/bloc/settings_bloc.dart';
 import 'presentation/settings/bloc/settings_event.dart';
 import 'presentation/settings/bloc/settings_state.dart';
-import 'domain/repositories/generic_repository.dart';
-import 'data/models/product_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

@@ -74,7 +74,14 @@ const CustomerPaymentModelSchema = CollectionSchema(
       ],
     )
   },
-  links: {},
+  links: {
+    r'customer': LinkSchema(
+      id: -8436587829828910071,
+      name: r'customer',
+      target: r'CustomerModel',
+      single: true,
+    )
+  },
   embeddedSchemas: {},
   getId: _customerPaymentModelGetId,
   getLinks: _customerPaymentModelGetLinks,
@@ -163,12 +170,14 @@ Id _customerPaymentModelGetId(CustomerPaymentModel object) {
 
 List<IsarLinkBase<dynamic>> _customerPaymentModelGetLinks(
     CustomerPaymentModel object) {
-  return [];
+  return [object.customer];
 }
 
 void _customerPaymentModelAttach(
     IsarCollection<dynamic> col, Id id, CustomerPaymentModel object) {
   object.id = id;
+  object.customer
+      .attach(col, col.isar.collection<CustomerModel>(), r'customer', id);
 }
 
 extension CustomerPaymentModelQueryWhereSort
@@ -1019,7 +1028,21 @@ extension CustomerPaymentModelQueryObject on QueryBuilder<CustomerPaymentModel,
     CustomerPaymentModel, QFilterCondition> {}
 
 extension CustomerPaymentModelQueryLinks on QueryBuilder<CustomerPaymentModel,
-    CustomerPaymentModel, QFilterCondition> {}
+    CustomerPaymentModel, QFilterCondition> {
+  QueryBuilder<CustomerPaymentModel, CustomerPaymentModel,
+      QAfterFilterCondition> customer(FilterQuery<CustomerModel> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'customer');
+    });
+  }
+
+  QueryBuilder<CustomerPaymentModel, CustomerPaymentModel,
+      QAfterFilterCondition> customerIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'customer', 0, true, 0, true);
+    });
+  }
+}
 
 extension CustomerPaymentModelQuerySortBy
     on QueryBuilder<CustomerPaymentModel, CustomerPaymentModel, QSortBy> {

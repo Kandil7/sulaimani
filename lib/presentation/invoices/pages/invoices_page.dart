@@ -14,6 +14,7 @@ import '../bloc/invoices_bloc.dart';
 import '../bloc/invoices_event.dart';
 import '../bloc/invoices_state.dart';
 import '../widgets/reprint_invoice_dialog.dart';
+import '../widgets/edit_invoice_dialog.dart';
 import 'package:isar/isar.dart';
 
 class InvoicesPage extends StatelessWidget {
@@ -385,6 +386,12 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
+                    onPressed: () => _showEditInvoiceDialog(sale),
+                    icon: const Icon(Icons.edit, size: 18),
+                    tooltip: 'تعديل الملاحظات',
+                    color: AppColors.warning,
+                  ),
+                  IconButton(
                     onPressed: () => _showReprintDialog(sale),
                     icon: const Icon(Icons.print, size: 18),
                     tooltip: 'إعادة طباعة',
@@ -461,8 +468,6 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
     showDialog(
       context: context,
       builder: (ctx) {
-        final itemsFuture = context.read<InvoicesBloc>();
-        // We'll load items directly
         return FutureBuilder<List<SaleItemModel>>(
           future: sl<SaleLocalDatasource>().getSaleItems(sale.id),
           builder: (context, snapshot) {
@@ -553,6 +558,23 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
           },
         );
       },
+    );
+  }
+
+  void _showEditInvoiceDialog(SaleModel sale) {
+    showDialog(
+      context: context,
+      builder: (ctx) => BlocProvider.value(
+        value: context.read<InvoicesBloc>(),
+        child: EditInvoiceDialog(
+          saleId: sale.id,
+          currentNotes: sale.notes ?? '',
+          onSaved: () {
+            // Refresh the list after edit
+            context.read<InvoicesBloc>().add(LoadRecentSales());
+          },
+        ),
+      ),
     );
   }
 

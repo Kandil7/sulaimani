@@ -51,7 +51,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
     super.initState();
     _paymentType = widget.selectedCustomerId != null ? 'credit' : 'cash';
     _selectedCustomerId = widget.selectedCustomerId;
-    _paidAmountController.text = widget.totalAmount.toStringAsFixed(2);
+    _paidAmountController.text = _finalTotal.toStringAsFixed(2);
   }
 
   @override
@@ -296,14 +296,14 @@ class _PaymentDialogState extends State<PaymentDialog> {
                   flex: 2,
                   child: ElevatedButton(
                     onPressed: _isValid && !widget.isLoading
-                        ? () => widget.onConfirm(
-                              _paymentType,
-                              _paidAmount,
-                              _selectedCustomerId,
-                              _notesController.text.isEmpty
-                                  ? null
-                                  : _notesController.text,
-                            )
+                        ? widget.onConfirm(
+                            _paymentType,
+                            _paidAmount,
+                            _selectedCustomerId,
+                            _notesController.text.isEmpty
+                                ? null
+                                : _notesController.text,
+                          )
                         : null,
                     style: ElevatedButton.styleFrom(
                       padding:

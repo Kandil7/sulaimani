@@ -28,3 +28,14 @@ class InternalLoadItems extends InvoicesEvent {
   final List<SaleItemModel> items;
   InternalLoadItems(this.sale, this.items);
 }
+
+class EditSale extends InvoicesEvent {
+  final SaleModel sale;
+  EditSale(this.sale);
+}
+
+class UpdateSaleNotes extends InvoicesEvent {
+  final int saleId;
+  final String notes;
+  UpdateSaleNotes(this.saleId, this.notes);
+}

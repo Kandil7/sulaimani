@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../data/models/customer_model.dart';
 
 abstract class CustomersState extends Equatable {
   const CustomersState();
@@ -11,10 +12,10 @@ class CustomersInitial extends CustomersState {}
 class CustomersLoading extends CustomersState {}
 
 class CustomersLoaded extends CustomersState {
-  final List<Customer> customers;
-  final List<Customer> filteredCustomers;
+  final List<CustomerModel> customers;
+  final List<CustomerModel> filteredCustomers;
   final String searchQuery;
-  final Customer? selectedCustomer;
+  final CustomerModel? selectedCustomer;
   final bool showOnlyWithDebt;
   final String sortField;
   final bool sortAscending;
@@ -30,10 +31,10 @@ class CustomersLoaded extends CustomersState {
   });
 
   CustomersLoaded copyWith({
-    List<Customer>? customers,
-    List<Customer>? filteredCustomers,
+    List<CustomerModel>? customers,
+    List<CustomerModel>? filteredCustomers,
     String? searchQuery,
-    Customer? selectedCustomer,
+    CustomerModel? selectedCustomer,
     bool? showOnlyWithDebt,
     String? sortField,
     bool? sortAscending,
@@ -76,46 +77,4 @@ class CustomersError extends CustomersState {
   const CustomersError(this.message);
   @override
   List<Object?> get props => [message];
-}
-
-class Customer extends Equatable {
-  final int id;
-  final String name;
-  final String phone;
-  final double debtBalance;
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-
-  const Customer({
-    required this.id,
-    required this.name,
-    required this.phone,
-    required this.debtBalance,
-    required this.createdAt,
-    this.updatedAt,
-  });
-
-  bool get hasDebt => debtBalance > 0;
-
-  Customer copyWith({
-    int? id,
-    String? name,
-    String? phone,
-    double? debtBalance,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) {
-    return Customer(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-      debtBalance: debtBalance ?? this.debtBalance,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  @override
-  List<Object?> get props =>
-      [id, name, phone, debtBalance, createdAt, updatedAt];
 }

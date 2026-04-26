@@ -234,6 +234,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
         _notesController.text.isNotEmpty ? _notesController.text : null;
     product.productType =
         _productType == ProductType.medicine ? 'medicine' : 'pesticide';
+    product.updatedAt = DateTime.now();
 
     widget.onSave?.call(product);
     Navigator.of(context).pop();

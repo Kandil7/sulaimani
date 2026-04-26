@@ -7,7 +7,6 @@ import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../../../data/datasources/local/customer_payment_local_datasource.dart';
 import '../../../data/models/sale_model.dart';
 import '../../../data/models/customer_payment_model.dart';
-import 'package:isar/isar.dart';
 
 class CustomerPaymentHistory extends StatefulWidget {
   final int customerId;

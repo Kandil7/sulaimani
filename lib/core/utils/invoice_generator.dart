@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
@@ -146,7 +145,7 @@ class InvoiceGenerator {
                     crossAxisAlignment: pw.CrossAxisAlignment.end,
                     children: [
                       pw.Text(
-                        AppDateUtils.formatToDate(sale.date),
+                        AppDateUtils.formatToDateTime(sale.date),
                         style: pw.TextStyle(font: font, fontSize: 10),
                         textDirection: pw.TextDirection.rtl,
                       ),
@@ -181,6 +180,23 @@ class InvoiceGenerator {
                     style: pw.TextStyle(font: font, fontSize: 9),
                     textDirection: pw.TextDirection.rtl,
                   ),
+                pw.SizedBox(height: 8),
+              ],
+
+              // ── Notes ──
+              if (sale.notes != null && sale.notes!.isNotEmpty) ...[
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    'ملاحظة: ${sale.notes}',
+                    style: pw.TextStyle(font: font, fontSize: 9),
+                    textDirection: pw.TextDirection.rtl,
+                  ),
+                ),
                 pw.SizedBox(height: 8),
               ],
 

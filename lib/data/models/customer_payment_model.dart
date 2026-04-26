@@ -1,4 +1,5 @@
 import 'package:isar/isar.dart';
+import 'customer_model.dart';
 
 part 'customer_payment_model.g.dart';
 
@@ -23,4 +24,7 @@ class CustomerPaymentModel {
   late String paymentType;
 
   late DateTime createdAt;
+
+  /// Link to customer for efficient querying
+  final customer = IsarLink<CustomerModel>();
 }

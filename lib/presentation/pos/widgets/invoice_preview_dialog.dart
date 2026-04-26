@@ -15,7 +15,7 @@ import '../../../data/models/sale_item_model.dart';
 class InvoicePreviewDialog extends StatelessWidget {
   final SaleModel sale;
   final List<SaleItemModel> items;
-  final List<int> pdfBytes;
+  final Uint8List pdfBytes;
   final VoidCallback onNewSale;
 
   const InvoicePreviewDialog({
@@ -360,15 +360,14 @@ class InvoicePreviewDialog extends StatelessWidget {
 
   void _printInvoice(BuildContext context) async {
     await Printing.layoutPdf(
-      onLayout: (format) async => Uint8List.fromList(pdfBytes),
+      onLayout: (format) async => pdfBytes,
     );
   }
 
   void _shareInvoice() async {
     try {
-      final bytes = Uint8List.fromList(pdfBytes);
       await Printing.sharePdf(
-        bytes: bytes,
+        bytes: pdfBytes,
         filename: '${sale.receiptNumber}.pdf',
       );
     } catch (e) {

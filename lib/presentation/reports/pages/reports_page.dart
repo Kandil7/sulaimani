@@ -1,11 +1,15 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/utils/invoice_generator.dart';
 import '../../../core/utils/report_exporter.dart';
+import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../../../data/repositories/settings_repository.dart';
+import '../../invoices/widgets/reprint_invoice_dialog.dart';
 import '../bloc/reports_bloc.dart';
 import '../bloc/reports_event.dart';
 import '../bloc/reports_state.dart';
@@ -323,7 +327,10 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
                         ProfitSummary(data: data),
                         const SizedBox(height: AppSizes.lg),
                         // Invoices table
-                        InvoicesTable(invoices: filteredInvoices),
+                        InvoicesTable(
+                          invoices: filteredInvoices,
+                          onInvoiceTap: (saleId) => _openInvoice(saleId),
+                        ),
                       ],
                     ),
                   );
@@ -336,6 +343,52 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
         ],
       ),
     );
+  }
+
+  void _openInvoice(int saleId) async {
+    try {
+      final saleDatasource = sl<SaleLocalDatasource>();
+      final sale = await saleDatasource.getById(saleId);
+      if (sale == null || !mounted) return;
+
+      final items = await saleDatasource.getSaleItems(saleId);
+
+      // Fetch settings for logo
+      final settingsRepo = sl<SettingsRepository>();
+      final settings = await settingsRepo.getSettings();
+
+      final pdfBytes = await InvoiceGenerator.generatePdfBytes(
+        sale: sale,
+        items: items,
+        customerName: sale.customerName,
+        shopName: settings.pharmacyName,
+        shopAddress: settings.pharmacyAddress,
+        shopPhone: settings.pharmacyPhone,
+        header: settings.invoiceHeader,
+        footer: settings.invoiceFooter,
+        logoPath: settings.invoiceLogoPath,
+      );
+
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        builder: (_) => ReprintInvoiceDialog(
+          sale: sale,
+          items: items,
+          pdfBytes:
+              pdfBytes is Uint8List ? pdfBytes : Uint8List.fromList(pdfBytes),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل في فتح الفاتورة: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
   }
 }
 

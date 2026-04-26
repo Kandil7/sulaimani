@@ -7,11 +7,13 @@ import '../bloc/dashboard_state.dart';
 class RecentSalesTable extends StatelessWidget {
   final List<RecentSale> sales;
   final VoidCallback? onViewAllTap;
+  final Function(int saleId)? onInvoiceTap;
 
   const RecentSalesTable({
     super.key,
     required this.sales,
     this.onViewAllTap,
+    this.onInvoiceTap,
   });
 
   @override
@@ -116,43 +118,59 @@ class RecentSalesTable extends StatelessWidget {
   TableRow _buildRow(RecentSale sale) {
     return TableRow(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(AppSizes.md),
-          child: Text(
-            '#${sale.invoiceNumber}',
-            style: AppTextStyles.bodyM.copyWith(
-              fontWeight: FontWeight.w500,
+        InkWell(
+          onTap: onInvoiceTap != null ? () => onInvoiceTap!(sale.id) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: Text(
+              '#${sale.invoiceNumber}',
+              style: AppTextStyles.bodyM.copyWith(
+                fontWeight: FontWeight.w500,
+                color: AppColors.primary,
+              ),
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(AppSizes.md),
-          child: Text(
-            sale.customerName ?? 'زائر',
-            style: AppTextStyles.bodyM,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(AppSizes.md),
-          child: Text(
-            '${sale.amount.toStringAsFixed(0)} ج',
-            style: AppTextStyles.bodyM.copyWith(
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+        InkWell(
+          onTap: onInvoiceTap != null ? () => onInvoiceTap!(sale.id) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: Text(
+              sale.customerName ?? 'زائر',
+              style: AppTextStyles.bodyM,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(AppSizes.md),
-          child: _PaymentBadge(paymentType: sale.paymentType),
+        InkWell(
+          onTap: onInvoiceTap != null ? () => onInvoiceTap!(sale.id) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: Text(
+              '${sale.amount.toStringAsFixed(0)} ج',
+              style: AppTextStyles.bodyM.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
         ),
-        Padding(
-          padding: const EdgeInsets.all(AppSizes.md),
-          child: Text(
-            _formatRelativeTime(sale.createdAt),
-            style: AppTextStyles.caption,
+        InkWell(
+          onTap: onInvoiceTap != null ? () => onInvoiceTap!(sale.id) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: _PaymentBadge(paymentType: sale.paymentType),
+          ),
+        ),
+        InkWell(
+          onTap: onInvoiceTap != null ? () => onInvoiceTap!(sale.id) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: Text(
+              _formatRelativeTime(sale.createdAt),
+              style: AppTextStyles.caption,
+            ),
           ),
         ),
       ],

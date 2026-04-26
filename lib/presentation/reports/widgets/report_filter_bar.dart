@@ -134,7 +134,6 @@ class _ReportFilterBarState extends State<ReportFilterBar> {
                     );
                     if (picked != null) {
                       setState(() => _fromDate = picked);
-                      widget.onDateRangeChanged(_fromDate, _toDate);
                       widget.onFilterChanged(ReportFilter.custom);
                     }
                   },
@@ -156,7 +155,6 @@ class _ReportFilterBarState extends State<ReportFilterBar> {
                     );
                     if (picked != null) {
                       setState(() => _toDate = picked);
-                      widget.onDateRangeChanged(_fromDate, _toDate);
                       widget.onFilterChanged(ReportFilter.custom);
                     }
                   },

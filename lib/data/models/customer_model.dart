@@ -17,4 +17,6 @@ class CustomerModel {
   late DateTime createdAt;
 
   DateTime? updatedAt;
+
+  bool get hasDebt => debtBalance > 0;
 }

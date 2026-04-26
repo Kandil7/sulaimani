@@ -12,6 +12,9 @@ import '../../../core/widgets/loading_skeleton.dart';
 import '../../alerts/bloc/alerts_bloc.dart';
 import '../../alerts/bloc/alerts_event.dart';
 import '../../alerts/bloc/alerts_state.dart';
+import '../../products/bloc/products_bloc.dart';
+import '../../products/bloc/products_event.dart';
+import '../../products/widgets/add_edit_product_dialog.dart';
 
 class AlertsPage extends StatelessWidget {
   const AlertsPage({super.key});
@@ -231,6 +234,31 @@ class AlertsView extends StatelessWidget {
     context.go('/products?preselect=$productId');
   }
 
+  void _showEditProductDialog(BuildContext context, ProductAlert alert) {
+    if (alert.product == null) {
+      // Fallback to navigation if product not loaded
+      context.go('/products?preselect=${alert.productId}');
+      return;
+    }
+
+    final bloc = sl<ProductsBloc>();
+
+    showDialog(
+      context: context,
+      builder: (_) => BlocProvider.value(
+        value: bloc,
+        child: AddEditProductDialog(
+          product: alert.product,
+          onSave: (updatedProduct) {
+            bloc.add(UpdateProduct(updatedProduct));
+            // Refresh alerts after edit
+            context.read<AlertsBloc>().add(LoadAlerts());
+          },
+        ),
+      ),
+    );
+  }
+
   Widget _buildAlertSection({
     required String title,
     required Color color,
@@ -337,7 +365,7 @@ class AlertsView extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                         tooltip: 'تعديل المنتج',
-                        onPressed: () => onAlertTap(alert.productId),
+                        onPressed: () => _showEditProductDialog(context, alert),
                       ),
                       IconButton(
                         icon: const Icon(

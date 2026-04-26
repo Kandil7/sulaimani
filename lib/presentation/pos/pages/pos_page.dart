@@ -308,6 +308,8 @@ class _PosView extends StatefulWidget {
 class _PosViewState extends State<_PosView> {
   final _searchController = TextEditingController();
   final _searchFocusNode = FocusNode();
+  bool _paymentDialogShown = false;
+  bool _expiryDialogShown = false;
 
   @override
   void dispose() {
@@ -465,15 +467,24 @@ class _PosViewState extends State<_PosView> {
         }
 
         // Handle opening payment dialog
-        if (state is PosActive && state.isPaymentDialogOpen) {
+        if (state is PosActive &&
+            state.isPaymentDialogOpen &&
+            !_paymentDialogShown) {
+          _paymentDialogShown = true;
           _showPaymentDialog(context, state);
+        } else if (state is PosActive && !state.isPaymentDialogOpen) {
+          _paymentDialogShown = false;
         }
 
         // Handle expiry warning dialog
         if (state is PosActive &&
             state.isExpiryWarningOpen &&
-            state.pendingExpiryProduct != null) {
+            state.pendingExpiryProduct != null &&
+            !_expiryDialogShown) {
+          _expiryDialogShown = true;
           _showExpiryWarningDialog(context, state);
+        } else if (state is PosActive && !state.isExpiryWarningOpen) {
+          _expiryDialogShown = false;
         }
       },
       builder: (context, state) {

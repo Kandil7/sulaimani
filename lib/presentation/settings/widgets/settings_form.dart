@@ -42,7 +42,6 @@ class _SettingsFormState extends State<SettingsForm> {
   bool _autoBackupEnabled = false;
   int _backupIntervalHours = 24;
   String? _selectedLogoPath;
-  String? _tempLogoPreview; // Base64 or temp path for preview
 
   @override
   void initState() {
@@ -163,7 +162,6 @@ class _SettingsFormState extends State<SettingsForm> {
         // Store the path for saving
         setState(() {
           _selectedLogoPath = file.path;
-          _tempLogoPreview = file.path;
         });
 
         if (mounted) {
@@ -328,7 +326,6 @@ class _SettingsFormState extends State<SettingsForm> {
                     IconButton(
                       onPressed: () => setState(() {
                         _selectedLogoPath = null;
-                        _tempLogoPreview = null;
                       }),
                       icon: const Icon(Icons.delete_outline,
                           color: AppColors.danger),

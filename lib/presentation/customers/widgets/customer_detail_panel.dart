@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/sale_model.dart';
+import '../../../data/models/customer_model.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
 import '../bloc/customers_state.dart';
@@ -11,8 +12,8 @@ import 'customer_payment_history.dart';
 
 class CustomerDetailPanel extends StatelessWidget {
   final VoidCallback onRecordPayment;
-  final Function(Customer) onEdit;
-  final Function(Customer) onDelete;
+  final Function(CustomerModel) onEdit;
+  final Function(CustomerModel) onDelete;
   final Function(SaleModel)? onInvoiceTap;
 
   const CustomerDetailPanel({
@@ -116,7 +117,7 @@ class CustomerDetailPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildDebtCard(Customer customer) {
+  Widget _buildDebtCard(CustomerModel customer) {
     if (customer.hasDebt) {
       return Container(
         width: double.infinity,
@@ -192,7 +193,7 @@ class CustomerDetailPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoSection(Customer customer) {
+  Widget _buildInfoSection(CustomerModel customer) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
@@ -225,7 +226,7 @@ class CustomerDetailPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, Customer customer) {
+  Widget _buildQuickActions(BuildContext context, CustomerModel customer) {
     return Column(
       children: [
         SizedBox(

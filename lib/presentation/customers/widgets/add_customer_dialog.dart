@@ -70,7 +70,7 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                           return 'هذا الحقل مطلوب';
                         }
                         if (value.trim().length < 2) {
-                          return 'الاسم harus يكون على الأقل حرفين';
+                          return 'الاسم يجب أن يكون على الأقل حرفين';
                         }
                         return null;
                       },

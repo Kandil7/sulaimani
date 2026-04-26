@@ -15,7 +15,7 @@ import '../../../core/utils/date_utils.dart' as app_date;
 class ReprintInvoiceDialog extends StatelessWidget {
   final SaleModel sale;
   final List<SaleItemModel> items;
-  final List<int> pdfBytes;
+  final Uint8List pdfBytes;
 
   const ReprintInvoiceDialog({
     super.key,
@@ -385,15 +385,14 @@ class ReprintInvoiceDialog extends StatelessWidget {
 
   void _printInvoice(BuildContext context) async {
     await Printing.layoutPdf(
-      onLayout: (format) async => Uint8List.fromList(pdfBytes),
+      onLayout: (format) async => pdfBytes,
     );
   }
 
   void _shareInvoice() async {
     try {
-      final bytes = Uint8List.fromList(pdfBytes);
       await Printing.sharePdf(
-        bytes: bytes,
+        bytes: pdfBytes,
         filename: '${sale.receiptNumber}.pdf',
       );
     } catch (e) {
@@ -454,7 +453,7 @@ class ReprintInvoiceDialog extends StatelessWidget {
               const Divider(),
               Expanded(
                 child: PdfPreview(
-                  build: (format) async => Uint8List.fromList(pdfBytes),
+                  build: (format) async => pdfBytes,
                   canChangePageFormat: false,
                   canChangeOrientation: false,
                   canDebug: false,

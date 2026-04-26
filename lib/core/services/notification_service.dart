@@ -169,8 +169,9 @@ class NotificationService {
       // Use PowerShell to show Windows toast notification via BurntToast module
       // Fallback: use old-style toast via msg.exe or a simple dialog
       // We encode the text properly for PowerShell
-      final escapedTitle = title.replaceAll("'", "''");
-      final escapedBody = body.replaceAll("'", "''");
+      // Encode text properly for PowerShell - escape single quotes
+      title = title.replaceAll("'", "''");
+      body = body.replaceAll("'", "''");
 
       // Try using Windows.UI.Notifications or fallback msg.exe
       // Using BurntToast-style PowerShell script
@@ -179,7 +180,7 @@ Add-Type -AssemblyName System.Windows.Forms
 \$n = New-Object System.Windows.Forms.NotifyIcon
 \$n.Icon = [System.Drawing.SystemIcons]::Information
 \$n.Visible = \$true
-\$n.ShowBalloonTip(3000, '\$escapedTitle', '\$escapedBody', 'Info')
+\$n.ShowBalloonTip(3000, '\$title', '\$body', 'Info')
 Start-Sleep -Seconds 4
 \$n.Dispose()
 ''';

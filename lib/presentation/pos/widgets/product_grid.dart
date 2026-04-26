@@ -133,7 +133,7 @@ class ProductGrid extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.sm),
           Text(
-            'جرب البحث ب另一种 keyword',
+            'جرب البحث بكلمة مفتاحية مختلفة',
             style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary.withOpacity(0.5),

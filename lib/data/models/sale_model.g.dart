@@ -47,33 +47,38 @@ const SaleModelSchema = CollectionSchema(
       name: r'finalAmount',
       type: IsarType.double,
     ),
-    r'paidAmount': PropertySchema(
+    r'notes': PropertySchema(
       id: 6,
+      name: r'notes',
+      type: IsarType.string,
+    ),
+    r'paidAmount': PropertySchema(
+      id: 7,
       name: r'paidAmount',
       type: IsarType.double,
     ),
     r'paymentMethod': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'paymentMethod',
       type: IsarType.string,
     ),
     r'receiptNumber': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'receiptNumber',
       type: IsarType.string,
     ),
     r'remainingAmount': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'remainingAmount',
       type: IsarType.double,
     ),
     r'totalAmount': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'totalAmount',
       type: IsarType.double,
     ),
     r'updatedAt': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -145,6 +150,12 @@ int _saleModelEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  {
+    final value = object.notes;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.paymentMethod.length * 3;
   bytesCount += 3 + object.receiptNumber.length * 3;
   return bytesCount;
@@ -162,12 +173,13 @@ void _saleModelSerialize(
   writer.writeDateTime(offsets[3], object.date);
   writer.writeDouble(offsets[4], object.discount);
   writer.writeDouble(offsets[5], object.finalAmount);
-  writer.writeDouble(offsets[6], object.paidAmount);
-  writer.writeString(offsets[7], object.paymentMethod);
-  writer.writeString(offsets[8], object.receiptNumber);
-  writer.writeDouble(offsets[9], object.remainingAmount);
-  writer.writeDouble(offsets[10], object.totalAmount);
-  writer.writeDateTime(offsets[11], object.updatedAt);
+  writer.writeString(offsets[6], object.notes);
+  writer.writeDouble(offsets[7], object.paidAmount);
+  writer.writeString(offsets[8], object.paymentMethod);
+  writer.writeString(offsets[9], object.receiptNumber);
+  writer.writeDouble(offsets[10], object.remainingAmount);
+  writer.writeDouble(offsets[11], object.totalAmount);
+  writer.writeDateTime(offsets[12], object.updatedAt);
 }
 
 SaleModel _saleModelDeserialize(
@@ -184,12 +196,13 @@ SaleModel _saleModelDeserialize(
   object.discount = reader.readDouble(offsets[4]);
   object.finalAmount = reader.readDouble(offsets[5]);
   object.id = id;
-  object.paidAmount = reader.readDouble(offsets[6]);
-  object.paymentMethod = reader.readString(offsets[7]);
-  object.receiptNumber = reader.readString(offsets[8]);
-  object.remainingAmount = reader.readDouble(offsets[9]);
-  object.totalAmount = reader.readDouble(offsets[10]);
-  object.updatedAt = reader.readDateTime(offsets[11]);
+  object.notes = reader.readStringOrNull(offsets[6]);
+  object.paidAmount = reader.readDouble(offsets[7]);
+  object.paymentMethod = reader.readString(offsets[8]);
+  object.receiptNumber = reader.readString(offsets[9]);
+  object.remainingAmount = reader.readDouble(offsets[10]);
+  object.totalAmount = reader.readDouble(offsets[11]);
+  object.updatedAt = reader.readDateTime(offsets[12]);
   return object;
 }
 
@@ -213,16 +226,18 @@ P _saleModelDeserializeProp<P>(
     case 5:
       return (reader.readDouble(offset)) as P;
     case 6:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 8:
       return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 10:
       return (reader.readDouble(offset)) as P;
     case 11:
+      return (reader.readDouble(offset)) as P;
+    case 12:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1051,6 +1066,152 @@ extension SaleModelQueryFilter
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notes',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterFilterCondition> paidAmountEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -1719,6 +1880,18 @@ extension SaleModelQuerySortBy on QueryBuilder<SaleModel, SaleModel, QSortBy> {
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> sortByPaidAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paidAmount', Sort.asc);
@@ -1878,6 +2051,18 @@ extension SaleModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QAfterSortBy> thenByPaidAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'paidAmount', Sort.asc);
@@ -1990,6 +2175,13 @@ extension SaleModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByNotes(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<SaleModel, SaleModel, QDistinct> distinctByPaidAmount() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'paidAmount');
@@ -2072,6 +2264,12 @@ extension SaleModelQueryProperty
   QueryBuilder<SaleModel, double, QQueryOperations> finalAmountProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'finalAmount');
+    });
+  }
+
+  QueryBuilder<SaleModel, String?, QQueryOperations> notesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notes');
     });
   }
 

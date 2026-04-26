@@ -57,6 +57,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
               expiryDate: p.expiryDate,
               quantity: p.stockQuantity,
               minimumStock: p.minimumStock,
+              product: p,
             ));
             processedProductIds.add(p.id);
           }
@@ -69,6 +70,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
               expiryDate: p.expiryDate,
               quantity: p.stockQuantity,
               minimumStock: p.minimumStock,
+              product: p,
             ));
             processedProductIds.add(p.id);
           }
@@ -80,6 +82,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
               type: 'Low Stock',
               quantity: p.stockQuantity,
               minimumStock: p.minimumStock,
+              product: p,
             ));
             processedProductIds.add(p.id);
           }

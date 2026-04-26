@@ -10,11 +10,13 @@ import '../bloc/reports_state.dart';
 class InvoicesTable extends StatefulWidget {
   final List<InvoiceReportItem> invoices;
   final Function(String)? onExport;
+  final Function(int saleId)? onInvoiceTap;
 
   const InvoicesTable({
     super.key,
     required this.invoices,
     this.onExport,
+    this.onInvoiceTap,
   });
 
   @override
@@ -222,7 +224,18 @@ class _InvoicesTableState extends State<InvoicesTable> {
                       cells: [
                         DataCell(Text(
                             '${_currentPage * _itemsPerPage + index + 1}')),
-                        DataCell(Text(invoice.invoiceNumber)),
+                        DataCell(InkWell(
+                          onTap: widget.onInvoiceTap != null
+                              ? () => widget.onInvoiceTap!(invoice.id)
+                              : null,
+                          child: Text(
+                            invoice.invoiceNumber,
+                            style: AppTextStyles.bodyM.copyWith(
+                              color: AppColors.primary,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        )),
                         DataCell(Text(invoice.customerName ?? '-')),
                         DataCell(Text(invoice.amount.toStringAsFixed(0))),
                         DataCell(_PaymentTypeBadge(type: invoice.paymentType)),

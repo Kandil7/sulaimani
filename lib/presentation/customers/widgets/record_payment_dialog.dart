@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../data/models/customer_model.dart';
 import '../bloc/customers_bloc.dart';
 import '../bloc/customers_event.dart';
-import '../bloc/customers_state.dart';
 
 class RecordPaymentDialog extends StatefulWidget {
-  final Customer customer;
+  final CustomerModel customer;
 
   const RecordPaymentDialog({
     super.key,
