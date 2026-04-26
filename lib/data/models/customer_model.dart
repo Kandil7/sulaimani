@@ -9,6 +9,7 @@ class CustomerModel {
   @Index()
   late String name;
 
+  @Index(unique: true)
   late String phone;
 
   double debtBalance = 0.0;

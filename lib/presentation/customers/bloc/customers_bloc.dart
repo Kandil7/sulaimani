@@ -1,13 +1,24 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:isar/isar.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/customer_model.dart';
+import '../../../data/models/customer_payment_model.dart';
+import '../../../data/datasources/local/customer_payment_local_datasource.dart';
+import '../../../data/datasources/local/customer_local_datasource.dart';
+import '../../../core/di/injection_container.dart';
 import 'customers_event.dart';
 import 'customers_state.dart';
 
 class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
   final GenericRepository<CustomerModel> repository;
+  late final CustomerPaymentLocalDatasource _paymentDatasource;
+  late final CustomerLocalDatasource _customerDatasource;
+  late final Isar _isar;
 
   CustomersBloc({required this.repository}) : super(CustomersInitial()) {
+    _paymentDatasource = CustomerPaymentLocalDatasource(sl<Isar>());
+    _customerDatasource = sl<CustomerLocalDatasource>();
+    _isar = sl<Isar>();
     on<LoadCustomers>(_onLoadCustomers);
     on<SearchCustomers>(_onSearchCustomers);
     on<AddCustomer>(_onAddCustomer);
@@ -87,6 +98,12 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     Emitter<CustomersState> emit,
   ) async {
     try {
+      // Check for duplicate phone
+      if (await _customerDatasource.phoneExists(event.phone)) {
+        emit(const CustomersError('رقم التليفون مسجل بالفعل لعميل آخر'));
+        return;
+      }
+
       final customer = CustomerModel()
         ..name = event.name
         ..phone = event.phone
@@ -105,6 +122,15 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
     Emitter<CustomersState> emit,
   ) async {
     try {
+      // Check for duplicate phone (excluding current customer)
+      if (await _customerDatasource.phoneExists(
+        event.customer.phone,
+        excludeCustomerId: event.customer.id,
+      )) {
+        emit(const CustomersError('رقم التليفون مسجل بالفعل لعميل آخر'));
+        return;
+      }
+
       event.customer.updatedAt = DateTime.now();
       await repository.update(event.customer);
       add(LoadCustomers());
@@ -220,15 +246,30 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
         return;
       }
 
-      customer.debtBalance = customer.debtBalance - event.amount;
+      // Record the payment as a transaction atomically
+      await _isar.writeTxn(() async {
+        // Record the payment
+        final payment = CustomerPaymentModel()
+          ..customerId = event.customerId
+          ..amount = event.amount
+          ..paymentDate = DateTime.now()
+          ..paymentType = event.amount == customer.debtBalance
+              ? 'full_settlement'
+              : 'partial'
+          ..note = event.note
+          ..createdAt = DateTime.now();
 
-      // Ensure debt never goes negative
-      if (customer.debtBalance < 0) {
-        customer.debtBalance = 0;
-      }
+        await _isar.customerPaymentModels.put(payment);
 
-      customer.updatedAt = DateTime.now();
-      await repository.update(customer);
+        // Update customer debt
+        customer.debtBalance -= event.amount;
+        if (customer.debtBalance < 0) {
+          customer.debtBalance = 0;
+        }
+        customer.updatedAt = DateTime.now();
+        await _isar.customerModels.put(customer);
+      });
+
       add(LoadCustomers());
       emit(const CustomerOperationSuccess('تم تسجيل الدفعة بنجاح'));
     } catch (e) {

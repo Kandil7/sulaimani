@@ -4,7 +4,10 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
+import '../../../data/datasources/local/customer_payment_local_datasource.dart';
 import '../../../data/models/sale_model.dart';
+import '../../../data/models/customer_payment_model.dart';
+import 'package:isar/isar.dart';
 
 class CustomerPaymentHistory extends StatefulWidget {
   final int customerId;
@@ -20,26 +23,34 @@ class CustomerPaymentHistory extends StatefulWidget {
 
 class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
   List<SaleModel> _sales = [];
+  List<CustomerPaymentModel> _payments = [];
   bool _isLoading = true;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadSales();
+    _loadAll();
   }
 
-  Future<void> _loadSales() async {
+  Future<void> _loadAll() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      final datasource = sl<SaleLocalDatasource>();
-      final sales = await datasource.getByCustomerId(widget.customerId);
+      final saleDatasource = sl<SaleLocalDatasource>();
+      final paymentDatasource = sl<CustomerPaymentLocalDatasource>();
+
+      final results = await Future.wait([
+        saleDatasource.getByCustomerId(widget.customerId),
+        paymentDatasource.getByCustomerId(widget.customerId),
+      ]);
+
       setState(() {
-        _sales = sales;
+        _sales = results[0] as List<SaleModel>;
+        _payments = results[1] as List<CustomerPaymentModel>;
         _isLoading = false;
       });
     } catch (e) {
@@ -50,12 +61,49 @@ class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
     }
   }
 
+  /// Merges sales and payments into one chronological timeline (newest first)
+  List<_TimelineItem> _buildTimeline() {
+    final items = <_TimelineItem>[];
+
+    for (final sale in _sales) {
+      items.add(_TimelineItem(
+        date: sale.date,
+        type: 'sale',
+        label: 'شراء (${sale.paymentMethod == 'credit' ? 'آجل' : 'نقدي'})',
+        receiptNumber: sale.receiptNumber,
+        amount: sale.finalAmount,
+        isPositive: sale.paymentMethod == 'credit',
+        notes: null,
+      ));
+    }
+
+    for (final payment in _payments) {
+      items.add(_TimelineItem(
+        date: payment.paymentDate,
+        type: 'payment',
+        label: payment.paymentType == 'full_settlement'
+            ? 'سداد كامل'
+            : payment.paymentType == 'partial'
+                ? 'سداد جزئي'
+                : 'تسوية',
+        receiptNumber: payment.linkedSaleId != null
+            ? 'فاتورة #${payment.linkedSaleId}'
+            : null,
+        amount: payment.amount,
+        isPositive: false,
+        notes: payment.note,
+      ));
+    }
+
+    // Sort by date descending (newest first)
+    items.sort((a, b) => b.date.compareTo(a.date));
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
@@ -67,7 +115,9 @@ class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
       );
     }
 
-    if (_sales.isEmpty) {
+    final timeline = _buildTimeline();
+
+    if (timeline.isEmpty) {
       return Container(
         decoration: BoxDecoration(
           color: AppColors.background,
@@ -75,7 +125,7 @@ class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
         ),
         child: const Center(
           child: Text(
-            'لا توجد مشتريات سابقة',
+            'لا توجد معاملات سابقة',
             style: TextStyle(color: AppColors.textSecondary),
           ),
         ),
@@ -87,93 +137,201 @@ class _CustomerPaymentHistoryState extends State<CustomerPaymentHistory> {
         color: AppColors.background,
         borderRadius: BorderRadius.circular(AppSizes.radiusMd),
       ),
-      child: ListView.separated(
-        padding: const EdgeInsets.all(AppSizes.sm),
-        itemCount: _sales.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final sale = _sales[index];
-          return _SaleHistoryTile(sale: sale);
-        },
-      ),
-    );
-  }
-}
-
-class _SaleHistoryTile extends StatelessWidget {
-  final SaleModel sale;
-
-  const _SaleHistoryTile({required this.sale});
-
-  @override
-  Widget build(BuildContext context) {
-    final isCredit = sale.paymentMethod == 'credit';
-    final isCash = sale.paymentMethod == 'cash';
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.sm,
-        vertical: AppSizes.xs,
-      ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Payment method indicator
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isCredit
-                  ? AppColors.warning
-                  : isCash
-                      ? AppColors.success
-                      : AppColors.primary,
+          // Section headers
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.sm,
+              vertical: AppSizes.xs,
             ),
-          ),
-          const SizedBox(width: AppSizes.sm),
-          // Date and receipt
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text(
-                  sale.receiptNumber,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                const SizedBox(width: 24),
+                const Expanded(
+                  child: Text(
+                    'الوصف',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
-                Text(
-                  _formatDate(sale.date),
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textSecondary,
+                const SizedBox(
+                  width: 80,
+                  child: Text(
+                    'المبلغ',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
             ),
           ),
+          const Divider(height: 1),
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.all(AppSizes.sm),
+              itemCount: timeline.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final item = timeline[index];
+                return _TimelineTile(item: item);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimelineItem {
+  final DateTime date;
+  final String type; // 'sale' or 'payment'
+  final String label;
+  final String? receiptNumber;
+  final double amount;
+  final bool isPositive; // sale=credit adds to debt, payment reduces debt
+  final String? notes;
+
+  _TimelineItem({
+    required this.date,
+    required this.type,
+    required this.label,
+    this.receiptNumber,
+    required this.amount,
+    required this.isPositive,
+    this.notes,
+  });
+}
+
+class _TimelineTile extends StatelessWidget {
+  final _TimelineItem item;
+
+  const _TimelineTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final isSale = item.type == 'sale';
+    final isPayment = item.type == 'payment';
+    final isCreditSale = isSale && item.isPositive;
+
+    // Sale with cash = positive (cash in)
+    // Sale with credit = neutral-ish (shows in red for debt)
+    // Payment = positive (debt reduction, shown in green)
+
+    Color iconColor;
+    IconData icon;
+    if (isPayment) {
+      iconColor = AppColors.success;
+      icon = Icons.payments;
+    } else if (isCreditSale) {
+      iconColor = AppColors.warning;
+      icon = Icons.receipt_long;
+    } else {
+      iconColor = AppColors.success;
+      icon = Icons.receipt;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.xs,
+        vertical: AppSizes.xs,
+      ),
+      child: Row(
+        children: [
+          // Type icon
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 14, color: iconColor),
+          ),
+          const SizedBox(width: AppSizes.sm),
+          // Description
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isCreditSale
+                        ? AppColors.warning
+                        : AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  '${_formatDate(item.date)}${item.receiptNumber != null ? ' • ${item.receiptNumber}' : ''}',
+                  style: const TextStyle(
+                    fontSize: 9,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                if (item.notes != null) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    item.notes!,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.textSecondary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
           // Amount
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                CurrencyUtils.format(sale.finalAmount),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isCredit ? AppColors.warning : AppColors.success,
+          SizedBox(
+            width: 80,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  CurrencyUtils.format(item.amount),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: isPayment
+                        ? AppColors.success
+                        : isCreditSale
+                            ? AppColors.warning
+                            : AppColors.success,
+                  ),
                 ),
-              ),
-              Text(
-                isCredit ? 'آجل' : 'نقدي',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isCredit ? AppColors.warning : AppColors.success,
+                Text(
+                  isPayment
+                      ? 'سداد'
+                      : isCreditSale
+                          ? 'آجل'
+                          : 'نقدي',
+                  style: TextStyle(
+                    fontSize: 9,
+                    color: isPayment
+                        ? AppColors.success
+                        : isCreditSale
+                            ? AppColors.warning
+                            : AppColors.success,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

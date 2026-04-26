@@ -65,6 +65,20 @@ class ReportSummaryRow extends StatelessWidget {
             backgroundColor: AppColors.successSurface,
           ),
         ),
+        const SizedBox(width: AppSizes.md),
+        // Total customer debt card
+        Expanded(
+          child: _SummaryCard(
+            icon: Icons.account_balance_wallet,
+            iconColor:
+                data.totalDebt > 0 ? AppColors.danger : AppColors.success,
+            value: _formatCurrency(data.totalDebt),
+            label: 'إجمالي الديون',
+            backgroundColor: data.totalDebt > 0
+                ? AppColors.dangerSurface
+                : AppColors.successSurface,
+          ),
+        ),
       ],
     );
   }

@@ -61,6 +61,19 @@ const CustomerModelSchema = CollectionSchema(
           caseSensitive: true,
         )
       ],
+    ),
+    r'phone': IndexSchema(
+      id: -6308098324157559207,
+      name: r'phone',
+      unique: true,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'phone',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
     )
   },
   links: {},
@@ -144,6 +157,61 @@ List<IsarLinkBase<dynamic>> _customerModelGetLinks(CustomerModel object) {
 void _customerModelAttach(
     IsarCollection<dynamic> col, Id id, CustomerModel object) {
   object.id = id;
+}
+
+extension CustomerModelByIndex on IsarCollection<CustomerModel> {
+  Future<CustomerModel?> getByPhone(String phone) {
+    return getByIndex(r'phone', [phone]);
+  }
+
+  CustomerModel? getByPhoneSync(String phone) {
+    return getByIndexSync(r'phone', [phone]);
+  }
+
+  Future<bool> deleteByPhone(String phone) {
+    return deleteByIndex(r'phone', [phone]);
+  }
+
+  bool deleteByPhoneSync(String phone) {
+    return deleteByIndexSync(r'phone', [phone]);
+  }
+
+  Future<List<CustomerModel?>> getAllByPhone(List<String> phoneValues) {
+    final values = phoneValues.map((e) => [e]).toList();
+    return getAllByIndex(r'phone', values);
+  }
+
+  List<CustomerModel?> getAllByPhoneSync(List<String> phoneValues) {
+    final values = phoneValues.map((e) => [e]).toList();
+    return getAllByIndexSync(r'phone', values);
+  }
+
+  Future<int> deleteAllByPhone(List<String> phoneValues) {
+    final values = phoneValues.map((e) => [e]).toList();
+    return deleteAllByIndex(r'phone', values);
+  }
+
+  int deleteAllByPhoneSync(List<String> phoneValues) {
+    final values = phoneValues.map((e) => [e]).toList();
+    return deleteAllByIndexSync(r'phone', values);
+  }
+
+  Future<Id> putByPhone(CustomerModel object) {
+    return putByIndex(r'phone', object);
+  }
+
+  Id putByPhoneSync(CustomerModel object, {bool saveLinks = true}) {
+    return putByIndexSync(r'phone', object, saveLinks: saveLinks);
+  }
+
+  Future<List<Id>> putAllByPhone(List<CustomerModel> objects) {
+    return putAllByIndex(r'phone', objects);
+  }
+
+  List<Id> putAllByPhoneSync(List<CustomerModel> objects,
+      {bool saveLinks = true}) {
+    return putAllByIndexSync(r'phone', objects, saveLinks: saveLinks);
+  }
 }
 
 extension CustomerModelQueryWhereSort
@@ -265,6 +333,51 @@ extension CustomerModelQueryWhere
               indexName: r'name',
               lower: [],
               upper: [name],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterWhereClause> phoneEqualTo(
+      String phone) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'phone',
+        value: [phone],
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterWhereClause> phoneNotEqualTo(
+      String phone) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'phone',
+              lower: [],
+              upper: [phone],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'phone',
+              lower: [phone],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'phone',
+              lower: [phone],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'phone',
+              lower: [],
+              upper: [phone],
               includeUpper: false,
             ));
       }

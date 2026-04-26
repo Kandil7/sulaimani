@@ -3,6 +3,7 @@ import 'package:isar/isar.dart';
 import '../../data/datasources/local/database_service.dart';
 import '../../data/datasources/local/product_local_datasource.dart';
 import '../../data/datasources/local/customer_local_datasource.dart';
+import '../../data/datasources/local/customer_payment_local_datasource.dart';
 import '../../data/datasources/local/sale_local_datasource.dart';
 import '../../data/datasources/local/alerts_local_datasource.dart';
 import '../../data/models/product_model.dart';
@@ -49,6 +50,9 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(
     () => CustomerLocalDatasource(sl<DatabaseService>().isar),
+  );
+  sl.registerLazySingleton(
+    () => CustomerPaymentLocalDatasource(sl<DatabaseService>().isar),
   );
   sl.registerLazySingleton(
     () => SaleLocalDatasource(sl<DatabaseService>().isar),

@@ -66,14 +66,15 @@ class SelectCustomer extends PosEvent {
   List<Object?> get props => [customerId];
 }
 
-/// Apply fixed discount to cart
+/// Apply discount to cart (fixed amount or percentage)
 class ApplyDiscount extends PosEvent {
   final double discountAmount;
+  final bool isPercentage;
 
-  const ApplyDiscount(this.discountAmount);
+  const ApplyDiscount(this.discountAmount, {this.isPercentage = false});
 
   @override
-  List<Object?> get props => [discountAmount];
+  List<Object?> get props => [discountAmount, isPercentage];
 }
 
 /// Remove applied discount

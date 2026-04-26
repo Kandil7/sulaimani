@@ -45,4 +45,17 @@ class CustomerLocalDatasource {
         .getAll(ids)
         .then((list) => list.firstWhere((c) => c != null, orElse: () => null));
   }
+
+  Future<CustomerModel?> getByPhone(String phone) async {
+    return await isar.customerModels.filter().phoneEqualTo(phone).findFirst();
+  }
+
+  Future<bool> phoneExists(String phone, {int? excludeCustomerId}) async {
+    if (excludeCustomerId != null) {
+      // Check if phone exists for a DIFFERENT customer
+      final existing = await getByPhone(phone);
+      return existing != null && existing.id != excludeCustomerId;
+    }
+    return (await getByPhone(phone)) != null;
+  }
 }

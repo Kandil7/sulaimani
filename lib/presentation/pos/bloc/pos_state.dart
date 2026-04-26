@@ -19,6 +19,7 @@ class PosActive extends PosState {
   final List<SaleItemModel> cartItems;
   final double total;
   final double discount;
+  final bool isDiscountPercentage;
   final double finalTotal;
   final List<ProductModel> allProducts;
   final List<ProductModel> searchResults;
@@ -33,6 +34,7 @@ class PosActive extends PosState {
     this.cartItems = const [],
     this.total = 0.0,
     this.discount = 0.0,
+    this.isDiscountPercentage = false,
     this.finalTotal = 0.0,
     this.allProducts = const [],
     this.searchResults = const [],
@@ -62,6 +64,7 @@ class PosActive extends PosState {
     List<SaleItemModel>? cartItems,
     double? total,
     double? discount,
+    bool? isDiscountPercentage,
     double? finalTotal,
     List<ProductModel>? allProducts,
     List<ProductModel>? searchResults,
@@ -78,6 +81,7 @@ class PosActive extends PosState {
       cartItems: cartItems ?? this.cartItems,
       total: total ?? this.total,
       discount: discount ?? this.discount,
+      isDiscountPercentage: isDiscountPercentage ?? this.isDiscountPercentage,
       finalTotal: finalTotal ?? this.finalTotal,
       allProducts: allProducts ?? this.allProducts,
       searchResults: searchResults ?? this.searchResults,

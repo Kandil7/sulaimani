@@ -415,7 +415,10 @@ class _PosViewState extends State<_PosView> {
         builder: (context) => _DiscountDialog(total: state.total),
       );
       if (result != null && result.discountAmount > 0) {
-        context.read<PosBloc>().add(ApplyDiscount(result.discountAmount));
+        context.read<PosBloc>().add(ApplyDiscount(
+              result.discountAmount,
+              isPercentage: result.isPercentage,
+            ));
       }
     }
   }
@@ -488,29 +491,36 @@ class _PosViewState extends State<_PosView> {
           }
         }
 
-        // Keyboard shortcuts
-        return KeyboardListener(
-          focusNode: FocusNode(),
-          onKeyEvent: (event) {
+        // Keyboard shortcuts - use Focus widget to capture keys globally in POS
+        return Focus(
+          autofocus: true,
+          onKeyEvent: (node, event) {
             if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.f1) {
                 _searchFocusNode.requestFocus();
+                return KeyEventResult.handled;
               } else if (event.logicalKey == LogicalKeyboardKey.f2) {
                 if (activeState.cartItems.isNotEmpty) {
                   _handleOpenPayment();
+                  return KeyEventResult.handled;
                 }
               } else if (event.logicalKey == LogicalKeyboardKey.escape) {
                 if (activeState.isPaymentDialogOpen) {
                   context.read<PosBloc>().add(ClosePaymentDialog());
+                  return KeyEventResult.handled;
                 } else if (activeState.isExpiryWarningOpen) {
                   context.read<PosBloc>().add(CloseExpiryWarningDialog());
+                  return KeyEventResult.handled;
                 } else if (activeState.cartItems.isNotEmpty) {
                   _handleClearCart();
+                  return KeyEventResult.handled;
                 }
               } else if (event.logicalKey == LogicalKeyboardKey.f12) {
                 _quickSale();
+                return KeyEventResult.handled;
               }
             }
+            return KeyEventResult.ignored;
           },
           child: Scaffold(
             body: Row(
@@ -523,6 +533,7 @@ class _PosViewState extends State<_PosView> {
                     total: activeState.total,
                     discount: activeState.discount,
                     finalTotal: activeState.finalTotal,
+                    isDiscountPercentage: activeState.isDiscountPercentage,
                     onQuantityChanged: _handleQuantityChange,
                     onRemove: _handleRemoveFromCart,
                     onClearCart: _handleClearCart,

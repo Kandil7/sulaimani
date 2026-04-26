@@ -1,7 +1,10 @@
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/currency_utils.dart';
@@ -292,7 +295,7 @@ class ReprintInvoiceDialog extends StatelessWidget {
             ),
             const SizedBox(height: AppSizes.lg),
 
-            // Action buttons
+// Action buttons
             Row(
               children: [
                 Expanded(
@@ -303,6 +306,20 @@ class ReprintInvoiceDialog extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding:
                           const EdgeInsets.symmetric(vertical: AppSizes.md),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.sm),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _shareViaWhatsApp(context),
+                    icon: const Icon(Icons.send, size: 18),
+                    label: const Text('واتساب'),
+                    style: OutlinedButton.styleFrom(
+                      padding:
+                          const EdgeInsets.symmetric(vertical: AppSizes.md),
+                      foregroundColor: const Color(0xFF25D366),
+                      side: const BorderSide(color: Color(0xFF25D366)),
                     ),
                   ),
                 ),
@@ -381,6 +398,30 @@ class ReprintInvoiceDialog extends StatelessWidget {
       );
     } catch (e) {
       debugPrint('Error sharing invoice: $e');
+    }
+  }
+
+  void _shareViaWhatsApp(BuildContext context) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final pdfFile = File('${tempDir.path}/${sale.receiptNumber}.pdf');
+      await pdfFile.writeAsBytes(pdfBytes);
+
+      await Share.shareXFiles(
+        [XFile(pdfFile.path)],
+        text:
+            'فاتورة صيدلية السليماني - ${sale.receiptNumber}\nإجمالي: ${CurrencyUtils.format(sale.finalAmount)}',
+      );
+    } catch (e) {
+      debugPrint('Error sharing via WhatsApp: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل في المشاركة: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
 

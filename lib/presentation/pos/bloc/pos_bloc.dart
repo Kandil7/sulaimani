@@ -268,6 +268,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       cartItems: [],
       total: 0.0,
       discount: 0.0,
+      isDiscountPercentage: false,
       finalTotal: 0.0,
       clearCustomerId: true,
       paymentType: 'cash',
@@ -285,27 +286,35 @@ class PosBloc extends Bloc<PosEvent, PosState> {
     ));
   }
 
-  /// Apply discount to cart
+  /// Apply discount to cart (fixed amount or percentage)
   void _onApplyDiscount(ApplyDiscount event, Emitter<PosState> emit) {
     final currentState =
         state is PosActive ? state as PosActive : const PosActive();
 
-    if (event.discountAmount < 0) {
+    double amount = event.discountAmount;
+
+    if (event.isPercentage) {
+      // Convert percentage to absolute amount
+      amount = (currentState.total * event.discountAmount) / 100;
+    }
+
+    if (amount < 0) {
       emit(const PosError('الخصم لا يمكن أن يكون سالباً'));
       emit(currentState);
       return;
     }
 
-    if (event.discountAmount > currentState.total) {
+    if (amount > currentState.total) {
       emit(const PosError('الخصم لا يمكن أن يتجاوز الإجمالي'));
       emit(currentState);
       return;
     }
 
-    final finalTotal = currentState.total - event.discountAmount;
+    final finalTotal = currentState.total - amount;
 
     emit(currentState.copyWith(
-      discount: event.discountAmount,
+      discount: amount,
+      isDiscountPercentage: event.isPercentage,
       finalTotal: finalTotal,
     ));
   }
@@ -317,6 +326,7 @@ class PosBloc extends Bloc<PosEvent, PosState> {
 
     emit(currentState.copyWith(
       discount: 0.0,
+      isDiscountPercentage: false,
       finalTotal: currentState.total,
     ));
   }

@@ -1,7 +1,11 @@
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/currency_utils.dart';
@@ -300,6 +304,22 @@ class InvoicePreviewDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppSizes.sm),
+                // WhatsApp share button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _shareViaWhatsApp(context),
+                    icon: const Icon(Icons.send, size: 18),
+                    label: const Text('واتساب'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.md,
+                      ),
+                      foregroundColor: const Color(0xFF25D366),
+                      side: const BorderSide(color: Color(0xFF25D366)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.sm),
                 // Share button
                 Expanded(
                   child: OutlinedButton.icon(
@@ -346,7 +366,6 @@ class InvoicePreviewDialog extends StatelessWidget {
 
   void _shareInvoice() async {
     try {
-      // Save PDF to temp file and share
       final bytes = Uint8List.fromList(pdfBytes);
       await Printing.sharePdf(
         bytes: bytes,
@@ -354,6 +373,52 @@ class InvoicePreviewDialog extends StatelessWidget {
       );
     } catch (e) {
       debugPrint('Error sharing invoice: $e');
+    }
+  }
+
+  void _shareViaWhatsApp(BuildContext context) async {
+    try {
+      // Save PDF to temp file
+      final tempDir = await getTemporaryDirectory();
+      final pdfFile = File('${tempDir.path}/${sale.receiptNumber}.pdf');
+      await pdfFile.writeAsBytes(pdfBytes);
+
+      // Check if WhatsApp is installed
+      final whatsappUri = Uri.parse('whatsapp://send');
+      final canLaunchWhatsApp = await canLaunchUrl(whatsappUri);
+
+      if (canLaunchWhatsApp) {
+        // Use share_plus with WhatsApp share intent
+        await Share.shareXFiles(
+          [XFile(pdfFile.path)],
+          text:
+              'فاتورة صيدلية السليماني - ${sale.receiptNumber}\nإجمالي: ${CurrencyUtils.format(sale.finalAmount)}',
+        );
+      } else {
+        // Fallback: just share the file
+        await Share.shareXFiles(
+          [XFile(pdfFile.path)],
+          text: 'فاتورة صيدلية السليماني - ${sale.receiptNumber}',
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('تم مشاركة الفاتورة عبر التطبيق المتاح'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sharing via WhatsApp: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل في المشاركة: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
     }
   }
 }

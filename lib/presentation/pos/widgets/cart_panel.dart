@@ -10,6 +10,7 @@ class CartPanel extends StatelessWidget {
   final double total;
   final double discount;
   final double finalTotal;
+  final bool isDiscountPercentage;
   final Function(int, int) onQuantityChanged;
   final Function(int) onRemove;
   final VoidCallback onClearCart;
@@ -24,13 +25,14 @@ class CartPanel extends StatelessWidget {
     required this.total,
     required this.discount,
     required this.finalTotal,
+    required this.isDiscountPercentage,
     required this.onQuantityChanged,
     required this.onRemove,
     required this.onClearCart,
     required this.onOpenPayment,
     required this.onRemoveDiscount,
     required this.onAddDiscount,
-    this.isProcessing = false,
+    required this.isProcessing,
   });
 
   int get _itemCount => cartItems.fold(0, (sum, item) => sum + item.quantity);
@@ -140,9 +142,11 @@ class CartPanel extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Text(
-                            'الخصم: ',
-                            style: TextStyle(
+                          Text(
+                            isDiscountPercentage
+                                ? 'الخصم ($discount%): '
+                                : 'الخصم: ',
+                            style: const TextStyle(
                               fontSize: 14,
                               color: AppColors.success,
                             ),
