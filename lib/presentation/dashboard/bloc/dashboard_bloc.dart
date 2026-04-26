@@ -3,6 +3,7 @@ import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/sale_model.dart';
 import '../../../data/models/customer_model.dart';
+import '../../reports/bloc/reports_state.dart';
 import 'dashboard_event.dart';
 import 'dashboard_state.dart';
 
@@ -10,11 +11,13 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   final GenericRepository<ProductModel> productRepository;
   final GenericRepository<SaleModel> saleRepository;
   final GenericRepository<CustomerModel> customerRepository;
+  final GenericRepository<dynamic>? saleItemRepository;
 
   DashboardBloc({
     required this.productRepository,
     required this.saleRepository,
     required this.customerRepository,
+    this.saleItemRepository,
   }) : super(DashboardInitial()) {
     on<LoadDashboard>(_onLoadDashboard);
     on<RefreshDashboard>(_onRefreshDashboard);
@@ -118,6 +121,32 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
           })
           .toList();
 
+      // Get top 5 products by sales count (from today's sales)
+      final topProductsMap = <String, ProductSalesData>{};
+      for (final sale in todayInvoices) {
+        await sale.items.load();
+        for (final item in sale.items) {
+          final productName = item.product.value?.name ?? 'غير معروف';
+          if (topProductsMap.containsKey(productName)) {
+            final existing = topProductsMap[productName]!;
+            topProductsMap[productName] = ProductSalesData(
+              productName: productName,
+              quantitySold: existing.quantitySold + item.quantity,
+              revenue: existing.revenue + item.total,
+            );
+          } else {
+            topProductsMap[productName] = ProductSalesData(
+              productName: productName,
+              quantitySold: item.quantity,
+              revenue: item.total,
+            );
+          }
+        }
+      }
+      final topProducts = topProductsMap.values.toList()
+        ..sort((a, b) => b.quantitySold.compareTo(a.quantitySold));
+      final top5Products = topProducts.take(5).toList();
+
       emit(DashboardLoaded(
         todaySales: todaySalesTotal,
         todayInvoicesCount: todayInvoices.length,
@@ -127,6 +156,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         last7DaysSales: last7Days,
         recentSales: recentSales,
         urgentAlerts: urgentAlerts,
+        topProducts: top5Products,
       ));
     } catch (e) {
       emit(DashboardError(e.toString()));

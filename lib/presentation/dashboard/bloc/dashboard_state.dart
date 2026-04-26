@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../reports/bloc/reports_state.dart';
 
 abstract class DashboardState extends Equatable {
   const DashboardState();
@@ -19,6 +20,7 @@ class DashboardLoaded extends DashboardState {
   final List<DailySales> last7DaysSales;
   final List<RecentSale> recentSales;
   final List<AlertItem> urgentAlerts;
+  final List<ProductSalesData> topProducts;
 
   const DashboardLoaded({
     required this.todaySales,
@@ -29,6 +31,7 @@ class DashboardLoaded extends DashboardState {
     required this.last7DaysSales,
     required this.recentSales,
     required this.urgentAlerts,
+    this.topProducts = const [],
   });
 
   @override
@@ -41,6 +44,7 @@ class DashboardLoaded extends DashboardState {
         last7DaysSales,
         recentSales,
         urgentAlerts,
+        topProducts,
       ];
 }
 
