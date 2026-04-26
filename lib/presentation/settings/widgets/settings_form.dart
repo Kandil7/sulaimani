@@ -114,7 +114,7 @@ class _SettingsFormState extends State<SettingsForm> {
   void _pickLogo() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('ميزة اختيار الشعار будут добавлены в будущем'),
+        content: Text('ميزة اختيار الشعار ستُضاف قريباً'),
         backgroundColor: AppColors.warning,
       ),
     );

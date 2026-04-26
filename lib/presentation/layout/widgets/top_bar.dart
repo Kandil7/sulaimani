@@ -3,124 +3,110 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/di/injection_container.dart';
-import '../../../data/repositories/settings_repository.dart';
 import '../../alerts/bloc/alerts_bloc.dart';
 import '../../alerts/bloc/alerts_state.dart';
+import '../../settings/bloc/settings_bloc.dart';
+import '../../settings/bloc/settings_state.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
-class TopBar extends StatefulWidget {
+class TopBar extends StatelessWidget {
   const TopBar({super.key});
 
   @override
-  State<TopBar> createState() => _TopBarState();
-}
-
-class _TopBarState extends State<TopBar> {
-  String _pharmacyName = 'صيدلية السليماني';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    try {
-      final settings = await sl<SettingsRepository>().getSettings();
-      if (mounted) {
-        setState(() {
-          _pharmacyName = settings.pharmacyName;
-        });
-      }
-    } catch (_) {
-      // Use default name
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AlertsBloc, AlertsState>(
-      builder: (context, state) {
-        final totalCount = state is AlertsLoaded ? state.totalCount : 0;
-        final alerts = state is AlertsLoaded
-            ? _buildAlertItems(state)
-            : <PopupMenuEntry<String>>[];
+    return BlocBuilder<SettingsBloc, SettingsState>(
+      buildWhen: (prev, curr) =>
+          curr is SettingsLoaded || curr is SettingsSaved,
+      builder: (context, settingsState) {
+        String pharmacyName = 'صيدلية السليماني';
+        if (settingsState is SettingsLoaded) {
+          pharmacyName = settingsState.settings.pharmacyName;
+        } else if (settingsState is SettingsSaved) {
+          pharmacyName = settingsState.settings.pharmacyName;
+        }
+        return BlocBuilder<AlertsBloc, AlertsState>(
+          builder: (context, alertsState) {
+            final totalCount =
+                alertsState is AlertsLoaded ? alertsState.totalCount : 0;
+            final alerts = alertsState is AlertsLoaded
+                ? _buildAlertItems(alertsState)
+                : <PopupMenuEntry<String>>[];
 
-        return Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.xl),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border(
-              bottom: BorderSide(color: Colors.grey.shade200),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Left: Pharmacy name
-              Text(
-                _pharmacyName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+            return Container(
+              height: 70,
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.xl),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  bottom: BorderSide(color: Colors.grey.shade200),
                 ),
               ),
-              // Right side actions
-              Row(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Current Date/Time
-                  StreamBuilder(
-                      stream: Stream.periodic(const Duration(seconds: 1)),
-                      builder: (context, snapshot) {
-                        return Text(
-                          DateFormat('hh:mm a | yyyy/MM/dd', 'en_US')
-                              .format(DateTime.now()),
-                          textDirection: TextDirection.ltr,
-                          style:
-                              const TextStyle(color: AppColors.textSecondary),
-                        );
-                      }),
-                  const SizedBox(width: AppSizes.lg),
-
-                  // Notifications
-                  PopupMenuButton<String>(
-                    icon: Badge(
-                      label: totalCount > 0
-                          ? Text(
-                              totalCount > 99 ? '99+' : totalCount.toString())
-                          : const SizedBox.shrink(),
-                      isLabelVisible: totalCount > 0,
-                      child: const Icon(Icons.notifications_outlined,
-                          color: AppColors.textSecondary),
+                  // Left: Pharmacy name
+                  Text(
+                    pharmacyName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
                     ),
-                    offset: const Offset(0, 50),
-                    itemBuilder: (context) => alerts,
-                    onSelected: (value) {
-                      if (value.startsWith('alert_')) {
-                        // Navigate to alerts page with specific tab
-                        context.go('/alerts');
-                      } else if (value == 'view_all') {
-                        context.go('/alerts');
-                      }
-                    },
                   ),
-                  const SizedBox(width: AppSizes.lg),
-
-                  // User Profile Placeholder
-                  CircleAvatar(
-                    backgroundColor: AppColors.primary,
-                    child: Text(
-                      _pharmacyName.isNotEmpty ? _pharmacyName[0] : 'A',
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                  // Right side actions
+                  Row(
+                    children: [
+                      // Current Date/Time
+                      StreamBuilder(
+                        stream: Stream.periodic(const Duration(seconds: 1)),
+                        builder: (context, snapshot) {
+                          return Text(
+                            DateFormat('hh:mm a | yyyy/MM/dd', 'en_US')
+                                .format(DateTime.now()),
+                            textDirection: TextDirection.ltr,
+                            style:
+                                const TextStyle(color: AppColors.textSecondary),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: AppSizes.lg),
+                      // Notifications
+                      PopupMenuButton<String>(
+                        icon: Badge(
+                          label: totalCount > 0
+                              ? Text(totalCount > 99
+                                  ? '99+'
+                                  : totalCount.toString())
+                              : const SizedBox.shrink(),
+                          isLabelVisible: totalCount > 0,
+                          child: const Icon(Icons.notifications_outlined,
+                              color: AppColors.textSecondary),
+                        ),
+                        offset: const Offset(0, 50),
+                        itemBuilder: (context) => alerts,
+                        onSelected: (value) {
+                          if (value.startsWith('alert_')) {
+                            context.go('/alerts');
+                          } else if (value == 'view_all') {
+                            context.go('/alerts');
+                          }
+                        },
+                      ),
+                      const SizedBox(width: AppSizes.lg),
+                      // User Profile Placeholder
+                      CircleAvatar(
+                        backgroundColor: AppColors.primary,
+                        child: Text(
+                          pharmacyName.isNotEmpty ? pharmacyName[0] : 'A',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              )
-            ],
-          ),
+              ),
+            );
+          },
         );
       },
     );

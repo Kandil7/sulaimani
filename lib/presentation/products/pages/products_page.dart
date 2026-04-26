@@ -261,11 +261,15 @@ class _ProductsViewState extends State<ProductsView> {
   }
 
   void _showAddDialog() {
+    final state = context.read<ProductsBloc>().state;
+    final products =
+        state is ProductsLoaded ? state.products : <ProductModel>[];
     showDialog(
       context: context,
       builder: (_) => BlocProvider.value(
         value: context.read<ProductsBloc>(),
         child: AddEditProductDialog(
+          existingProducts: products,
           onSave: (product) {
             context.read<ProductsBloc>().add(AddProduct(product));
           },
@@ -275,12 +279,16 @@ class _ProductsViewState extends State<ProductsView> {
   }
 
   void _showEditDialog(ProductModel product) {
+    final state = context.read<ProductsBloc>().state;
+    final products =
+        state is ProductsLoaded ? state.products : <ProductModel>[];
     showDialog(
       context: context,
       builder: (_) => BlocProvider.value(
         value: context.read<ProductsBloc>(),
         child: AddEditProductDialog(
           product: product,
+          existingProducts: products,
           onSave: (updatedProduct) {
             context.read<ProductsBloc>().add(UpdateProduct(updatedProduct));
             if (_selectedProduct?.id == updatedProduct.id) {

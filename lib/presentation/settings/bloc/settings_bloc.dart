@@ -76,9 +76,13 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   ) async {
     emit(SettingsLoading());
     try {
-      await _repository.restoreFromBackup(event.backupPath);
-      final settings = await _repository.getSettings();
-      emit(BackupRestored(settings));
+      final success = await _repository.restoreFromBackup(event.backupPath);
+      if (success) {
+        // DB was closed after restore - emit with success flag for UI to handle
+        emit(BackupRestored(success: true));
+      } else {
+        emit(const SettingsError('ملف النسخة الاحتياطية غير موجود'));
+      }
     } catch (e) {
       emit(SettingsError(e.toString()));
     }

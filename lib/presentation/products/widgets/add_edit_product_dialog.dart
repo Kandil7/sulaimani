@@ -10,17 +10,20 @@ import '../../../domain/entities/product.dart' show ProductType;
 class AddEditProductDialog extends StatefulWidget {
   final ProductModel? product;
   final ValueChanged<ProductModel>? onSave;
+  final List<ProductModel>? existingProducts;
 
   const AddEditProductDialog({
     super.key,
     this.product,
     this.onSave,
+    this.existingProducts,
   });
 
   static Future<void> show(
     BuildContext context, {
     ProductModel? product,
     ValueChanged<ProductModel>? onSave,
+    List<ProductModel>? existingProducts,
   }) {
     return showDialog(
       context: context,
@@ -28,6 +31,7 @@ class AddEditProductDialog extends StatefulWidget {
       builder: (context) => AddEditProductDialog(
         product: product,
         onSave: onSave,
+        existingProducts: existingProducts,
       ),
     );
   }
@@ -249,6 +253,15 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
                                   return 'الكود مطلوب';
+                                }
+                                // Check uniqueness
+                                if (widget.existingProducts != null) {
+                                  final isDuplicate = widget.existingProducts!
+                                      .where((p) => p.id != widget.product?.id)
+                                      .any((p) => p.barcode == value);
+                                  if (isDuplicate) {
+                                    return 'هذا الكود مستخدم بالفعل';
+                                  }
                                 }
                                 return null;
                               },

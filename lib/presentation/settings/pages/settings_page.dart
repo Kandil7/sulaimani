@@ -48,9 +48,15 @@ class _SettingsPageContent extends StatelessWidget {
           );
         } else if (state is BackupRestored) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم استعادة النسخة الاحتياطية بنجاح'),
-              backgroundColor: AppColors.success,
+            SnackBar(
+              content: Text(
+                state.success
+                    ? 'تم استعادة النسخة الاحتياطية بنجاح. يُنصح بإعادة تشغيل التطبيق.'
+                    : 'فشل استعادة النسخة الاحتياطية.',
+              ),
+              backgroundColor:
+                  state.success ? AppColors.success : AppColors.danger,
+              duration: const Duration(seconds: 5),
             ),
           );
         } else if (state is SettingsError) {
@@ -112,11 +118,30 @@ class _SettingsPageContent extends StatelessWidget {
       settings = state.settings;
     } else if (state is BackupCreated) {
       settings = state.settings;
-    } else if (state is BackupRestored) {
-      settings = state.settings;
     }
 
     if (settings == null) {
+      if (state is BackupRestored) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.refresh,
+                  size: 64, color: AppColors.textSecondary),
+              const SizedBox(height: AppSizes.md),
+              const Text(
+                'تم استعادة البيانات بنجاح',
+                style: AppTextStyles.h3,
+              ),
+              const SizedBox(height: AppSizes.sm),
+              const Text(
+                'يُنصح بإعادة تشغيل التطبيق لتحديث البيانات',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+        );
+      }
       return const Center(
         child: Text('حدث خطأ في تحميل الإعدادات'),
       );

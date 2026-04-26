@@ -48,8 +48,8 @@ class BackupCreated extends SettingsState {
 }
 
 class BackupRestored extends SettingsState {
-  final SettingsModel settings;
-  const BackupRestored(this.settings);
+  final bool success;
+  const BackupRestored({this.success = true});
   @override
-  List<Object?> get props => [settings];
+  List<Object?> get props => [success];
 }
