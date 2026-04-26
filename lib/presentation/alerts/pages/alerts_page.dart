@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
@@ -113,6 +114,7 @@ class AlertsView extends StatelessWidget {
                 title: 'المنتجات منتهية الصلاحية',
                 color: AppColors.danger,
                 alerts: state.expiredProducts,
+                onAlertTap: (productId) => _onAlertTap(context, productId),
               ),
               const SizedBox(height: AppSizes.lg),
             ],
@@ -123,6 +125,7 @@ class AlertsView extends StatelessWidget {
                 title: 'المنتجات التي تنتهي قريباً',
                 color: AppColors.warning,
                 alerts: state.expiringSoonProducts,
+                onAlertTap: (productId) => _onAlertTap(context, productId),
               ),
               const SizedBox(height: AppSizes.lg),
             ],
@@ -133,6 +136,7 @@ class AlertsView extends StatelessWidget {
                 title: 'المنتجات ذات المخزون المنخفض',
                 color: AppColors.warning,
                 alerts: state.lowStockProducts,
+                onAlertTap: (productId) => _onAlertTap(context, productId),
               ),
           ],
         ),
@@ -222,10 +226,17 @@ class AlertsView extends StatelessWidget {
     );
   }
 
+  void _onAlertTap(BuildContext context, int productId) {
+    // Navigate to products page - the product detail panel will show
+    context.go('/products');
+    // TODO: In a future iteration, pass productId to pre-select the product
+  }
+
   Widget _buildAlertSection({
     required String title,
     required Color color,
     required List<ProductAlert> alerts,
+    required Function(int productId) onAlertTap,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -320,6 +331,15 @@ class AlertsView extends StatelessWidget {
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                        tooltip: 'تعديل المنتج',
+                        onPressed: () => onAlertTap(alert.productId),
+                      ),
                       IconButton(
                         icon: const Icon(
                           Icons.check_circle_outline,

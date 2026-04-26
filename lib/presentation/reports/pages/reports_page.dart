@@ -24,8 +24,6 @@ class ReportsPage extends StatefulWidget {
 }
 
 class _ReportsPageState extends State<ReportsPage> {
-  String? _paymentTypeFilter;
-
   @override
   Widget build(BuildContext context) {
     return BlocProvider(

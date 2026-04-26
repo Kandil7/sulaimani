@@ -1,5 +1,6 @@
 import 'package:isar/isar.dart';
 import '../../models/product_model.dart';
+import '../../models/sale_item_model.dart';
 
 class ProductLocalDatasource {
   final Isar isar;
@@ -81,5 +82,22 @@ class ProductLocalDatasource {
     return await isar.productModels
         .getAll(ids)
         .then((list) => list.whereType<ProductModel>().toList());
+  }
+
+  /// Check if a product has any sales history
+  Future<bool> hasSalesHistory(int productId) async {
+    final count = await isar.saleItemModels
+        .filter()
+        .product((q) => q.idEqualTo(productId))
+        .count();
+    return count > 0;
+  }
+
+  /// Get sales count for a product
+  Future<int> getSalesCount(int productId) async {
+    return await isar.saleItemModels
+        .filter()
+        .product((q) => q.idEqualTo(productId))
+        .count();
   }
 }

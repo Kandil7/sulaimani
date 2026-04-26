@@ -12,6 +12,7 @@ import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_skeleton.dart';
 import '../../../data/models/product_model.dart';
+import '../../../data/datasources/local/product_local_datasource.dart';
 import '../../../domain/entities/product.dart';
 import '../../products/bloc/products_bloc.dart';
 import '../../products/bloc/products_event.dart';
@@ -303,19 +304,35 @@ class _ProductsViewState extends State<ProductsView> {
   }
 
   Future<void> _onDeleteProduct(ProductModel product) async {
-    final confirmed = await ConfirmDialog.show(
-      context,
-      title: 'حذف المنتج',
-      message: 'هل أنت متأكد من حذف "${product.name}"؟',
-      confirmLabel: 'حذف',
-      isDanger: true,
-    );
+    // Check if product has sales history first
+    final productDatasource = sl<ProductLocalDatasource>();
+    final hasSales = await productDatasource.hasSalesHistory(product.id);
 
-    if (confirmed == true && context.mounted) {
-      context.read<ProductsBloc>().add(DeleteProduct(product.id));
-      if (_selectedProduct?.id == product.id) {
-        setState(() => _selectedProduct = null);
-      }
+    if (hasSales) {
+      final count = await productDatasource.getSalesCount(product.id);
+      final confirmed = await ConfirmDialog.show(
+        context,
+        title: 'تنبيه',
+        message:
+            'المنتج "${product.name}" مرتبط بـ $count عملية بيع.\n\nهل تريد حذفه مع الاحتفاظ بسجل المبيعات؟',
+        confirmLabel: 'حذف',
+        isDanger: true,
+      );
+      if (confirmed != true || !context.mounted) return;
+    } else {
+      final confirmed = await ConfirmDialog.show(
+        context,
+        title: 'حذف المنتج',
+        message: 'هل أنت متأكد من حذف "${product.name}"؟',
+        confirmLabel: 'حذف',
+        isDanger: true,
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+
+    context.read<ProductsBloc>().add(DeleteProduct(product.id));
+    if (_selectedProduct?.id == product.id) {
+      setState(() => _selectedProduct = null);
     }
   }
 
