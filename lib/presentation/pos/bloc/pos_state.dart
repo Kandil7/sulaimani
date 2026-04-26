@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/sale_item_model.dart';
@@ -117,7 +118,7 @@ class PosProcessing extends PosState {}
 class PosSaleSuccess extends PosState {
   final SaleModel sale;
   final List<SaleItemModel> items;
-  final List<int> pdfBytes;
+  final Uint8List pdfBytes;
 
   const PosSaleSuccess({
     required this.sale,

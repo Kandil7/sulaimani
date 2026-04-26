@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
@@ -368,6 +370,14 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       // Add product with skip warning flag
       final product = currentState.pendingExpiryProduct!;
 
+      // Log expiry warning confirmation for audit trail (US-04 AC3)
+      final isExpired = _isProductExpired(product);
+      final expiryInfo = product.expiryDate != null
+          ? 'expires ${product.expiryDate!.toIso8601String()}'
+          : 'no expiry date';
+      debugPrint(
+          '[EXPIRY_WARNING_CONFIRMED] Product: ${product.name} (ID: ${product.id}, Barcode: ${product.barcode}, $expiryInfo) - User proceeded with sale despite ${isExpired ? "EXPIRED" : "EXPIRING_SOON"} warning at ${DateTime.now().toIso8601String()}');
+
       final existingIndex = currentState.cartItems
           .indexWhere((item) => item.product.value?.id == product.id);
 
@@ -517,7 +527,8 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       emit(PosSaleSuccess(
         sale: createdSale,
         items: saleItems,
-        pdfBytes: pdfBytes,
+        pdfBytes:
+            pdfBytes is Uint8List ? pdfBytes : Uint8List.fromList(pdfBytes),
       ));
 
       // Reset to fresh state
