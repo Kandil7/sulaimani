@@ -152,7 +152,7 @@ class _ProductsTableState extends State<ProductsTable> {
                   size: ColumnSize.M,
                 ),
                 DataColumn2(label: Text('الحالة'), size: ColumnSize.S),
-                DataColumn2(label: Text('إجراءات'), size: ColumnSize.S),
+                DataColumn2(label: const Text('إجراءات'), size: ColumnSize.M),
               ],
               rows: List.generate(
                 widget.products.length,
@@ -213,26 +213,33 @@ class _ProductsTableState extends State<ProductsTable> {
                       DataCell(
                         Row(
                           mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            IconButton(
-                              icon: const Icon(
-                                Icons.edit_outlined,
-                                size: 20,
+                            InkWell(
+                              onTap: () => widget.onEditProduct?.call(product),
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: AppColors.primary,
+                                ),
                               ),
-                              color: AppColors.primary,
-                              onPressed: () =>
-                                  widget.onEditProduct?.call(product),
-                              tooltip: 'تعديل',
                             ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                              ),
-                              color: AppColors.danger,
-                              onPressed: () =>
+                            const SizedBox(width: 4),
+                            InkWell(
+                              onTap: () =>
                                   widget.onDeleteProduct?.call(product),
-                              tooltip: 'حذف',
+                              borderRadius: BorderRadius.circular(4),
+                              child: Padding(
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color: AppColors.danger,
+                                ),
+                              ),
                             ),
                           ],
                         ),

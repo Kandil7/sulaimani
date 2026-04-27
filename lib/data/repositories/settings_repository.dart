@@ -73,6 +73,13 @@ class SettingsRepository {
   /// Returns the current database path so callers know where to copy
   String? get currentDbPath => _isar.path;
 
+  /// Update last backup date
+  Future<void> updateLastBackupDate() async {
+    final settings = await getSettings();
+    settings.lastBackupDate = DateTime.now();
+    await saveSettings(settings);
+  }
+
   /// Restore from a backup file. The database will be closed and caller must reopen.
   /// Returns the path to the restored db so caller can reopen.
   Future<String?> restoreFromBackup(String backupPath) async {

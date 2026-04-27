@@ -5,8 +5,15 @@ import '../../data/models/product_model.dart';
 import '../../presentation/alerts/bloc/alerts_state.dart' show ProductAlert;
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
+  static NotificationService? _instance;
+  static final NotificationService _internalInstance =
+      NotificationService._internal();
+
+  factory NotificationService() {
+    _instance ??= _internalInstance;
+    return _instance!;
+  }
+
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin _notifications =
@@ -17,36 +24,39 @@ class NotificationService {
   Future<void> initialize() async {
     if (_initialized) return;
 
-    // Linux settings
-    const LinuxInitializationSettings linuxSettings =
-        LinuxInitializationSettings(defaultActionName: 'Open');
+    try {
+      final InitializationSettings initSettings;
 
-    // macOS settings
-    const DarwinInitializationSettings darwinSettings =
-        DarwinInitializationSettings(requestAlertPermission: true);
+      if (Platform.isLinux) {
+        const LinuxInitializationSettings linuxSettings =
+            LinuxInitializationSettings(defaultActionName: 'Open');
+        initSettings = const InitializationSettings(linux: linuxSettings);
+      } else if (Platform.isMacOS) {
+        const DarwinInitializationSettings darwinSettings =
+            DarwinInitializationSettings(requestAlertPermission: true);
+        initSettings = const InitializationSettings(macOS: darwinSettings);
+      } else if (Platform.isWindows) {
+        _initialized = true;
+        debugPrint('NotificationService: Windows - using toast fallback');
+        return;
+      } else {
+        initSettings = const InitializationSettings(
+          linux: LinuxInitializationSettings(defaultActionName: 'Open'),
+          macOS: DarwinInitializationSettings(requestAlertPermission: true),
+        );
+      }
 
-    // Build initialization settings based on platform
-    InitializationSettings initSettings;
-    if (Platform.isWindows) {
-      // Windows uses default constructor with app name
-      initSettings = const InitializationSettings(
-        linux: linuxSettings,
-        macOS: darwinSettings,
+      await _notifications.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: _onNotificationResponse,
       );
-    } else {
-      initSettings = const InitializationSettings(
-        linux: linuxSettings,
-        macOS: darwinSettings,
-      );
+
+      _initialized = true;
+      debugPrint('NotificationService: Initialized');
+    } catch (e) {
+      debugPrint('NotificationService: Initialize failed: $e');
+      _initialized = true;
     }
-
-    await _notifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: _onNotificationResponse,
-    );
-
-    _initialized = true;
-    debugPrint('NotificationService: Initialized');
   }
 
   void _onNotificationResponse(NotificationResponse response) {
@@ -54,8 +64,19 @@ class NotificationService {
         'NotificationService: Notification tapped — ${response.payload}');
   }
 
+  /// Show expiry notification for all alert types
   Future<void> showExpiryNotification(List<ProductAlert> products) async {
     if (products.isEmpty) return;
+
+    // Use Windows toast on Windows
+    if (Platform.isWindows) {
+      await showWindowsToast(
+        title: '🔔 Sulaimani Alerts',
+        body: _buildAlertBody(products),
+      );
+      return;
+    }
+
     await initialize();
 
     // Group by type
@@ -67,22 +88,22 @@ class NotificationService {
     String body;
 
     if (expired.isNotEmpty && expired.length == products.length) {
-      title = 'منتجات منتهية الصلاحية';
+      title = '⚠️ Expired Products';
       body = expired.length == 1
-          ? '${expired.first.productName} منتهي الصلاحية'
-          : '${expired.length} منتجات منتهية الصلاحية';
+          ? '${expired.first.productName} has expired'
+          : '${expired.length} products have expired';
     } else if (lowStock.isNotEmpty && lowStock.length == products.length) {
-      title = 'منتجات نفدت من المخزون';
+      title = '⚠️ Low Stock';
       body = lowStock.length == 1
-          ? '${lowStock.first.productName} المخزون منخفض'
-          : '${lowStock.length} منتجات المخزون منخفض';
+          ? '${lowStock.first.productName} is low on stock'
+          : '${lowStock.length} products are low on stock';
     } else {
-      title = 'تنبيهات صيدلية السليماني';
+      title = '🔔 Sulaimani Pharmacy Alerts';
       final parts = <String>[];
-      if (expired.isNotEmpty) parts.add('${expired.length} منتهي');
-      if (expiring.isNotEmpty) parts.add('${expiring.length} ينتهي قريباً');
-      if (lowStock.isNotEmpty) parts.add('${lowStock.length} مخزون منخفض');
-      body = parts.join(' • ');
+      if (expired.isNotEmpty) parts.add('$expired expired');
+      if (expiring.isNotEmpty) parts.add('$expiring expiring');
+      if (lowStock.isNotEmpty) parts.add('$lowStock low stock');
+      body = parts.join(' - ');
     }
 
     const LinuxNotificationDetails linuxDetails = LinuxNotificationDetails(
@@ -101,17 +122,33 @@ class NotificationService {
       macOS: darwinDetails,
     );
 
-    await _notifications.show(
-      1,
-      title,
-      body,
-      details,
-      payload: 'expiry_alert',
-    );
+    await _notifications.show(1, title, body, details, payload: 'expiry_alert');
   }
 
+  String _buildAlertBody(List<ProductAlert> products) {
+    final expired = products.where((p) => p.type == 'Expired').length;
+    final expiring = products.where((p) => p.type == 'Expiring Soon').length;
+    final lowStock = products.where((p) => p.type == 'Low Stock').length;
+
+    final parts = <String>[];
+    if (expired > 0) parts.add('$expired expired');
+    if (expiring > 0) parts.add('$expiring expiring');
+    if (lowStock > 0) parts.add('$lowStock low stock');
+    return parts.join(' - ');
+  }
+
+  /// Show low stock notification
   Future<void> showLowStockNotification(int count) async {
     if (count <= 0) return;
+
+    if (Platform.isWindows) {
+      await showWindowsToast(
+        title: '📦 Low Stock Alert',
+        body: '$count products have reached minimum stock level',
+      );
+      return;
+    }
+
     await initialize();
 
     const LinuxNotificationDetails linuxDetails = LinuxNotificationDetails(
@@ -132,18 +169,24 @@ class NotificationService {
 
     await _notifications.show(
       2,
-      'منتجات نفدت من المخزون',
-      '$count منتج(s) وصلت للحد الأدنى من المخزون',
+      '📦 Low Stock Warning',
+      '$count products have reached minimum stock level',
       details,
       payload: 'low_stock_alert',
     );
   }
 
+  /// Show single custom notification
   Future<void> showSingleNotification({
     required String title,
     required String body,
     int id = 0,
   }) async {
+    if (Platform.isWindows) {
+      await showWindowsToast(title: title, body: body);
+      return;
+    }
+
     await initialize();
 
     const LinuxNotificationDetails linuxDetails = LinuxNotificationDetails();
@@ -157,8 +200,7 @@ class NotificationService {
     await _notifications.show(id, title, body, details);
   }
 
-  /// Shows Windows toast notification using PowerShell as a fallback.
-  /// This works on Windows 10/11 without any additional packages.
+  /// Show Windows toast notification using PowerShell
   Future<void> showWindowsToast({
     required String title,
     required String body,
@@ -166,36 +208,32 @@ class NotificationService {
     if (!Platform.isWindows) return;
 
     try {
-      // Use PowerShell to show Windows toast notification via BurntToast module
-      // Fallback: use old-style toast via msg.exe or a simple dialog
-      // We encode the text properly for PowerShell
-      // Encode text properly for PowerShell - escape single quotes
-      title = title.replaceAll("'", "''");
-      body = body.replaceAll("'", "''");
+      // Escape special characters
+      final escapedTitle = title.replaceAll('"', "'").replaceAll("'", "''");
+      final escapedBody = body.replaceAll('"', "'").replaceAll("'", "''");
 
-      // Try using Windows.UI.Notifications or fallback msg.exe
-      // Using BurntToast-style PowerShell script
       final script = '''
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Add-Type -AssemblyName System.Windows.Forms
-\$n = New-Object System.Windows.Forms.NotifyIcon
-\$n.Icon = [System.Drawing.SystemIcons]::Information
-\$n.Visible = \$true
-\$n.ShowBalloonTip(3000, '\$title', '\$body', 'Info')
-Start-Sleep -Seconds 4
-\$n.Dispose()
+\$notify = New-Object System.Windows.Forms.NotifyIcon
+\$notify.Icon = [System.Drawing.SystemIcons]::Info
+\$notify.Visible = \$true
+\$notify.ShowBalloonTip(5000, "$escapedTitle", "$escapedBody", "Info")
+Start-Sleep -Seconds 3
+\$notify.Dispose()
 ''';
 
-      final result = await Process.run(
+      await Process.run(
         'powershell',
-        ['-ExecutionPolicy', 'Bypass', '-Command', script],
+        ['-ExecutionPolicy', 'Bypass', '-NoProfile', '-Command', script],
+        runInShell: true,
       );
-      debugPrint(
-          'NotificationService: Windows toast shown, exit code: ${result.exitCode}');
     } catch (e) {
-      debugPrint('NotificationService: Failed to show Windows toast: $e');
+      debugPrint('NotificationService: Windows toast failed: $e');
     }
   }
 
+  /// Check products and show appropriate alerts
   Future<void> checkAndShowAlerts(List<ProductModel> products) async {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -207,10 +245,7 @@ Start-Sleep -Seconds 4
     for (final p in products) {
       if (p.expiryDate != null) {
         final expiryDay = DateTime(
-          p.expiryDate!.year,
-          p.expiryDate!.month,
-          p.expiryDate!.day,
-        );
+            p.expiryDate!.year, p.expiryDate!.month, p.expiryDate!.day);
 
         if (today.isAfter(expiryDay)) {
           expired.add(ProductAlert(
@@ -246,12 +281,11 @@ Start-Sleep -Seconds 4
 
     final allAlerts = [...expired, ...expiringSoon, ...lowStock];
     if (allAlerts.isNotEmpty) {
-      // Try native notification first, then fall back to Windows toast
       if (Platform.isWindows) {
         await showWindowsToast(
-          title: 'تنبيهات صيدلية السليماني',
+          title: '🔔 Sulaimani Pharmacy',
           body:
-              '${expired.length} منتهي • ${expiringSoon.length} ينتهي قريباً • ${lowStock.length} مخزون منخفض',
+              '${expired.length} expired - ${expiringSoon.length} expiring - ${lowStock.length} low stock',
         );
       }
       await showExpiryNotification(allAlerts);

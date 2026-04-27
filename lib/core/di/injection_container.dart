@@ -29,12 +29,14 @@ import '../../presentation/customers/bloc/customers_bloc.dart';
 import '../../presentation/alerts/bloc/alerts_bloc.dart';
 import '../../presentation/reports/bloc/reports_bloc.dart';
 import '../../presentation/settings/bloc/settings_bloc.dart';
+import '../../presentation/settings/bloc/backup_bloc.dart';
 import '../../presentation/invoices/bloc/invoices_bloc.dart';
 import '../usecases/get_product_stats.dart';
 import '../usecases/search_products.dart';
 import '../usecases/get_expiring_products.dart';
 import '../usecases/get_sales_by_date.dart';
 import '../usecases/get_report_data.dart';
+import '../services/data_backup_service.dart';
 
 final sl = GetIt.instance;
 
@@ -145,6 +147,17 @@ Future<void> init() async {
         repository: sl<SettingsRepository>(),
         databaseService: sl<DatabaseService>(),
       ));
+
+  // ====== Backup Service ======
+  sl.registerLazySingleton(() => DataBackupService(
+        productDatasource: sl<ProductLocalDatasource>(),
+        customerDatasource: sl<CustomerLocalDatasource>(),
+        saleDatasource: sl<SaleLocalDatasource>(),
+        databaseService: sl<DatabaseService>(),
+        settingsRepository: sl<SettingsRepository>(),
+      ));
+
+  sl.registerFactory(() => BackupBloc(backupService: sl<DataBackupService>()));
 
   sl.registerFactory(() => InvoicesBloc(
         saleDatasource: sl<SaleLocalDatasource>(),

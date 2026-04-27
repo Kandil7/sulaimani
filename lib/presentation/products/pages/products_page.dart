@@ -159,102 +159,13 @@ class _ProductsViewState extends State<ProductsView> {
                           context.read<ProductsBloc>().add(LoadProducts()),
                     );
                   }
-                  return const SizedBox();
+                  return const SizedBox.shrink();
                 },
               ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Column(
-      children: [
-        const LoadingSkeleton(
-          height: 50,
-          width: double.infinity,
-        ),
-        const SizedBox(height: AppSizes.md),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(AppSizes.lg),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-            ),
-            child: Column(
-              children: List.generate(
-                5,
-                (index) => const Padding(
-                  padding: EdgeInsets.only(bottom: AppSizes.md),
-                  child: LoadingSkeleton(
-                    height: 48,
-                    width: double.infinity,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDesktopLayout(List<ProductModel> products) {
-    var filteredProducts = _applyLocalFilters(products);
-    final totalPages = (filteredProducts.length / _itemsPerPage).ceil();
-    final startIndex = _currentPage * _itemsPerPage;
-    final endIndex =
-        (startIndex + _itemsPerPage).clamp(0, filteredProducts.length);
-    final pageProducts = filteredProducts.isEmpty
-        ? <ProductModel>[]
-        : filteredProducts.sublist(startIndex, endIndex);
-
-    if (pageProducts.isEmpty && _currentPage > 0) {
-      _currentPage = 0;
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 5,
-          child: ProductsTable(
-            products: pageProducts,
-            currentPage: _currentPage,
-            totalPages: totalPages > 0 ? totalPages : 1,
-            selectedProduct: _selectedProduct,
-            onProductSelected: _onProductSelected,
-            onEditProduct: _showEditDialog,
-            onDeleteProduct: _onDeleteProduct,
-            onPageChanged: (page) {
-              setState(() => _currentPage = page);
-            },
-            sortColumn: _sortField,
-            sortAscending: _sortAscending,
-            onSort: _onSort,
-          ),
-        ),
-        const SizedBox(width: AppSizes.md),
-        ProductDetailPanel(
-          product: _selectedProduct,
-          onClose: () {
-            setState(() => _selectedProduct = null);
-          },
-          onEdit: () {
-            if (_selectedProduct != null) {
-              _showEditDialog(_selectedProduct!);
-            }
-          },
-          onDelete: () {
-            if (_selectedProduct != null) {
-              _onDeleteProduct(_selectedProduct!);
-            }
-          },
-        ),
-      ],
     );
   }
 
@@ -293,6 +204,70 @@ class _ProductsViewState extends State<ProductsView> {
 
   List<ProductModel> _applyLocalFilters(List<ProductModel> products) {
     return products;
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: CircularProgressIndicator(color: AppColors.primary),
+    );
+  }
+
+  Widget _buildDesktopLayout(List<ProductModel> products) {
+    var filteredProducts = _applyLocalFilters(products);
+    final totalPages = (filteredProducts.length / _itemsPerPage).ceil();
+    final startIndex = _currentPage * _itemsPerPage;
+    final endIndex =
+        (startIndex + _itemsPerPage).clamp(0, filteredProducts.length);
+    final pageProducts = filteredProducts.isEmpty
+        ? <ProductModel>[]
+        : filteredProducts.sublist(startIndex, endIndex);
+
+    if (pageProducts.isEmpty && _currentPage > 0) {
+      _currentPage = 0;
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 5,
+          child: SingleChildScrollView(
+            child: ProductsTable(
+              products: pageProducts,
+              currentPage: _currentPage,
+              totalPages: totalPages > 0 ? totalPages : 1,
+              selectedProduct: _selectedProduct,
+              onProductSelected: _onProductSelected,
+              onEditProduct: _showEditDialog,
+              onDeleteProduct: _onDeleteProduct,
+              onPageChanged: (page) {
+                setState(() => _currentPage = page);
+              },
+              sortColumn: _sortField,
+              sortAscending: _sortAscending,
+              onSort: _onSort,
+            ),
+          ),
+        ),
+        const SizedBox(width: AppSizes.md),
+        ProductDetailPanel(
+          product: _selectedProduct,
+          onClose: () {
+            setState(() => _selectedProduct = null);
+          },
+          onEdit: () {
+            if (_selectedProduct != null) {
+              _showEditDialog(_selectedProduct!);
+            }
+          },
+          onDelete: () {
+            if (_selectedProduct != null) {
+              _onDeleteProduct(_selectedProduct!);
+            }
+          },
+        ),
+      ],
+    );
   }
 
   void _onSearch(String query) {
