@@ -236,10 +236,25 @@ class _LogoHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(AppSizes.md),
+      padding: const EdgeInsets.all(AppSizes.sm),
       child: Row(
         children: [
-          Image.asset('assets/images/logo.png', width: 80, height: 80),
+          Flexible(
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: 40,
+              height: 40,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.home, color: AppColors.primary),
+              ),
+            ),
+          ),
           if (isExpanded) ...[
             const SizedBox(width: AppSizes.sm),
             Expanded(
@@ -268,13 +283,12 @@ class _LogoHeader extends StatelessWidget {
           if (onToggle != null)
             IconButton(
               icon: Icon(
-                isExpanded ? Icons.chevron_left : Icons.chevron_right,
-                color: AppColors.textSecondary,
-                size: 20,
+                isExpanded ? Icons.menu_open : Icons.menu,
+                color: AppColors.primary,
               ),
-              onPressed: onToggle,
               tooltip:
                   isExpanded ? 'طي الشريط الجانبي' : 'توسيع الشريط الجانبي',
+              onPressed: onToggle,
             ),
         ],
       ),
