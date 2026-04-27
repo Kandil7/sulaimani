@@ -408,7 +408,7 @@ class ReprintInvoiceDialog extends StatelessWidget {
       await Share.shareXFiles(
         [XFile(pdfFile.path)],
         text:
-            'فاتورة صيدلية السليماني - ${sale.receiptNumber}\nإجمالي: ${CurrencyUtils.format(sale.finalAmount)}',
+            'فاتورة السليماني للتنمية الزراعية - ${sale.receiptNumber}\nإجمالي: ${CurrencyUtils.format(sale.finalAmount)}',
       );
     } catch (e) {
       debugPrint('Error sharing via WhatsApp: $e');

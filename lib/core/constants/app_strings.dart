@@ -1,5 +1,5 @@
 class AppStrings {
-  static const String appName = 'صيدلية السليماني';
+  static const String appName = 'السليماني';
   static const String dashboard = 'الرئيسية';
   static const String products = 'المنتجات';
   static const String pos = 'البيع';

@@ -82,7 +82,7 @@
 ### Sidebar Anatomy
 ```
 ┌─────────────────────┐
-│  [🌿 Logo]  صيدلية  │  ← Header: Logo + اسم المحل
+│  [🌿 Logo] محل │  ← Header: Logo + اسم المحل
 │            النيل    │     background: Primary
 ├─────────────────────┤
 │                     │

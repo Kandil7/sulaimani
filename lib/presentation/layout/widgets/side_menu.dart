@@ -239,7 +239,7 @@ class _LogoHeader extends StatelessWidget {
       padding: const EdgeInsets.all(AppSizes.md),
       child: Row(
         children: [
-          Image.asset('assets/images/logo.png', width: 40, height: 40),
+          Image.asset('assets/images/logo.png', width: 80, height: 80),
           if (isExpanded) ...[
             const SizedBox(width: AppSizes.sm),
             Expanded(

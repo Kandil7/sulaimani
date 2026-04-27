@@ -277,7 +277,7 @@ class InvoiceGenerator {
     page.graphics.drawLine(
         PdfPens.darkGray, Offset(0, footerY), Offset(pageSize.width, footerY));
     page.graphics.drawString(
-      footer ?? 'شكراً لتعاملكم مع صيدلية السليماني',
+      footer ?? 'شكراً لتعاملكم مع السليماني للتنمية الزراعية',
       smallFont,
       bounds: Rect.fromLTWH(0, footerY + 5, pageSize.width, 20),
       format: centerRtlFormat,

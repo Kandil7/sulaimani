@@ -625,7 +625,7 @@ Acceptance Criteria:
 
 ***
 
-### ✅ Product Backlog — صيدلية السليماني
+### ✅ Product Backlog — السليماني للتنمية الزراعية
 
 #### **Epic 1: Product Management**
 

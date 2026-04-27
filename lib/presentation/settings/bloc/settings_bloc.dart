@@ -85,11 +85,16 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       // Set custom path if provided
       if (customPath != null && customPath.isNotEmpty) {
         backupService.setCustomBackupPath(customPath);
+      } else {
+        // Clear custom path to use default
+        backupService.setCustomBackupPath(null);
       }
 
       // Export full backup (CSV format)
-      final backupPath =
-          await backupService.exportFullBackup(includeSales: true);
+      await backupService.exportFullBackup(includeSales: true);
+
+      // Get the actual backup path after export
+      final backupPath = await backupService.getBackupPath();
 
       // Update last backup date in settings
       await _repository.updateLastBackupDate();

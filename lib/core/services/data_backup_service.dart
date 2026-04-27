@@ -60,94 +60,99 @@ class DataBackupService {
   /// Export all data to a comprehensive CSV backup
   /// Returns the path to the backup file
   Future<String> exportFullBackup({bool includeSales = true}) async {
-    final backupDir = await _getBackupDirectory();
-    final timestamp = DateTime.now();
-    final timestampStr = _formatTimestamp(timestamp);
+    try {
+      final backupDir = await _getBackupDirectory();
+      final backupPath = backupDir.path;
+      final timestamp = DateTime.now();
+      final timestampStr = _formatTimestamp(timestamp);
 
-    // Create backup manifest
-    final List<String> exportedFiles = [];
-    final Map<String, dynamic> manifest = {
-      'version': '1.0.0',
-      'createdAt': timestamp.toIso8601String(),
-      'appName': 'Sulaimani Pharmacy',
-      'data': <String, dynamic>{},
-    };
-
-    // Export Products
-    final productsPath = '$backupDir/products_$timestampStr.csv';
-    final products = await _productDatasource.getAll();
-    await _exportProductsToCsv(products, productsPath);
-    manifest['data']['products'] = {
-      'file': 'products_$timestampStr.csv',
-      'count': products.length,
-    };
-    exportedFiles.add(productsPath);
-
-    // Export Categories
-    final categoriesPath = '$backupDir/categories_$timestampStr.csv';
-    final categories = await _isar.categoryModels.where().findAll();
-    await _exportCategoriesToCsv(categories, categoriesPath);
-    manifest['data']['categories'] = {
-      'file': 'categories_$timestampStr.csv',
-      'count': categories.length,
-    };
-    exportedFiles.add(categoriesPath);
-
-    // Export Customers
-    final customersPath = '$backupDir/customers_$timestampStr.csv';
-    final customers = await _customerDatasource.getAll();
-    await _exportCustomersToCsv(customers, customersPath);
-    manifest['data']['customers'] = {
-      'file': 'customers_$timestampStr.csv',
-      'count': customers.length,
-    };
-    exportedFiles.add(customersPath);
-
-    // Export Sales (if enabled)
-    if (includeSales) {
-      final salesPath = '$backupDir/sales_$timestampStr.csv';
-      final sales = await _saleDatasource.getAll();
-      await _exportSalesToCsv(sales, salesPath);
-      manifest['data']['sales'] = {
-        'file': 'sales_$timestampStr.csv',
-        'count': sales.length,
+      // Create backup manifest
+      final List<String> exportedFiles = [];
+      final Map<String, dynamic> manifest = {
+        'version': '1.0.0',
+        'createdAt': timestamp.toIso8601String(),
+        'appName': 'Sulaimani Pharmacy',
+        'data': <String, dynamic>{},
       };
-      exportedFiles.add(salesPath);
 
-      // Export Sale Items
-      final saleItemsPath = '$backupDir/sale_items_$timestampStr.csv';
-      final allItems = <SaleItemModel>[];
-      for (final sale in sales) {
-        final items = await _saleDatasource.getSaleItems(sale.id);
-        allItems.addAll(items);
+      // Export Products
+      final productsPath = '$backupPath/products_$timestampStr.csv';
+      final products = await _productDatasource.getAll();
+      await _exportProductsToCsv(products, productsPath);
+      manifest['data']['products'] = {
+        'file': 'products_$timestampStr.csv',
+        'count': products.length,
+      };
+      exportedFiles.add(productsPath);
+
+      // Export Categories
+      final categoriesPath = '$backupPath/categories_$timestampStr.csv';
+      final categories = await _isar.categoryModels.where().findAll();
+      await _exportCategoriesToCsv(categories, categoriesPath);
+      manifest['data']['categories'] = {
+        'file': 'categories_$timestampStr.csv',
+        'count': categories.length,
+      };
+      exportedFiles.add(categoriesPath);
+
+      // Export Customers
+      final customersPath = '$backupPath/customers_$timestampStr.csv';
+      final customers = await _customerDatasource.getAll();
+      await _exportCustomersToCsv(customers, customersPath);
+      manifest['data']['customers'] = {
+        'file': 'customers_$timestampStr.csv',
+        'count': customers.length,
+      };
+      exportedFiles.add(customersPath);
+
+      // Export Sales (if enabled)
+      if (includeSales) {
+        final salesPath = '$backupPath/sales_$timestampStr.csv';
+        final sales = await _saleDatasource.getAll();
+        await _exportSalesToCsv(sales, salesPath);
+        manifest['data']['sales'] = {
+          'file': 'sales_$timestampStr.csv',
+          'count': sales.length,
+        };
+        exportedFiles.add(salesPath);
+
+        // Export Sale Items
+        final saleItemsPath = '$backupPath/sale_items_$timestampStr.csv';
+        final allItems = <SaleItemModel>[];
+        for (final sale in sales) {
+          final items = await _saleDatasource.getSaleItems(sale.id);
+          allItems.addAll(items);
+        }
+        await _exportSaleItemsToCsv(allItems, saleItemsPath);
+        manifest['data']['saleItems'] = {
+          'file': 'sale_items_$timestampStr.csv',
+          'count': allItems.length,
+        };
+        exportedFiles.add(saleItemsPath);
       }
-      await _exportSaleItemsToCsv(allItems, saleItemsPath);
-      manifest['data']['saleItems'] = {
-        'file': 'sale_items_$timestampStr.csv',
-        'count': allItems.length,
+
+      // Export Settings
+      final settingsPath = '$backupPath/settings_$timestampStr.csv';
+      final settings = await _settingsRepository.getSettings();
+      await _exportSettingsToCsv(settings, settingsPath);
+      manifest['data']['settings'] = {
+        'file': 'settings_$timestampStr.csv',
       };
-      exportedFiles.add(saleItemsPath);
+      exportedFiles.add(settingsPath);
+
+      // Save manifest
+      final manifestPath = '$backupPath/manifest_$timestampStr.json';
+      await File(manifestPath).writeAsString(
+        const JsonEncoder.withIndent('  ').convert(manifest),
+      );
+
+      // Update last backup date
+      await _settingsRepository.updateLastBackupDate();
+
+      return backupPath;
+    } catch (e) {
+      throw Exception('فشل في إنشاء النسخة الاحتياطية: $e');
     }
-
-    // Export Settings
-    final settingsPath = '$backupDir/settings_$timestampStr.csv';
-    final settings = await _settingsRepository.getSettings();
-    await _exportSettingsToCsv(settings, settingsPath);
-    manifest['data']['settings'] = {
-      'file': 'settings_$timestampStr.csv',
-    };
-    exportedFiles.add(settingsPath);
-
-    // Save manifest
-    final manifestPath = '$backupDir/manifest_$timestampStr.json';
-    await File(manifestPath).writeAsString(
-      const JsonEncoder.withIndent('  ').convert(manifest),
-    );
-
-    // Update last backup date
-    await _settingsRepository.updateLastBackupDate();
-
-    return backupDir.path;
   }
 
   /// Export products to CSV
@@ -439,6 +444,12 @@ class DataBackupService {
       await backupDir.create(recursive: true);
     }
     return backupDir;
+  }
+
+  /// Get the current backup directory path for display
+  Future<String> getBackupPath() async {
+    final dir = await _getBackupDirectory();
+    return dir.path;
   }
 
   Future<String> _getExportPath(String prefix) async {

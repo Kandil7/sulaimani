@@ -391,13 +391,13 @@ class InvoicePreviewDialog extends StatelessWidget {
         await Share.shareXFiles(
           [XFile(pdfFile.path)],
           text:
-              'فاتورة صيدلية السليماني - ${sale.receiptNumber}\nإجمالي: ${CurrencyUtils.format(sale.finalAmount)}',
+              'فاتورة السليماني للتنمية الزراعية - ${sale.receiptNumber}\nإجمالي: ${CurrencyUtils.format(sale.finalAmount)}',
         );
       } else {
         // Fallback: just share the file
         await Share.shareXFiles(
           [XFile(pdfFile.path)],
-          text: 'فاتورة صيدلية السليماني - ${sale.receiptNumber}',
+          text: 'فاتورة السليماني للتنمية الزراعية - ${sale.receiptNumber}',
         );
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

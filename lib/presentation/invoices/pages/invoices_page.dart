@@ -340,12 +340,15 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
                 children: [
                   const Icon(Icons.receipt, size: 16, color: AppColors.primary),
                   const SizedBox(width: AppSizes.xs),
-                  Text(
-                    sale.receiptNumber,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: AppColors.primary,
+                  Flexible(
+                    child: Text(
+                      sale.receiptNumber,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: AppColors.primary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
