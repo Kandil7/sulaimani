@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../alerts/bloc/alerts_bloc.dart';
 import '../../alerts/bloc/alerts_state.dart';
 import '../../settings/bloc/settings_bloc.dart';
@@ -10,10 +11,23 @@ import '../../settings/bloc/settings_state.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 
 class TopBar extends StatelessWidget {
-  const TopBar({super.key});
+  final VoidCallback? onMenuToggle;
+  final bool isSidebarCollapsed;
+  final bool showMobileMenu;
+  final VoidCallback? onMobileMenuTap;
+
+  const TopBar({
+    super.key,
+    this.onMenuToggle,
+    this.isSidebarCollapsed = false,
+    this.showMobileMenu = false,
+    this.onMobileMenuTap,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ScreenUtils.isMobile(context);
+
     return BlocBuilder<SettingsBloc, SettingsState>(
       buildWhen: (prev, curr) =>
           curr is SettingsLoaded || curr is SettingsSaved,
@@ -33,43 +47,58 @@ class TopBar extends StatelessWidget {
                 : <PopupMenuEntry<String>>[];
 
             return Container(
-              height: 70,
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.xl),
+              height: isMobile ? 60 : 70,
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? AppSizes.md : AppSizes.xl,
+              ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border(
-                  bottom: BorderSide(color: Colors.grey.shade200),
-                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Left: Pharmacy name
-                  Text(
-                    pharmacyName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                  // Left: Menu toggle (mobile) or pharmacy name
+                  if (showMobileMenu && isMobile)
+                    IconButton(
+                      icon: const Icon(Icons.menu, color: AppColors.primary),
+                      onPressed: onMobileMenuTap,
+                    )
+                  else
+                    Text(
+                      pharmacyName,
+                      style: TextStyle(
+                        fontSize: isMobile ? 14 : 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
                   // Right side actions
                   Row(
                     children: [
-                      // Current Date/Time
-                      StreamBuilder(
-                        stream: Stream.periodic(const Duration(seconds: 1)),
-                        builder: (context, snapshot) {
-                          return Text(
-                            DateFormat('hh:mm a | yyyy/MM/dd', 'en_US')
-                                .format(DateTime.now()),
-                            textDirection: TextDirection.ltr,
-                            style:
-                                const TextStyle(color: AppColors.textSecondary),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: AppSizes.lg),
+                      // Current Date/Time (hide on very small screens)
+                      if (!isMobile)
+                        StreamBuilder(
+                          stream: Stream.periodic(const Duration(seconds: 1)),
+                          builder: (context, snapshot) {
+                            return Text(
+                              DateFormat('hh:mm a | yyyy/MM/dd', 'en_US')
+                                  .format(DateTime.now()),
+                              textDirection: TextDirection.ltr,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            );
+                          },
+                        ),
+                      if (!isMobile) const SizedBox(width: AppSizes.md),
                       // Notifications
                       PopupMenuButton<String>(
                         icon: Badge(
@@ -92,13 +121,17 @@ class TopBar extends StatelessWidget {
                           }
                         },
                       ),
-                      const SizedBox(width: AppSizes.lg),
+                      const SizedBox(width: AppSizes.md),
                       // User Profile Placeholder
                       CircleAvatar(
+                        radius: isMobile ? 14 : 16,
                         backgroundColor: AppColors.primary,
                         child: Text(
-                          pharmacyName.isNotEmpty ? pharmacyName[0] : 'A',
-                          style: const TextStyle(color: Colors.white),
+                          pharmacyName.isNotEmpty ? pharmacyName[0] : 'ص',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isMobile ? 12 : 14,
+                          ),
                         ),
                       ),
                     ],

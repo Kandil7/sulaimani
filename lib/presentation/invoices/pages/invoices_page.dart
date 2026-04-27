@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../core/utils/currency_utils.dart';
 import '../../../core/utils/date_utils.dart' as app_date;
 import '../../../core/di/injection_container.dart';
@@ -53,16 +54,24 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ScreenUtils.isMobile(context);
+    final padding = ScreenUtils.responsive(
+      context,
+      mobile: AppSizes.md,
+      tablet: AppSizes.md,
+      desktop: AppSizes.lg,
+    );
+
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(AppSizes.lg),
+        padding: EdgeInsets.all(padding),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
-            const SizedBox(height: AppSizes.lg),
-            _buildSearchBar(),
-            const SizedBox(height: AppSizes.md),
+            _buildHeader(isMobile),
+            SizedBox(height: isMobile ? AppSizes.md : AppSizes.lg),
+            _buildSearchBar(isMobile),
+            SizedBox(height: isMobile ? AppSizes.sm : AppSizes.md),
             Expanded(
               child: _buildContent(),
             ),
@@ -72,26 +81,39 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isMobile) {
     return Row(
       children: [
-        const Icon(Icons.receipt_long, size: 32, color: AppColors.primary),
-        const SizedBox(width: AppSizes.sm),
-        Text('الفواتير', style: AppTextStyles.h1),
+        Icon(
+          Icons.receipt_long,
+          size: ScreenUtils.getIconSize(context, base: 32),
+          color: AppColors.primary,
+        ),
+        SizedBox(width: isMobile ? AppSizes.xs : AppSizes.sm),
+        Text(
+          'الفواتير',
+          style: isMobile ? AppTextStyles.h2 : AppTextStyles.h1,
+        ),
         const Spacer(),
         OutlinedButton.icon(
           onPressed: () {
             context.read<InvoicesBloc>().add(LoadRecentSales());
             _searchController.clear();
           },
-          icon: const Icon(Icons.refresh),
-          label: const Text('تحديث'),
+          icon: const Icon(Icons.refresh, size: 18),
+          label: Text(isMobile ? '' : 'تحديث'),
+          style: OutlinedButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? AppSizes.sm : AppSizes.md,
+              vertical: AppSizes.sm,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(bool isMobile) {
     return Row(
       children: [
         Expanded(
@@ -100,21 +122,22 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
             focusNode: _searchFocusNode,
             decoration: InputDecoration(
               hintText: 'ابحث برقم الفاتورة...',
-              prefixIcon: const Icon(Icons.search),
+              prefixIcon: const Icon(Icons.search, size: 20),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.md,
-                vertical: AppSizes.sm,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: isMobile ? AppSizes.sm : AppSizes.md,
+                vertical: isMobile ? AppSizes.xs : AppSizes.sm,
               ),
+              isDense: isMobile,
             ),
             onSubmitted: (value) {
               context.read<InvoicesBloc>().add(SearchSaleByReceipt(value));
             },
           ),
         ),
-        const SizedBox(width: AppSizes.sm),
+        SizedBox(width: isMobile ? AppSizes.xs : AppSizes.sm),
         ElevatedButton(
           onPressed: () {
             context.read<InvoicesBloc>().add(
@@ -124,12 +147,12 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.lg,
-              vertical: AppSizes.md,
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? AppSizes.md : AppSizes.lg,
+              vertical: isMobile ? AppSizes.sm : AppSizes.md,
             ),
           ),
-          child: const Text('بحث'),
+          child: Text(isMobile ? '🔍' : 'بحث'),
         ),
       ],
     );

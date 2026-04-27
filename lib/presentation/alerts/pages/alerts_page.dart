@@ -6,6 +6,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_skeleton.dart';
@@ -33,10 +34,18 @@ class AlertsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ScreenUtils.isMobile(context);
+    final padding = ScreenUtils.responsive(
+      context,
+      mobile: AppSizes.md,
+      tablet: AppSizes.md,
+      desktop: AppSizes.xl,
+    );
+
     return BlocBuilder<AlertsBloc, AlertsState>(
       builder: (context, state) {
-        return Padding(
-          padding: const EdgeInsets.all(AppSizes.xl),
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(padding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -46,7 +55,7 @@ class AlertsView extends StatelessWidget {
                 children: [
                   Text(
                     AppStrings.alerts,
-                    style: AppTextStyles.h1,
+                    style: isMobile ? AppTextStyles.h2 : AppTextStyles.h1,
                   ),
                   IconButton(
                     icon: const Icon(Icons.refresh),
@@ -56,12 +65,10 @@ class AlertsView extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: AppSizes.lg),
+              SizedBox(height: isMobile ? AppSizes.md : AppSizes.lg),
 
               // Alerts Content
-              Expanded(
-                child: _buildContent(context, state),
-              ),
+              _buildContent(context, state),
             ],
           ),
         );

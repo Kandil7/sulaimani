@@ -4,38 +4,48 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 
-class SideMenu extends StatefulWidget {
+class SideMenu extends StatelessWidget {
   final int alertCount;
+  final bool isCollapsed;
+  final VoidCallback? onCollapseToggle;
+  final bool isMobile;
 
   const SideMenu({
     super.key,
     this.alertCount = 0,
+    this.isCollapsed = false,
+    this.onCollapseToggle,
+    this.isMobile = false,
   });
-
-  @override
-  State<SideMenu> createState() => _SideMenuState();
-}
-
-class _SideMenuState extends State<SideMenu> {
-  bool _isExpanded = true;
 
   @override
   Widget build(BuildContext context) {
     final currentPath = GoRouterState.of(context).uri.toString();
+    final isExpanded = !isCollapsed;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: _isExpanded
-          ? AppSizes.sidebarExpandedWidth
-          : AppSizes.sidebarCollapsedWidth,
-      color: Colors.white,
+    // For mobile drawer, always show expanded
+    if (isMobile) {
+      return _buildMobileMenu(context, currentPath);
+    }
+
+    // Desktop/Tablet sidebar
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(2, 0),
+          ),
+        ],
+      ),
       child: Column(
         children: [
           _LogoHeader(
-              isExpanded: _isExpanded,
-              onToggle: () {
-                setState(() => _isExpanded = !_isExpanded);
-              }),
+            isExpanded: isExpanded,
+            onToggle: onCollapseToggle,
+          ),
           const SizedBox(height: AppSizes.md),
           Expanded(
             child: SingleChildScrollView(
@@ -44,60 +54,167 @@ class _SideMenuState extends State<SideMenu> {
                   _MenuItem(
                     icon: Icons.dashboard_outlined,
                     title: AppStrings.dashboard,
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath == '/',
                     onTap: () => context.go('/'),
                   ),
                   _MenuItem(
                     icon: Icons.point_of_sale_outlined,
                     title: 'نقطة البيع',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/pos'),
                     onTap: () => context.go('/pos'),
                   ),
                   _MenuItem(
                     icon: Icons.inventory_2_outlined,
                     title: 'إدارة المنتجات',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/products'),
                     onTap: () => context.go('/products'),
                   ),
                   _MenuItem(
                     icon: Icons.people_outline,
                     title: 'العملاء',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/customers'),
                     onTap: () => context.go('/customers'),
                   ),
                   _MenuItem(
                     icon: Icons.warning_amber_outlined,
                     title: 'التنبيهات',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/alerts'),
                     onTap: () => context.go('/alerts'),
-                    badgeCount:
-                        widget.alertCount > 0 ? widget.alertCount : null,
+                    badgeCount: alertCount > 0 ? alertCount : null,
                   ),
                   _MenuItem(
                     icon: Icons.receipt_long_outlined,
                     title: 'التقارير',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/reports'),
                     onTap: () => context.go('/reports'),
                   ),
                   _MenuItem(
                     icon: Icons.description_outlined,
                     title: 'الفواتير',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/invoices'),
                     onTap: () => context.go('/invoices'),
                   ),
                   _MenuItem(
                     icon: Icons.settings_outlined,
                     title: 'الإعدادات',
-                    isExpanded: _isExpanded,
+                    isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/settings'),
                     onTap: () => context.go('/settings'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Build mobile drawer menu
+  Widget _buildMobileMenu(BuildContext context, String currentPath) {
+    return Container(
+      width: 280,
+      decoration: BoxDecoration(
+        color: Colors.white,
+      ),
+      child: Column(
+        children: [
+          _LogoHeader(
+            isExpanded: true,
+            onToggle: () => Navigator.pop(context),
+          ),
+          const SizedBox(height: AppSizes.md),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _MenuItem(
+                    icon: Icons.dashboard_outlined,
+                    title: AppStrings.dashboard,
+                    isExpanded: true,
+                    isActive: currentPath == '/',
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/');
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.point_of_sale_outlined,
+                    title: 'نقطة البيع',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/pos'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/pos');
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'إدارة المنتجات',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/products'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/products');
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.people_outline,
+                    title: 'العملاء',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/customers'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/customers');
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.warning_amber_outlined,
+                    title: 'التنبيهات',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/alerts'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/alerts');
+                    },
+                    badgeCount: alertCount > 0 ? alertCount : null,
+                  ),
+                  _MenuItem(
+                    icon: Icons.receipt_long_outlined,
+                    title: 'التقارير',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/reports'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/reports');
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.description_outlined,
+                    title: 'الفواتير',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/invoices'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/invoices');
+                    },
+                  ),
+                  _MenuItem(
+                    icon: Icons.settings_outlined,
+                    title: 'الإعدادات',
+                    isExpanded: true,
+                    isActive: currentPath.startsWith('/settings'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      context.go('/settings');
+                    },
                   ),
                 ],
               ),
@@ -111,9 +228,9 @@ class _SideMenuState extends State<SideMenu> {
 
 class _LogoHeader extends StatelessWidget {
   final bool isExpanded;
-  final VoidCallback onToggle;
+  final VoidCallback? onToggle;
 
-  const _LogoHeader({required this.isExpanded, required this.onToggle});
+  const _LogoHeader({required this.isExpanded, this.onToggle});
 
   @override
   Widget build(BuildContext context) {
@@ -137,15 +254,17 @@ class _LogoHeader extends StatelessWidget {
             ),
           ],
           const Spacer(),
-          IconButton(
-            icon: Icon(
-              isExpanded ? Icons.chevron_left : Icons.chevron_right,
-              color: AppColors.textSecondary,
-              size: 20,
+          if (onToggle != null)
+            IconButton(
+              icon: Icon(
+                isExpanded ? Icons.chevron_left : Icons.chevron_right,
+                color: AppColors.textSecondary,
+                size: 20,
+              ),
+              onPressed: onToggle,
+              tooltip:
+                  isExpanded ? 'طي الشريط الجانبي' : 'توسيع الشريط الجانبي',
             ),
-            onPressed: onToggle,
-            tooltip: isExpanded ? 'طي الشريط الجانبي' : 'توسيع الشريط الجانبي',
-          ),
         ],
       ),
     );

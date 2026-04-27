@@ -8,6 +8,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/error_state.dart';
 import '../../../core/widgets/loading_skeleton.dart';
@@ -63,10 +64,6 @@ class _ProductsViewState extends State<ProductsView> {
   @override
   void initState() {
     super.initState();
-    // Pre-select product from alert if provided
-    if (widget.preselectedProductId != null) {
-      // We'll preselect once products are loaded via bloc listener
-    }
   }
 
   @override
@@ -77,6 +74,9 @@ class _ProductsViewState extends State<ProductsView> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ScreenUtils.isMobile(context);
+    final isTablet = ScreenUtils.isTablet(context);
+
     return BlocListener<ProductsBloc, ProductsState>(
       listener: (context, state) {
         if (state is ProductOperationSuccess) {
@@ -99,7 +99,6 @@ class _ProductsViewState extends State<ProductsView> {
         } else if (state is ProductsLoaded &&
             widget.preselectedProductId != null &&
             !_hasPreselected) {
-          // Pre-select the product passed from alerts
           final preselectedId = widget.preselectedProductId;
           final preselectedProduct =
               state.products.where((p) => p.id == preselectedId).toList();
@@ -112,20 +111,28 @@ class _ProductsViewState extends State<ProductsView> {
         }
       },
       child: Padding(
-        padding: const EdgeInsets.all(AppSizes.xl),
+        padding: EdgeInsets.all(isMobile ? AppSizes.md : AppSizes.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   AppStrings.products,
-                  style: AppTextStyles.h1,
+                  style: isMobile ? AppTextStyles.h2 : AppTextStyles.h1,
                 ),
+                if (!isMobile)
+                  Text(
+                    'المنتجات',
+                    style: AppTextStyles.bodyM.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
               ],
             ),
-            const SizedBox(height: AppSizes.lg),
+            SizedBox(height: isMobile ? AppSizes.sm : AppSizes.lg),
             ProductsToolbar(
               searchQuery: _searchQuery,
               selectedFilter: _selectedFilter,
@@ -134,14 +141,17 @@ class _ProductsViewState extends State<ProductsView> {
               onAddPressed: _showAddDialog,
               onExportPressed: _exportProducts,
             ),
-            const SizedBox(height: AppSizes.lg),
+            SizedBox(height: isMobile ? AppSizes.sm : AppSizes.lg),
             Expanded(
               child: BlocBuilder<ProductsBloc, ProductsState>(
                 builder: (context, state) {
                   if (state is ProductsLoading) {
                     return _buildLoadingState();
                   } else if (state is ProductsLoaded) {
-                    return _buildLoadedState(state.products);
+                    if (isMobile || isTablet) {
+                      return _buildMobileLayout(state.products);
+                    }
+                    return _buildDesktopLayout(state.products);
                   } else if (state is ProductsError) {
                     return ErrorState(
                       message: state.message,
@@ -177,8 +187,8 @@ class _ProductsViewState extends State<ProductsView> {
             child: Column(
               children: List.generate(
                 5,
-                (index) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSizes.md),
+                (index) => const Padding(
+                  padding: EdgeInsets.only(bottom: AppSizes.md),
                   child: LoadingSkeleton(
                     height: 48,
                     width: double.infinity,
@@ -192,9 +202,8 @@ class _ProductsViewState extends State<ProductsView> {
     );
   }
 
-  Widget _buildLoadedState(List<ProductModel> products) {
+  Widget _buildDesktopLayout(List<ProductModel> products) {
     var filteredProducts = _applyLocalFilters(products);
-
     final totalPages = (filteredProducts.length / _itemsPerPage).ceil();
     final startIndex = _currentPage * _itemsPerPage;
     final endIndex =
@@ -246,6 +255,39 @@ class _ProductsViewState extends State<ProductsView> {
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildMobileLayout(List<ProductModel> products) {
+    var filteredProducts = _applyLocalFilters(products);
+    final totalPages = (filteredProducts.length / _itemsPerPage).ceil();
+    final startIndex = _currentPage * _itemsPerPage;
+    final endIndex =
+        (startIndex + _itemsPerPage).clamp(0, filteredProducts.length);
+    final pageProducts = filteredProducts.isEmpty
+        ? <ProductModel>[]
+        : filteredProducts.sublist(startIndex, endIndex);
+
+    if (pageProducts.isEmpty && _currentPage > 0) {
+      _currentPage = 0;
+    }
+
+    return SingleChildScrollView(
+      child: ProductsTable(
+        products: pageProducts,
+        currentPage: _currentPage,
+        totalPages: totalPages > 0 ? totalPages : 1,
+        selectedProduct: _selectedProduct,
+        onProductSelected: _onProductSelected,
+        onEditProduct: _showEditDialog,
+        onDeleteProduct: _onDeleteProduct,
+        onPageChanged: (page) {
+          setState(() => _currentPage = page);
+        },
+        sortColumn: _sortField,
+        sortAscending: _sortAscending,
+        onSort: _onSort,
+      ),
     );
   }
 

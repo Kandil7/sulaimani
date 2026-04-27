@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../core/utils/invoice_generator.dart';
 import '../../../core/utils/report_exporter.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
@@ -107,6 +108,51 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
     );
   }
 
+  /// Build responsive header
+  Widget _buildHeader(bool isMobile) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text('التقارير', style: isMobile ? AppTextStyles.h2 : AppTextStyles.h1),
+        Wrap(
+          spacing: isMobile ? AppSizes.xs : AppSizes.sm,
+          runSpacing: isMobile ? AppSizes.xs : 0,
+          children: [
+            _buildExportButton(
+              label: isMobile ? 'PDF' : 'تصدير PDF',
+              icon: Icons.picture_as_pdf,
+              color: AppColors.danger,
+              onExport: () => _exportReport('pdf'),
+            ),
+            if (!isMobile) ...[
+              const SizedBox(width: AppSizes.sm),
+              _buildExportButton(
+                label: 'تصدير CSV',
+                icon: Icons.table_chart,
+                color: AppColors.success,
+                onExport: () => _exportReport('csv'),
+              ),
+              const SizedBox(width: AppSizes.sm),
+            ],
+            IconButton(
+              onPressed: () {
+                if (context.read<ReportsBloc>().state is ReportsLoaded) {
+                  final currentFilter =
+                      (context.read<ReportsBloc>().state as ReportsLoaded)
+                          .data
+                          .filter;
+                  _loadReport(currentFilter);
+                }
+              },
+              icon: const Icon(Icons.refresh),
+              tooltip: 'تحديث',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   Future<void> _exportReport(String type) async {
     final state = context.read<ReportsBloc>().state;
     if (state is! ReportsLoaded || state.data.invoices.isEmpty) {
@@ -196,51 +242,21 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = ScreenUtils.isMobile(context);
+    final padding = ScreenUtils.responsive(
+      context,
+      mobile: AppSizes.md,
+      tablet: AppSizes.md,
+      desktop: AppSizes.xl,
+    );
+
     return Padding(
-      padding: const EdgeInsets.all(AppSizes.xl),
+      padding: EdgeInsets.all(padding),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('التقارير', style: AppTextStyles.h1),
-              Row(
-                children: [
-                  _buildExportButton(
-                    label: 'تصدير PDF',
-                    icon: Icons.picture_as_pdf,
-                    color: AppColors.danger,
-                    onExport: () => _exportReport('pdf'),
-                  ),
-                  const SizedBox(width: AppSizes.sm),
-                  _buildExportButton(
-                    label: 'تصدير CSV',
-                    icon: Icons.table_chart,
-                    color: AppColors.success,
-                    onExport: () => _exportReport('csv'),
-                  ),
-                  const SizedBox(width: AppSizes.sm),
-                  IconButton(
-                    onPressed: () {
-                      if (context.read<ReportsBloc>().state is ReportsLoaded) {
-                        final currentFilter =
-                            (context.read<ReportsBloc>().state as ReportsLoaded)
-                                .data
-                                .filter;
-                        _loadReport(currentFilter);
-                      }
-                    },
-                    icon: const Icon(Icons.refresh),
-                    tooltip: 'تحديث',
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizes.md),
-          // Filter bar
+          _buildHeader(isMobile),
+          SizedBox(height: isMobile ? AppSizes.sm : AppSizes.md),
           BlocBuilder<ReportsBloc, ReportsState>(
             builder: (context, state) {
               ReportFilter currentFilter = ReportFilter.today;
@@ -260,9 +276,7 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
                 },
                 fromDate: fromDate,
                 toDate: toDate,
-                onDateRangeChanged: (from, to) {
-                  // Custom date range handling is done in filter bar
-                },
+                onDateRangeChanged: (from, to) {},
                 paymentTypeFilter: _paymentTypeFilter,
                 onPaymentTypeChanged: (value) {
                   setState(() => _paymentTypeFilter = value);
@@ -271,7 +285,6 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
             },
           ),
           const SizedBox(height: AppSizes.lg),
-          // Content
           Expanded(
             child: BlocBuilder<ReportsBloc, ReportsState>(
               builder: (context, state) {
@@ -287,7 +300,6 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
                 }
 
                 if (state is ReportsLoaded) {
-                  // Apply payment type filter if set
                   final data = state.data;
                   final filteredInvoices = _paymentTypeFilter != null
                       ? data.invoices
@@ -301,20 +313,15 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Summary cards
                         ReportSummaryRow(data: data),
                         const SizedBox(height: AppSizes.lg),
-                        // Charts row
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Sales bar chart (60%)
                             Expanded(
                               flex: 60,
                               child: SalesBarChart(dailySales: data.dailySales),
                             ),
                             const SizedBox(width: AppSizes.md),
-                            // Top products chart (40%)
                             Expanded(
                               flex: 40,
                               child: TopProductsChart(
@@ -323,10 +330,8 @@ class _ReportsPageContentState extends State<_ReportsPageContent> {
                           ],
                         ),
                         const SizedBox(height: AppSizes.lg),
-                        // Profit summary
                         ProfitSummary(data: data),
                         const SizedBox(height: AppSizes.lg),
-                        // Invoices table
                         InvoicesTable(
                           invoices: filteredInvoices,
                           onInvoiceTap: (saleId) => _openInvoice(saleId),

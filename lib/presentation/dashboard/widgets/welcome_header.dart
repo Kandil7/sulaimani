@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 
 class WelcomeHeader extends StatefulWidget {
   final String userName;
@@ -17,14 +18,35 @@ class WelcomeHeader extends StatefulWidget {
   State<WelcomeHeader> createState() => _WelcomeHeaderState();
 }
 
-class _WelcomeHeaderState extends State<WelcomeHeader> {
+class _WelcomeHeaderState extends State<WelcomeHeader>
+    with SingleTickerProviderStateMixin {
   late DateTime _currentTime;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _currentTime = DateTime.now();
     _startTimer();
+
+    // Setup animations
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+    _animationController.forward();
   }
 
   void _startTimer() {
@@ -37,42 +59,65 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
   }
 
   @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
+    final isMobile = ScreenUtils.isMobile(context);
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'مرحباً، ${widget.userName} 👋',
-              style: AppTextStyles.h1,
-            ),
-            const SizedBox(height: AppSizes.xs),
-            Text(
-              _formatDateTime(_currentTime),
-              style: AppTextStyles.bodyM.copyWith(
-                color: AppColors.textSecondary,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getGreeting(),
+                    style: isMobile ? AppTextStyles.h2 : AppTextStyles.h1,
+                  ),
+                  const SizedBox(height: AppSizes.xs),
+                  Text(
+                    _formatDateTime(_currentTime),
+                    style: AppTextStyles.bodyM.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.xs),
+                  Text(
+                    'إليك ملخص اليوم',
+                    style: AppTextStyles.bodyM.copyWith(
+                      color: AppColors.primary.withValues(alpha: 0.8),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: AppSizes.xs),
-            Text(
-              'إليك ملخص اليوم',
-              style: AppTextStyles.bodyM,
-            ),
+            // Refresh button with animation
+            _AnimatedRefreshButton(onRefreshTap: widget.onRefreshTap),
           ],
         ),
-        IconButton(
-          onPressed: widget.onRefreshTap,
-          icon: const Icon(Icons.refresh),
-          tooltip: 'تحديث',
-          style: IconButton.styleFrom(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.primary,
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return 'صباح الخير، ${widget.userName} ☀️';
+    } else if (hour < 17) {
+      return 'مساء الخير، ${widget.userName} 🌤️';
+    } else {
+      return 'مساء الخير، ${widget.userName} 🌙';
+    }
   }
 
   String _formatDateTime(DateTime dateTime) {
@@ -111,5 +156,58 @@ class _WelcomeHeaderState extends State<WelcomeHeader> {
     final hour = dateTime.hour.toString().padLeft(2, '0');
     final minute = dateTime.minute.toString().padLeft(2, '0');
     return '$hour:$minute';
+  }
+}
+
+class _AnimatedRefreshButton extends StatefulWidget {
+  final VoidCallback? onRefreshTap;
+
+  const _AnimatedRefreshButton({this.onRefreshTap});
+
+  @override
+  State<_AnimatedRefreshButton> createState() => _AnimatedRefreshButtonState();
+}
+
+class _AnimatedRefreshButtonState extends State<_AnimatedRefreshButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _rotation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _rotation = Tween<double>(begin: 0, end: 1).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    _controller.forward(from: 0);
+    widget.onRefreshTap?.call();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _rotation,
+      child: IconButton(
+        onPressed: _handleTap,
+        icon: const Icon(Icons.refresh),
+        tooltip: 'تحديث',
+        style: IconButton.styleFrom(
+          backgroundColor: AppColors.primarySurface,
+          foregroundColor: AppColors.primary,
+          padding: const EdgeInsets.all(AppSizes.md),
+        ),
+      ),
+    );
   }
 }

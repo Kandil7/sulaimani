@@ -125,6 +125,119 @@ class ScreenUtils {
     }
     return 0.85;
   }
+
+  /// Get responsive spacing value
+  static double getSpacing(BuildContext context, {double? base}) {
+    final multiplier = getFontSizeMultiplier(context);
+    return (base ?? 16.0) * multiplier;
+  }
+
+  /// Get responsive icon size
+  static double getIconSize(BuildContext context, {double? base}) {
+    final width = MediaQuery.of(context).size.width;
+    if (width >= Breakpoints.desktopM) {
+      return (base ?? 24.0) * 1.1;
+    } else if (width >= Breakpoints.desktopS) {
+      return base ?? 24.0;
+    } else if (width >= Breakpoints.tablet) {
+      return (base ?? 24.0) * 0.95;
+    }
+    return (base ?? 24.0) * 0.85;
+  }
+
+  /// Get responsive value with custom breakpoints
+  static T responsiveByWidth<T>(
+    BuildContext context, {
+    required T small,
+    required T medium,
+    required T large,
+    double? smallBreakpoint,
+    double? largeBreakpoint,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+    final mediumBP = smallBreakpoint ?? Breakpoints.tablet;
+    final largeBP = largeBreakpoint ?? Breakpoints.desktopS;
+
+    if (width >= largeBP) {
+      return large;
+    } else if (width >= mediumBP) {
+      return medium;
+    }
+    return small;
+  }
+}
+
+/// Responsive flex ratio helper
+class ResponsiveFlex {
+  /// Get flex values for Row/Column layouts
+  /// Returns (mainFlex, sideFlex) tuple
+  static (int, int) getFlex(
+    BuildContext context, {
+    int desktopFlex = 3,
+    int tabletFlex = 2,
+    int mobileFlex = 1,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+
+    if (width >= Breakpoints.desktopS) {
+      return (desktopFlex, desktopFlex > 1 ? 1 : 0);
+    } else if (width >= Breakpoints.tablet) {
+      return (tabletFlex, tabletFlex > 1 ? 1 : 0);
+    }
+    return (mobileFlex, 0);
+  }
+
+  /// Get flex for two-panel layout (like POS)
+  static (int, int) getTwoPanelFlex(
+    BuildContext context, {
+    int desktopSmallFlex = 4,
+    int desktopLargeFlex = 6,
+    int tabletSmallFlex = 5,
+    int tabletLargeFlex = 5,
+    int mobileSmallFlex = 1,
+    int mobileLargeFlex = 1,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+
+    if (width >= Breakpoints.desktopS) {
+      return (desktopSmallFlex, desktopLargeFlex);
+    } else if (width >= Breakpoints.tablet) {
+      return (tabletSmallFlex, tabletLargeFlex);
+    }
+    return (mobileSmallFlex, mobileLargeFlex);
+  }
+}
+
+/// Responsive card/panel grid
+class ResponsiveGrid {
+  /// Get number of columns for grid layout
+  static int getColumns(
+    BuildContext context, {
+    int desktopColumns = 4,
+    int tabletColumns = 3,
+    int mobileColumns = 2,
+    double minItemWidth = 200,
+  }) {
+    final width = MediaQuery.of(context).size.width;
+    final padding = ScreenUtils.isDesktop(context) ? 48.0 : 16.0;
+    final availableWidth = width - padding;
+
+    final calculatedColumns = (availableWidth / minItemWidth).floor();
+    return calculatedColumns.clamp(1, desktopColumns);
+  }
+
+  /// Get aspect ratio for cards
+  static double getAspectRatio(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width >= Breakpoints.desktopM) {
+      return 1.4;
+    } else if (width >= Breakpoints.desktopS) {
+      return 1.3;
+    } else if (width >= Breakpoints.tablet) {
+      return 1.2;
+    }
+    return 1.0;
+  }
 }
 
 /// Responsive padding helper

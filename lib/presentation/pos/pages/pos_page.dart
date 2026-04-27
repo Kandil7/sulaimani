@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../domain/repositories/generic_repository.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/models/customer_model.dart';
@@ -438,6 +438,206 @@ class _PosViewState extends State<_PosView> {
     }
   }
 
+  /// Build desktop/tablet layout with side-by-side panels
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    PosActive activeState,
+    Map<int, int> quantitiesInCart,
+    bool isProcessing,
+  ) {
+    final isTablet = ScreenUtils.isTablet(context);
+    // Responsive flex: 4:6 on desktop, 5:5 on tablet
+    final flex = ResponsiveFlex.getTwoPanelFlex(
+      context,
+      desktopSmallFlex: 4,
+      desktopLargeFlex: 6,
+      tabletSmallFlex: 5,
+      tabletLargeFlex: 5,
+    );
+
+    return Row(
+      children: [
+        // Left Panel: Cart
+        Expanded(
+          flex: flex.$1,
+          child: CartPanel(
+            cartItems: activeState.cartItems,
+            total: activeState.total,
+            discount: activeState.discount,
+            finalTotal: activeState.finalTotal,
+            isDiscountPercentage: activeState.isDiscountPercentage,
+            onQuantityChanged: _handleQuantityChange,
+            onRemove: _handleRemoveFromCart,
+            onClearCart: _handleClearCart,
+            onOpenPayment: _handleOpenPayment,
+            onRemoveDiscount: _handleRemoveDiscount,
+            onAddDiscount: _handleAddDiscount,
+            isProcessing: isProcessing,
+          ),
+        ),
+
+        // Right Panel: Products
+        Expanded(
+          flex: flex.$2,
+          child: Container(
+            color: AppColors.background,
+            child: Column(
+              children: [
+                // Search bar
+                Container(
+                  padding: EdgeInsets.all(isTablet ? AppSizes.sm : AppSizes.md),
+                  color: Colors.white,
+                  child: PosSearchBar(
+                    focusNode: _searchFocusNode,
+                    onSearch: _handleSearch,
+                    onClear: () => _handleSearch(''),
+                  ),
+                ),
+
+                // Product grid
+                Expanded(
+                  child: ProductGrid(
+                    products: activeState.searchResults,
+                    quantitiesInCart: quantitiesInCart,
+                    onProductTap: _handleAddToCart,
+                    isLoading: isProcessing,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Build mobile layout with stacked panels
+  Widget _buildMobileLayout(
+    BuildContext context,
+    PosActive activeState,
+    Map<int, int> quantitiesInCart,
+    bool isProcessing,
+  ) {
+    return Column(
+      children: [
+        // Top: Products (takes most space on mobile)
+        Expanded(
+          flex: 3,
+          child: Container(
+            color: AppColors.background,
+            child: Column(
+              children: [
+                // Search bar
+                Container(
+                  padding: const EdgeInsets.all(AppSizes.sm),
+                  color: Colors.white,
+                  child: PosSearchBar(
+                    focusNode: _searchFocusNode,
+                    onSearch: _handleSearch,
+                    onClear: () => _handleSearch(''),
+                  ),
+                ),
+                // Product grid
+                Expanded(
+                  child: ProductGrid(
+                    products: activeState.searchResults,
+                    quantitiesInCart: quantitiesInCart,
+                    onProductTap: _handleAddToCart,
+                    isLoading: isProcessing,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        // Bottom: Cart summary bar - show compact on mobile
+        _buildMobileCartBar(activeState),
+      ],
+    );
+  }
+
+  /// Build compact cart bar for mobile view
+  Widget _buildMobileCartBar(PosActive activeState) {
+    final itemCount =
+        activeState.cartItems.fold(0, (sum, item) => sum + item.quantity);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.md,
+        vertical: AppSizes.sm,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            // Cart info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '$itemCount عناصر',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'الإجمالي: ${CurrencyUtils.format(activeState.finalTotal)}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Action buttons
+            Row(
+              children: [
+                if (activeState.cartItems.isNotEmpty) ...[
+                  IconButton(
+                    onPressed: _handleClearCart,
+                    icon: const Icon(Icons.delete_outline),
+                    color: AppColors.danger,
+                    tooltip: 'مسح السلة',
+                  ),
+                  const SizedBox(width: AppSizes.xs),
+                ],
+                ElevatedButton(
+                  onPressed: activeState.cartItems.isNotEmpty
+                      ? _handleOpenPayment
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.lg,
+                      vertical: AppSizes.sm,
+                    ),
+                  ),
+                  child: const Text('دفع'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<PosBloc, PosState>(
@@ -537,60 +737,19 @@ class _PosViewState extends State<_PosView> {
             return KeyEventResult.ignored;
           },
           child: Scaffold(
-            body: Row(
-              children: [
-                // Left Panel: Cart (40%)
-                Expanded(
-                  flex: 4,
-                  child: CartPanel(
-                    cartItems: activeState.cartItems,
-                    total: activeState.total,
-                    discount: activeState.discount,
-                    finalTotal: activeState.finalTotal,
-                    isDiscountPercentage: activeState.isDiscountPercentage,
-                    onQuantityChanged: _handleQuantityChange,
-                    onRemove: _handleRemoveFromCart,
-                    onClearCart: _handleClearCart,
-                    onOpenPayment: _handleOpenPayment,
-                    onRemoveDiscount: _handleRemoveDiscount,
-                    onAddDiscount: _handleAddDiscount,
-                    isProcessing: isProcessing,
+            body: ScreenUtils.isMobile(context)
+                ? _buildMobileLayout(
+                    context,
+                    activeState,
+                    quantities,
+                    isProcessing,
+                  )
+                : _buildDesktopLayout(
+                    context,
+                    activeState,
+                    quantities,
+                    isProcessing,
                   ),
-                ),
-
-                // Right Panel: Products (60%)
-                Expanded(
-                  flex: 6,
-                  child: Container(
-                    color: AppColors.background,
-                    child: Column(
-                      children: [
-                        // Search bar
-                        Container(
-                          padding: const EdgeInsets.all(AppSizes.md),
-                          color: Colors.white,
-                          child: PosSearchBar(
-                            focusNode: _searchFocusNode,
-                            onSearch: _handleSearch,
-                            onClear: () => _handleSearch(''),
-                          ),
-                        ),
-
-                        // Product grid
-                        Expanded(
-                          child: ProductGrid(
-                            products: activeState.searchResults,
-                            quantitiesInCart: quantities,
-                            onProductTap: _handleAddToCart,
-                            isLoading: state is PosInitial,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
           ),
         );
       },

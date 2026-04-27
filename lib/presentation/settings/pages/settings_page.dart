@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../data/datasources/local/database_service.dart';
 import '../../../data/models/settings_model.dart';
@@ -71,14 +72,22 @@ class _SettingsPageContent extends StatelessWidget {
         }
       },
       builder: (context, state) {
+        final isMobile = ScreenUtils.isMobile(context);
+        final padding = ScreenUtils.responsive(
+          context,
+          mobile: AppSizes.md,
+          tablet: AppSizes.md,
+          desktop: AppSizes.lg,
+        );
+
         return Scaffold(
           body: Padding(
-            padding: const EdgeInsets.all(AppSizes.lg),
+            padding: EdgeInsets.all(padding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(context),
-                const SizedBox(height: AppSizes.lg),
+                _buildHeader(context, isMobile),
+                SizedBox(height: isMobile ? AppSizes.md : AppSizes.lg),
                 Expanded(
                   child: _buildContent(context, state),
                 ),
@@ -90,15 +99,22 @@ class _SettingsPageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, bool isMobile) {
     return Row(
       children: [
-        Text('الإعدادات', style: AppTextStyles.h1),
+        Text('الإعدادات',
+            style: isMobile ? AppTextStyles.h2 : AppTextStyles.h1),
         const Spacer(),
         OutlinedButton.icon(
           onPressed: () => _showResetConfirmation(context),
-          icon: const Icon(Icons.restore),
-          label: const Text('إعادة تعيين'),
+          icon: const Icon(Icons.restore, size: 18),
+          label: Text(isMobile ? '' : 'إعادة تعيين'),
+          style: OutlinedButton.styleFrom(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? AppSizes.sm : AppSizes.md,
+              vertical: AppSizes.sm,
+            ),
+          ),
         ),
       ],
     );

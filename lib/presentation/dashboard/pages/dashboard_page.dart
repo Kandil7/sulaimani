@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
@@ -127,12 +128,16 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildLoadedState(DashboardLoaded state) {
+    final isMobile = ScreenUtils.isMobile(context);
+    final isTablet = ScreenUtils.isTablet(context);
+
     return RefreshIndicator(
       onRefresh: () async {
         context.read<DashboardBloc>().add(RefreshDashboard());
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.xl),
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.all(isMobile ? AppSizes.md : AppSizes.xl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -142,65 +147,29 @@ class _DashboardPageState extends State<DashboardPage> {
                 context.read<DashboardBloc>().add(RefreshDashboard());
               },
             ),
-            const SizedBox(height: AppSizes.xl),
+            SizedBox(height: isMobile ? AppSizes.md : AppSizes.xl),
             QuickActionsRow(
               onQuickSaleTap: () => _navigateTo('/pos'),
               onAddProductTap: () => _showAddProductDialog(),
               onRecordPaymentTap: () => _navigateTo('/customers'),
             ),
-            const SizedBox(height: AppSizes.xl),
+            SizedBox(height: isMobile ? AppSizes.md : AppSizes.xl),
             StatsRow(
               data: state,
               onAlertsTap: () => _navigateTo('/alerts'),
             ),
-            const SizedBox(height: AppSizes.xl),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: SalesChart(data: state.last7DaysSales),
-                ),
-                const SizedBox(width: AppSizes.md),
-                Expanded(
-                  flex: 2,
-                  child: AlertsPanel(
-                    alerts: state.urgentAlerts,
-                    onViewAllTap: () => _navigateTo('/alerts'),
-                    onAlertTap: (productId) =>
-                        _navigateTo('/products/$productId'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.xl),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: RecentSalesTable(
-                    sales: state.recentSales,
-                    onViewAllTap: () => _navigateTo('/reports'),
-                    onInvoiceTap: (saleId) => _openInvoice(saleId),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.md),
-                Expanded(
-                  child: TopProductsChart(
-                    products: state.topProducts.isEmpty
-                        ? [
-                            const ProductSalesData(
-                              productName: 'لا توجد بيانات',
-                              quantitySold: 0,
-                              revenue: 0,
-                            ),
-                          ]
-                        : state.topProducts,
-                  ),
-                ),
-              ],
-            ),
+            SizedBox(height: isMobile ? AppSizes.md : AppSizes.xl),
+            // Charts row
+            if (isMobile || isTablet)
+              _buildMobileCharts(state)
+            else
+              _buildDesktopCharts(state),
+            SizedBox(height: isMobile ? AppSizes.md : AppSizes.xl),
+            // Bottom row
+            if (isMobile || isTablet)
+              _buildMobileBottomSection(state)
+            else
+              _buildDesktopBottomSection(state),
           ],
         ),
       ),
@@ -298,5 +267,98 @@ class _DashboardPageState extends State<DashboardPage> {
         );
       }
     }
+  }
+
+  // Mobile/Tablet charts layout
+  Widget _buildMobileCharts(DashboardLoaded state) {
+    return Column(
+      children: [
+        SalesChart(data: state.last7DaysSales),
+        const SizedBox(height: AppSizes.md),
+        AlertsPanel(
+          alerts: state.urgentAlerts,
+          onViewAllTap: () => _navigateTo('/alerts'),
+          onAlertTap: (productId) => _navigateTo('/products/$productId'),
+        ),
+      ],
+    );
+  }
+
+  // Desktop charts layout
+  Widget _buildDesktopCharts(DashboardLoaded state) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: SalesChart(data: state.last7DaysSales),
+        ),
+        const SizedBox(width: AppSizes.md),
+        Expanded(
+          flex: 2,
+          child: AlertsPanel(
+            alerts: state.urgentAlerts,
+            onViewAllTap: () => _navigateTo('/alerts'),
+            onAlertTap: (productId) => _navigateTo('/products/$productId'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Mobile/Tablet bottom section
+  Widget _buildMobileBottomSection(DashboardLoaded state) {
+    return Column(
+      children: [
+        RecentSalesTable(
+          sales: state.recentSales,
+          onViewAllTap: () => _navigateTo('/reports'),
+          onInvoiceTap: (saleId) => _openInvoice(saleId),
+        ),
+        const SizedBox(height: AppSizes.md),
+        TopProductsChart(
+          products: state.topProducts.isEmpty
+              ? [
+                  const ProductSalesData(
+                    productName: 'لا توجد بيانات',
+                    quantitySold: 0,
+                    revenue: 0,
+                  ),
+                ]
+              : state.topProducts,
+        ),
+      ],
+    );
+  }
+
+  // Desktop bottom section
+  Widget _buildDesktopBottomSection(DashboardLoaded state) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 2,
+          child: RecentSalesTable(
+            sales: state.recentSales,
+            onViewAllTap: () => _navigateTo('/reports'),
+            onInvoiceTap: (saleId) => _openInvoice(saleId),
+          ),
+        ),
+        const SizedBox(width: AppSizes.md),
+        Expanded(
+          child: TopProductsChart(
+            products: state.topProducts.isEmpty
+                ? [
+                    const ProductSalesData(
+                      productName: 'لا توجد بيانات',
+                      quantitySold: 0,
+                      revenue: 0,
+                    ),
+                  ]
+                : state.topProducts,
+          ),
+        ),
+      ],
+    );
   }
 }
