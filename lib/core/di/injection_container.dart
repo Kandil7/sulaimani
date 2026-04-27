@@ -146,6 +146,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => SettingsBloc(
         repository: sl<SettingsRepository>(),
         databaseService: sl<DatabaseService>(),
+        backupService: sl<DataBackupService>(),
       ));
 
   // ====== Backup Service ======

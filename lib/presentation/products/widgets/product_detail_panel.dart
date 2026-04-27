@@ -76,6 +76,7 @@ class ProductDetailPanel extends StatelessWidget {
 
     return Container(
       width: 320,
+      constraints: const BoxConstraints(minHeight: 400),
       padding: const EdgeInsets.all(AppSizes.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -83,6 +84,7 @@ class ProductDetailPanel extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
@@ -101,123 +103,6 @@ class ProductDetailPanel extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(),
-          const SizedBox(height: AppSizes.md),
-
-          // Product Icon & Name
-          Center(
-            child: Column(
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: isMedicine
-                        ? AppColors.secondarySurface
-                        : AppColors.primarySurface,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isMedicine ? Icons.medication : Icons.science,
-                    size: 32,
-                    color: isMedicine ? AppColors.secondary : AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: AppSizes.sm),
-                Text(
-                  product!.name,
-                  style: AppTextStyles.h2,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSizes.xs),
-                TypeBadge(
-                    type: isMedicine
-                        ? ProductType.medicine
-                        : ProductType.pesticide),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSizes.lg),
-          const Divider(),
-
-          // General Info
-          _buildSectionTitle('معلومات عامة'),
-          _buildInfoRow('الكود', product!.barcode),
-          _buildInfoRow('النوع', isMedicine ? 'دواء' : 'مبيد'),
-          _buildInfoRow('المادة الفعالة', product!.scientificName),
-          const SizedBox(height: AppSizes.md),
-          const Divider(),
-
-          // Prices
-          _buildSectionTitle('الأسعار'),
-          _buildInfoRow(
-              'سعر الشراء', '${product!.purchasePrice.toStringAsFixed(2)} ج'),
-          _buildInfoRow(
-              'سعر البيع', '${product!.sellingPrice.toStringAsFixed(2)} ج'),
-          _buildInfoRow(
-            'الربح',
-            '${profit.toStringAsFixed(2)} ج',
-            valueColor: AppColors.success,
-            isHighlighted: true,
-          ),
-          _buildInfoRow(
-            'الهامش %',
-            '${profitPercentage.toStringAsFixed(1)}%',
-            valueColor: AppColors.success,
-            isHighlighted: true,
-          ),
-          const SizedBox(height: AppSizes.md),
-          const Divider(),
-
-          // Stock
-          _buildSectionTitle('المخزون'),
-          StockProgressBar(
-            quantity: product!.stockQuantity,
-            minimumStock: product!.minimumStock,
-          ),
-          const SizedBox(height: AppSizes.sm),
-          _buildInfoRow('الكمية', '${product!.stockQuantity}'),
-          _buildInfoRow('الحد الأدنى', '${product!.minimumStock}'),
-          const SizedBox(height: AppSizes.md),
-          const Divider(),
-
-          // Expiry
-          _buildSectionTitle('الصلاحية'),
-          if (product!.expiryDate != null) ...[
-            _buildInfoRow(
-              'التاريخ',
-              DateFormat('dd/MM/yyyy').format(product!.expiryDate!),
-              valueColor: (daysRemaining ?? 0) < 0
-                  ? AppColors.danger
-                  : daysRemaining! <= 30
-                      ? AppColors.warning
-                      : AppColors.textPrimary,
-            ),
-            _buildInfoRow(
-              'الأيام المتبقية',
-              (daysRemaining ?? 0) < 0 ? 'منتهي' : '$daysRemaining يوم',
-              valueColor: daysRemaining! < 0
-                  ? AppColors.danger
-                  : daysRemaining <= 30
-                      ? AppColors.warning
-                      : AppColors.textPrimary,
-            ),
-          ] else
-            _buildInfoRow('التاريخ', '-'),
-          const SizedBox(height: AppSizes.md),
-
-          // Notes
-          if (product!.description != null &&
-              product!.description!.isNotEmpty) ...[
-            const Divider(),
-            _buildSectionTitle('ملاحظات'),
-            Text(
-              product!.description!,
-              style: AppTextStyles.bodyM,
-            ),
-          ],
-
-          const Spacer(),
 
           // Footer Buttons
           Row(

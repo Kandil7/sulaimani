@@ -44,6 +44,7 @@ class CustomerDetailPanel extends StatelessWidget {
   Widget _buildEmptyState(bool isMobile) {
     return Container(
       width: isMobile ? double.infinity : 320,
+      constraints: const BoxConstraints(minHeight: 400),
       padding: const EdgeInsets.all(AppSizes.xl),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -91,6 +92,7 @@ class CustomerDetailPanel extends StatelessWidget {
       BuildContext context, CustomerModel customer, bool isMobile) {
     return Container(
       width: isMobile ? double.infinity : 320,
+      constraints: const BoxConstraints(minHeight: 400),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
@@ -103,11 +105,12 @@ class CustomerDetailPanel extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Header with close button
           _buildHeader(context, isMobile),
           // Scrollable content
-          Expanded(
+          Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.md),
               physics: const BouncingScrollPhysics(),
@@ -221,6 +224,31 @@ class CustomerDetailPanel extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (customer.address != null &&
+                      customer.address!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            customer.address!,
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 13,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -285,6 +313,12 @@ class CustomerDetailPanel extends StatelessWidget {
       child: Column(
         children: [
           _buildInfoRow(
+            icon: Icons.shopping_cart,
+            label: 'إجمالي المشتريات',
+            value: '${customer.totalPurchases} عملية',
+          ),
+          const SizedBox(height: AppSizes.sm),
+          _buildInfoRow(
             icon: Icons.calendar_today,
             label: 'تاريخ التسجيل',
             value: _formatDate(customer.createdAt),
@@ -311,13 +345,23 @@ class CustomerDetailPanel extends StatelessWidget {
       children: [
         Icon(icon, size: 16, color: AppColors.textSecondary),
         const SizedBox(width: AppSizes.sm),
-        Text(label, style: AppTextStyles.bodyM),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w500,
+        Flexible(
+          child: Text(
+            label,
+            style: AppTextStyles.bodyM,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: AppSizes.sm),
+        Flexible(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.end,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

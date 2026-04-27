@@ -35,6 +35,15 @@ class AppRouter {
             },
           ),
           GoRoute(
+            path: '/products/:id',
+            builder: (context, state) {
+              final productId = state.pathParameters['id'];
+              return ProductsPage(
+                  preselectedProductId:
+                      productId != null ? int.tryParse(productId) : null);
+            },
+          ),
+          GoRoute(
             path: '/pos',
             builder: (context, state) => const PosPage(),
           ),

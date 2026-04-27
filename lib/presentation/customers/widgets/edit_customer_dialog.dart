@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
@@ -25,12 +24,15 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _addressController;
   String? _phoneError;
 
   @override
   void initState() {
     _nameController = TextEditingController(text: widget.customer.name);
     _phoneController = TextEditingController(text: widget.customer.phone);
+    _addressController =
+        TextEditingController(text: widget.customer.address ?? '');
     super.initState();
   }
 
@@ -38,6 +40,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -64,6 +67,9 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
     // Update the customer model in place
     widget.customer.name = _nameController.text.trim();
     widget.customer.phone = newPhone;
+    widget.customer.address = _addressController.text.trim().isEmpty
+        ? null
+        : _addressController.text.trim();
     widget.customer.updatedAt = DateTime.now();
 
     if (mounted) {
@@ -134,6 +140,12 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: AppSizes.md),
+              _buildTextField(
+                controller: _addressController,
+                label: 'العنوان',
+                keyboardType: TextInputType.streetAddress,
               ),
               const SizedBox(height: AppSizes.xl),
               Row(

@@ -91,6 +91,7 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
       final customer = CustomerModel()
         ..name = event.name
         ..phone = event.phone
+        ..address = event.address
         ..debtBalance = 0.0
         ..createdAt = DateTime.now();
       await repository.insert(customer);

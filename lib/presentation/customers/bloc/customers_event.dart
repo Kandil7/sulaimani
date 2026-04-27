@@ -19,9 +19,10 @@ class SearchCustomers extends CustomersEvent {
 class AddCustomer extends CustomersEvent {
   final String name;
   final String phone;
-  const AddCustomer({required this.name, required this.phone});
+  final String? address;
+  const AddCustomer({required this.name, required this.phone, this.address});
   @override
-  List<Object?> get props => [name, phone];
+  List<Object?> get props => [name, phone, address];
 }
 
 class UpdateCustomer extends CustomersEvent {

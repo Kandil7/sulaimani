@@ -11,7 +11,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../../core/widgets/confirm_dialog.dart';
 import '../../../core/widgets/error_state.dart';
-import '../../../core/widgets/loading_skeleton.dart';
 import '../../../data/models/product_model.dart';
 import '../../../data/datasources/local/product_local_datasource.dart';
 import '../../../domain/entities/product.dart';
@@ -231,22 +230,20 @@ class _ProductsViewState extends State<ProductsView> {
       children: [
         Expanded(
           flex: 5,
-          child: SingleChildScrollView(
-            child: ProductsTable(
-              products: pageProducts,
-              currentPage: _currentPage,
-              totalPages: totalPages > 0 ? totalPages : 1,
-              selectedProduct: _selectedProduct,
-              onProductSelected: _onProductSelected,
-              onEditProduct: _showEditDialog,
-              onDeleteProduct: _onDeleteProduct,
-              onPageChanged: (page) {
-                setState(() => _currentPage = page);
-              },
-              sortColumn: _sortField,
-              sortAscending: _sortAscending,
-              onSort: _onSort,
-            ),
+          child: ProductsTable(
+            products: pageProducts,
+            currentPage: _currentPage,
+            totalPages: totalPages > 0 ? totalPages : 1,
+            selectedProduct: _selectedProduct,
+            onProductSelected: _onProductSelected,
+            onEditProduct: _showEditDialog,
+            onDeleteProduct: _onDeleteProduct,
+            onPageChanged: (page) {
+              setState(() => _currentPage = page);
+            },
+            sortColumn: _sortField,
+            sortAscending: _sortAscending,
+            onSort: _onSort,
           ),
         ),
         const SizedBox(width: AppSizes.md),

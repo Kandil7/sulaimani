@@ -17,28 +17,48 @@ const CustomerModelSchema = CollectionSchema(
   name: r'CustomerModel',
   id: -2515451200106855952,
   properties: {
-    r'createdAt': PropertySchema(
+    r'address': PropertySchema(
       id: 0,
+      name: r'address',
+      type: IsarType.string,
+    ),
+    r'createdAt': PropertySchema(
+      id: 1,
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
     r'debtBalance': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'debtBalance',
       type: IsarType.double,
     ),
+    r'hasDebt': PropertySchema(
+      id: 3,
+      name: r'hasDebt',
+      type: IsarType.bool,
+    ),
     r'name': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
+    r'notes': PropertySchema(
+      id: 5,
+      name: r'notes',
+      type: IsarType.string,
+    ),
     r'phone': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'phone',
       type: IsarType.string,
     ),
+    r'totalPurchases': PropertySchema(
+      id: 7,
+      name: r'totalPurchases',
+      type: IsarType.long,
+    ),
     r'updatedAt': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -90,7 +110,19 @@ int _customerModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.address;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.notes;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.phone.length * 3;
   return bytesCount;
 }
@@ -101,11 +133,15 @@ void _customerModelSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeDateTime(offsets[0], object.createdAt);
-  writer.writeDouble(offsets[1], object.debtBalance);
-  writer.writeString(offsets[2], object.name);
-  writer.writeString(offsets[3], object.phone);
-  writer.writeDateTime(offsets[4], object.updatedAt);
+  writer.writeString(offsets[0], object.address);
+  writer.writeDateTime(offsets[1], object.createdAt);
+  writer.writeDouble(offsets[2], object.debtBalance);
+  writer.writeBool(offsets[3], object.hasDebt);
+  writer.writeString(offsets[4], object.name);
+  writer.writeString(offsets[5], object.notes);
+  writer.writeString(offsets[6], object.phone);
+  writer.writeLong(offsets[7], object.totalPurchases);
+  writer.writeDateTime(offsets[8], object.updatedAt);
 }
 
 CustomerModel _customerModelDeserialize(
@@ -115,12 +151,15 @@ CustomerModel _customerModelDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = CustomerModel();
-  object.createdAt = reader.readDateTime(offsets[0]);
-  object.debtBalance = reader.readDouble(offsets[1]);
+  object.address = reader.readStringOrNull(offsets[0]);
+  object.createdAt = reader.readDateTime(offsets[1]);
+  object.debtBalance = reader.readDouble(offsets[2]);
   object.id = id;
-  object.name = reader.readString(offsets[2]);
-  object.phone = reader.readString(offsets[3]);
-  object.updatedAt = reader.readDateTimeOrNull(offsets[4]);
+  object.name = reader.readString(offsets[4]);
+  object.notes = reader.readStringOrNull(offsets[5]);
+  object.phone = reader.readString(offsets[6]);
+  object.totalPurchases = reader.readLong(offsets[7]);
+  object.updatedAt = reader.readDateTimeOrNull(offsets[8]);
   return object;
 }
 
@@ -132,14 +171,22 @@ P _customerModelDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 1:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 2:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
+      return (reader.readString(offset)) as P;
+    case 7:
+      return (reader.readLong(offset)) as P;
+    case 8:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -388,6 +435,160 @@ extension CustomerModelQueryWhere
 extension CustomerModelQueryFilter
     on QueryBuilder<CustomerModel, CustomerModel, QFilterCondition> {
   QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'address',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'address',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'address',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'address',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      addressIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'address',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
       createdAtEqualTo(DateTime value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -505,6 +706,16 @@ extension CustomerModelQueryFilter
         upper: upper,
         includeUpper: includeUpper,
         epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      hasDebtEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasDebt',
+        value: value,
       ));
     });
   }
@@ -699,6 +910,160 @@ extension CustomerModelQueryFilter
   }
 
   QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'notes',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'notes',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'notes',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'notes',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      notesIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'notes',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
       phoneEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -835,6 +1200,62 @@ extension CustomerModelQueryFilter
   }
 
   QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      totalPurchasesEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'totalPurchases',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      totalPurchasesGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'totalPurchases',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      totalPurchasesLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'totalPurchases',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
+      totalPurchasesBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'totalPurchases',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterFilterCondition>
       updatedAtIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -917,6 +1338,18 @@ extension CustomerModelQueryLinks
 
 extension CustomerModelQuerySortBy
     on QueryBuilder<CustomerModel, CustomerModel, QSortBy> {
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -943,6 +1376,18 @@ extension CustomerModelQuerySortBy
     });
   }
 
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByHasDebt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasDebt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByHasDebtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasDebt', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -955,6 +1400,18 @@ extension CustomerModelQuerySortBy
     });
   }
 
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByPhone() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phone', Sort.asc);
@@ -964,6 +1421,20 @@ extension CustomerModelQuerySortBy
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> sortByPhoneDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phone', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy>
+      sortByTotalPurchases() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalPurchases', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy>
+      sortByTotalPurchasesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalPurchases', Sort.desc);
     });
   }
 
@@ -983,6 +1454,18 @@ extension CustomerModelQuerySortBy
 
 extension CustomerModelQuerySortThenBy
     on QueryBuilder<CustomerModel, CustomerModel, QSortThenBy> {
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByAddress() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByAddressDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'address', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.asc);
@@ -1006,6 +1489,18 @@ extension CustomerModelQuerySortThenBy
       thenByDebtBalanceDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'debtBalance', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByHasDebt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasDebt', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByHasDebtDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasDebt', Sort.desc);
     });
   }
 
@@ -1033,6 +1528,18 @@ extension CustomerModelQuerySortThenBy
     });
   }
 
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByNotes() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByNotesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'notes', Sort.desc);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByPhone() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phone', Sort.asc);
@@ -1042,6 +1549,20 @@ extension CustomerModelQuerySortThenBy
   QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy> thenByPhoneDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'phone', Sort.desc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy>
+      thenByTotalPurchases() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalPurchases', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QAfterSortBy>
+      thenByTotalPurchasesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'totalPurchases', Sort.desc);
     });
   }
 
@@ -1061,6 +1582,13 @@ extension CustomerModelQuerySortThenBy
 
 extension CustomerModelQueryWhereDistinct
     on QueryBuilder<CustomerModel, CustomerModel, QDistinct> {
+  QueryBuilder<CustomerModel, CustomerModel, QDistinct> distinctByAddress(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'address', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QDistinct> distinctByCreatedAt() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'createdAt');
@@ -1074,6 +1602,12 @@ extension CustomerModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CustomerModel, CustomerModel, QDistinct> distinctByHasDebt() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasDebt');
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1081,10 +1615,24 @@ extension CustomerModelQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CustomerModel, CustomerModel, QDistinct> distinctByNotes(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'notes', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CustomerModel, CustomerModel, QDistinct> distinctByPhone(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'phone', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<CustomerModel, CustomerModel, QDistinct>
+      distinctByTotalPurchases() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'totalPurchases');
     });
   }
 
@@ -1103,6 +1651,12 @@ extension CustomerModelQueryProperty
     });
   }
 
+  QueryBuilder<CustomerModel, String?, QQueryOperations> addressProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'address');
+    });
+  }
+
   QueryBuilder<CustomerModel, DateTime, QQueryOperations> createdAtProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'createdAt');
@@ -1115,15 +1669,33 @@ extension CustomerModelQueryProperty
     });
   }
 
+  QueryBuilder<CustomerModel, bool, QQueryOperations> hasDebtProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasDebt');
+    });
+  }
+
   QueryBuilder<CustomerModel, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
     });
   }
 
+  QueryBuilder<CustomerModel, String?, QQueryOperations> notesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'notes');
+    });
+  }
+
   QueryBuilder<CustomerModel, String, QQueryOperations> phoneProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'phone');
+    });
+  }
+
+  QueryBuilder<CustomerModel, int, QQueryOperations> totalPurchasesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'totalPurchases');
     });
   }
 

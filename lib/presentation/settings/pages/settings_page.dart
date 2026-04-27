@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -44,9 +45,11 @@ class _SettingsPageContent extends StatelessWidget {
           );
         } else if (state is BackupCreated) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('تم إنشاء النسخة الاحتياطية بنجاح'),
+            SnackBar(
+              content:
+                  Text('تم إنشاء النسخة الاحتياطية في: ${state.backupPath}'),
               backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 4),
             ),
           );
         } else if (state is BackupRestored) {
@@ -169,7 +172,23 @@ class _SettingsPageContent extends StatelessWidget {
       settings: settings,
       onSave: (s) => context.read<SettingsBloc>().add(UpdateSettings(s)),
       onReset: () => _showResetConfirmation(context),
-      onCreateBackup: () => context.read<SettingsBloc>().add(CreateBackup()),
+      onCreateBackup: () {
+        final bloc = context.read<SettingsBloc>();
+        final state = bloc.state;
+        String? customPath;
+
+        // Try to get customBackupPath from current settings
+        if (state is SettingsLoaded) {
+          customPath = state.settings.customBackupPath;
+        } else if (state is SettingsSaved) {
+          customPath = state.settings.customBackupPath;
+        } else if (state is BackupCreated) {
+          customPath = state.settings.customBackupPath;
+        }
+
+        // Add backup event with custom path
+        bloc.add(CreateBackup(customPath: customPath));
+      },
       onRestore: () => _showRestoreDialog(context),
     );
   }
@@ -203,23 +222,45 @@ class _SettingsPageContent extends StatelessWidget {
   }
 
   void _showRestoreDialog(BuildContext context) {
-    final controller = TextEditingController();
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('استعادة من نسخة احتياطية'),
+        title: Row(
+          children: [
+            Icon(Icons.restore, color: AppColors.primary),
+            const SizedBox(width: AppSizes.sm),
+            const Text('استعادة من نسخة احتياطية'),
+          ],
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('أدخل مسار ملف النسخة الاحتياطية:'),
-            const SizedBox(height: AppSizes.md),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'المسار',
-                border: OutlineInputBorder(),
-                hintText: 'C:\\Users\\...\\backup.isar',
+            Container(
+              padding: const EdgeInsets.all(AppSizes.md),
+              decoration: BoxDecoration(
+                color: AppColors.warningSurface,
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
               ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline,
+                      color: AppColors.warning, size: 20),
+                  const SizedBox(width: AppSizes.sm),
+                  Expanded(
+                    child: Text(
+                      'اختر ملف نسخة احتياطية (CSV) للاستيراد',
+                      style: AppTextStyles.bodyM
+                          .copyWith(color: AppColors.warning),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.md),
+            const Text(
+              'ملاحظة: سيتم استيراد البيانات من ملف CSV. تأكد من اختيار الملف الصحيح.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ],
         ),
@@ -228,18 +269,66 @@ class _SettingsPageContent extends StatelessWidget {
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('إلغاء'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              final path = controller.text.trim();
-              if (path.isNotEmpty) {
-                Navigator.pop(dialogContext);
-                context.read<SettingsBloc>().add(RestoreBackup(path));
-              }
+          ElevatedButton.icon(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await _pickAndRestoreBackup(context);
             },
-            child: const Text('استعادة'),
+            icon: const Icon(Icons.folder_open, size: 18),
+            label: const Text('اختيار ملف'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _pickAndRestoreBackup(BuildContext context) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+        allowMultiple: false,
+        withData: false,
+        withReadStream: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        if (file.path != null && context.mounted) {
+          // Show loading dialog
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const AlertDialog(
+              content: Row(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(width: AppSizes.md),
+                  Text('جاري استعادة البيانات...'),
+                ],
+              ),
+            ),
+          );
+
+          // Restore from CSV
+          if (context.mounted) {
+            context.read<SettingsBloc>().add(RestoreBackup(file.path!));
+          }
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('فشل في اختيار الملف: $e'),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      }
+    }
   }
 }

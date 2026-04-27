@@ -77,6 +77,8 @@ class AlertsView extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context, AlertsState state) {
+    final isMobile = ScreenUtils.isMobile(context);
+
     if (state is AlertsLoading) {
       return _buildLoadingState();
     } else if (state is AlertsLoaded) {
@@ -92,30 +94,62 @@ class AlertsView extends StatelessWidget {
         child: Column(
           children: [
             // Summary Cards
-            Row(
-              children: [
-                _buildSummaryCard(
-                  title: 'منتهية الصلاحية',
-                  count: state.expiredProducts.length,
-                  color: AppColors.danger,
-                  icon: Icons.cancel_outlined,
-                ),
-                const SizedBox(width: AppSizes.md),
-                _buildSummaryCard(
-                  title: 'تنتهي قريباً',
-                  count: state.expiringSoonProducts.length,
-                  color: AppColors.warning,
-                  icon: Icons.warning_amber_outlined,
-                ),
-                const SizedBox(width: AppSizes.md),
-                _buildSummaryCard(
-                  title: 'مخزون منخفض',
-                  count: state.lowStockProducts.length,
-                  color: AppColors.warning,
-                  icon: Icons.inventory_2_outlined,
-                ),
-              ],
-            ),
+            if (isMobile)
+              Column(
+                children: [
+                  _buildSummaryCard(
+                    title: 'منتهية الصلاحية',
+                    count: state.expiredProducts.length,
+                    color: AppColors.danger,
+                    icon: Icons.cancel_outlined,
+                  ),
+                  const SizedBox(height: AppSizes.sm),
+                  _buildSummaryCard(
+                    title: 'تنتهي قريباً',
+                    count: state.expiringSoonProducts.length,
+                    color: AppColors.warning,
+                    icon: Icons.warning_amber_outlined,
+                  ),
+                  const SizedBox(height: AppSizes.sm),
+                  _buildSummaryCard(
+                    title: 'مخزون منخفض',
+                    count: state.lowStockProducts.length,
+                    color: AppColors.warning,
+                    icon: Icons.inventory_2_outlined,
+                  ),
+                ],
+              )
+            else
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'منتهية الصلاحية',
+                      count: state.expiredProducts.length,
+                      color: AppColors.danger,
+                      icon: Icons.cancel_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.md),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'تنتهي قريباً',
+                      count: state.expiringSoonProducts.length,
+                      color: AppColors.warning,
+                      icon: Icons.warning_amber_outlined,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.md),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'مخزون منخفض',
+                      count: state.lowStockProducts.length,
+                      color: AppColors.warning,
+                      icon: Icons.inventory_2_outlined,
+                    ),
+                  ),
+                ],
+              ),
             const SizedBox(height: AppSizes.xl),
 
             // Expired Products
@@ -179,7 +213,8 @@ class AlertsView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSizes.lg),
-        Expanded(
+        SizedBox(
+          height: 300,
           child: LoadingSkeleton(
             height: double.infinity,
             width: double.infinity,

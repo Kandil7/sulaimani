@@ -24,6 +24,8 @@ class SettingsModel {
   int backupIntervalHours = 24;
   DateTime? lastBackupDate;
   DateTime? nextScheduledBackup;
+  String? customBackupPath;
+  int maxBackupFiles = 10;
 
   late DateTime createdAt;
   late DateTime updatedAt;
@@ -43,6 +45,8 @@ class SettingsModel {
     ..backupIntervalHours = 24
     ..lastBackupDate = null
     ..nextScheduledBackup = null
+    ..customBackupPath = null
+    ..maxBackupFiles = 10
     ..createdAt = DateTime.now()
     ..updatedAt = DateTime.now();
 }

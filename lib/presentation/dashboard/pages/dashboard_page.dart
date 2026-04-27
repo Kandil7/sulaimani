@@ -34,7 +34,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   Timer? _autoRefreshTimer;
-  final String _userName = 'أحمد';
+  final String _userName = 'مصطفي';
 
   @override
   void initState() {

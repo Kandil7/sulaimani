@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/services/data_backup_service.dart';
 import '../../../data/models/settings_model.dart';
 import 'invoice_preview_card.dart';
 
@@ -13,6 +14,7 @@ class SettingsForm extends StatefulWidget {
   final VoidCallback onReset;
   final VoidCallback onCreateBackup;
   final VoidCallback onRestore;
+  final VoidCallback? onBackupCreated;
 
   const SettingsForm({
     super.key,
@@ -21,6 +23,7 @@ class SettingsForm extends StatefulWidget {
     required this.onReset,
     required this.onCreateBackup,
     required this.onRestore,
+    this.onBackupCreated,
   });
 
   @override
@@ -36,12 +39,16 @@ class _SettingsFormState extends State<SettingsForm> {
   late TextEditingController _invoiceFooterController;
   late TextEditingController _expiryDaysController;
   late TextEditingController _lowStockController;
+  late TextEditingController _backupPathController;
 
   bool _enableNotificationSounds = true;
   bool _enableWindowsNotifications = true;
   bool _autoBackupEnabled = false;
   int _backupIntervalHours = 24;
+  int _maxBackupFiles = 10;
   String? _selectedLogoPath;
+  List<BackupInfo> _backupList = [];
+  bool _loadingBackups = false;
 
   @override
   void initState() {
@@ -64,16 +71,43 @@ class _SettingsFormState extends State<SettingsForm> {
         TextEditingController(text: s.expiryWarningDays.toString());
     _lowStockController =
         TextEditingController(text: s.lowStockWarning.toString());
+    _backupPathController =
+        TextEditingController(text: s.customBackupPath ?? '');
     _enableNotificationSounds = s.enableNotificationSounds;
     _enableWindowsNotifications = s.enableWindowsNotifications;
     _autoBackupEnabled = s.autoBackupEnabled;
     _backupIntervalHours = s.backupIntervalHours;
+    // Ensure maxBackupFiles is in valid range [5, 10, 15, 20, 30]
+    final maxFiles = s.maxBackupFiles;
+    _maxBackupFiles = [5, 10, 15, 20, 30].contains(maxFiles) ? maxFiles : 10;
     _selectedLogoPath = s.invoiceLogoPath;
+
+    // Load backup list after a short delay to avoid blocking UI initialization
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadBackupList();
+    });
+  }
+
+  Future<void> _loadBackupList() async {
+    if (!mounted) return;
+    setState(() => _loadingBackups = true);
+    try {
+      final customPath = _backupPathController.text.isNotEmpty
+          ? _backupPathController.text
+          : null;
+      _backupList = await listBackups(customPath: customPath);
+    } catch (_) {
+      _backupList = [];
+    }
+    if (mounted) {
+      setState(() => _loadingBackups = false);
+    }
   }
 
   @override
   void didUpdateWidget(SettingsForm oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Check if settings changed and reinitialize controllers
     if (oldWidget.settings.id != widget.settings.id) {
       _initControllers();
     }
@@ -88,6 +122,7 @@ class _SettingsFormState extends State<SettingsForm> {
     _invoiceFooterController.dispose();
     _expiryDaysController.dispose();
     _lowStockController.dispose();
+    _backupPathController.dispose();
     super.dispose();
   }
 
@@ -113,9 +148,14 @@ class _SettingsFormState extends State<SettingsForm> {
       s.enableWindowsNotifications = _enableWindowsNotifications;
       s.autoBackupEnabled = _autoBackupEnabled;
       s.backupIntervalHours = _backupIntervalHours;
+      s.maxBackupFiles = _maxBackupFiles;
+      s.customBackupPath = _backupPathController.text.trim().isEmpty
+          ? null
+          : _backupPathController.text.trim();
       s.invoiceLogoPath = _selectedLogoPath;
 
       widget.onSave(s);
+      _loadBackupList(); // Reload backup list with new path
     }
   }
 
@@ -434,7 +474,14 @@ class _SettingsFormState extends State<SettingsForm> {
           children: [
             Expanded(
               child: ElevatedButton.icon(
-                onPressed: widget.onCreateBackup,
+                onPressed: () async {
+                  widget.onCreateBackup();
+                  // Refresh backup list after a delay
+                  await Future.delayed(const Duration(seconds: 3));
+                  if (mounted) {
+                    _loadBackupList();
+                  }
+                },
                 icon: const Icon(Icons.save),
                 label: const Text('نسخ احتياطي'),
                 style: ElevatedButton.styleFrom(
@@ -454,16 +501,26 @@ class _SettingsFormState extends State<SettingsForm> {
           ],
         ),
         const SizedBox(height: AppSizes.md),
-        if (widget.settings.lastBackupDate != null)
-          Text(
-            'آخر نسخة احتياطية: ${_formatDate(widget.settings.lastBackupDate!)}',
-            style: AppTextStyles.bodyM,
-          )
-        else
-          Text(
-            'لم يتم إجراء نسخة احتياطية بعد',
-            style: AppTextStyles.bodyM,
+
+        // Backup Path Configuration
+        TextFormField(
+          controller: _backupPathController,
+          decoration: InputDecoration(
+            labelText: 'مسار حفظ النسخ الاحتياطية',
+            border: const OutlineInputBorder(),
+            hintText: 'افتراضي: مستندات التطبيق',
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.folder_open),
+              onPressed: _pickBackupPath,
+              tooltip: 'اختيار مجلد',
+            ),
           ),
+        ),
+        const SizedBox(height: AppSizes.md),
+
+        // Backup History
+        _buildBackupHistorySection(),
+
         const SizedBox(height: AppSizes.md),
         SwitchListTile(
           title: const Text('تفعيل النسخ الاحتياطي التلقائي'),
@@ -492,28 +549,50 @@ class _SettingsFormState extends State<SettingsForm> {
                   ),
                 ),
                 const SizedBox(height: AppSizes.sm),
+                Wrap(
+                  spacing: AppSizes.xs,
+                  runSpacing: AppSizes.xs,
+                  children: [
+                    _buildIntervalChip(6, '6س'),
+                    _buildIntervalChip(12, '12س'),
+                    _buildIntervalChip(24, 'يومي'),
+                    _buildIntervalChip(72, '3 أيام'),
+                    _buildIntervalChip(168, 'أسبوع'),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.sm),
                 Row(
                   children: [
-                    _buildIntervalChip(6, 'كل 6 ساعات'),
-                    const SizedBox(width: AppSizes.sm),
-                    _buildIntervalChip(12, 'كل 12 ساعة'),
-                    const SizedBox(width: AppSizes.sm),
-                    _buildIntervalChip(24, 'يومياً'),
-                    const SizedBox(width: AppSizes.sm),
-                    _buildIntervalChip(72, 'كل 3 أيام'),
-                    const SizedBox(width: AppSizes.sm),
-                    _buildIntervalChip(168, 'أسبوعياً'),
+                    const Text('الحد الأقصى للملفات:',
+                        style: TextStyle(fontSize: 12)),
+                    const SizedBox(width: AppSizes.xs),
+                    DropdownButton<int>(
+                      value: _maxBackupFiles,
+                      isDense: true,
+                      underline: const SizedBox(),
+                      items: [5, 10, 15, 20, 30]
+                          .map(
+                            (n) =>
+                                DropdownMenuItem(value: n, child: Text('$n')),
+                          )
+                          .toList(),
+                      onChanged: (v) {
+                        if (v != null && [5, 10, 15, 20, 30].contains(v)) {
+                          setState(() => _maxBackupFiles = v);
+                        }
+                      },
+                    ),
                   ],
                 ),
                 if (widget.settings.nextScheduledBackup != null) ...[
-                  const SizedBox(height: AppSizes.sm),
+                  const SizedBox(height: AppSizes.xs),
                   Row(
                     children: [
                       const Icon(Icons.schedule,
                           size: 14, color: AppColors.textSecondary),
                       const SizedBox(width: AppSizes.xs),
                       Text(
-                        'النسخة القادمة: ${_formatDate(widget.settings.nextScheduledBackup!)}',
+                        'القادمة: ${_formatDate(widget.settings.nextScheduledBackup!)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -528,6 +607,114 @@ class _SettingsFormState extends State<SettingsForm> {
         ],
       ],
     );
+  }
+
+  Widget _buildBackupHistorySection() {
+    if (_loadingBackups) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.md),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (_backupList.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(AppSizes.md),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
+            SizedBox(width: AppSizes.sm),
+            Text(
+              'لا توجد نسخ احتياطية محفوظة',
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 200),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSizes.sm),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppSizes.radiusMd)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.history,
+                    size: 16, color: AppColors.textSecondary),
+                const SizedBox(width: AppSizes.xs),
+                Text(
+                  'سجل النسخ الاحتياطية (${_backupList.length})',
+                  style: AppTextStyles.label,
+                ),
+                const Spacer(),
+                Text(
+                  'الحجم الكلي: ${_formatBackupSize(_backupList.fold(0, (sum, b) => sum + b.size))}',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: _backupList.length > 5 ? 5 : _backupList.length,
+              separatorBuilder: (_, __) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final backup = _backupList[index];
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.insert_drive_file, size: 20),
+                  title: Text(
+                    backup.name,
+                    style: AppTextStyles.bodyM,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(_formatDate(backup.createdAt)),
+                  trailing: Text(
+                    backup.formattedSize,
+                    style: AppTextStyles.caption,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatBackupSize(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  Future<void> _pickBackupPath() async {
+    final result = await FilePicker.platform.getDirectoryPath();
+    if (result != null) {
+      setState(() {
+        _backupPathController.text = result;
+      });
+      _loadBackupList();
+    }
   }
 
   Widget _buildIntervalChip(int hours, String label) {
@@ -571,6 +758,39 @@ class _SettingsFormState extends State<SettingsForm> {
           leading: const Icon(Icons.new_releases),
           title: const Text('الإصدار'),
           subtitle: const Text('1.0.0'),
+          contentPadding: EdgeInsets.zero,
+        ),
+        const Divider(),
+        // Database Location
+        ListTile(
+          leading: const Icon(Icons.folder),
+          title: const Text('موقع قاعدة البيانات'),
+          subtitle: FutureBuilder<String>(
+            future: getBackupDirectoryPath(),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                return Text(
+                  snapshot.data!.split('sulaimani_backups').first,
+                  style: AppTextStyles.caption,
+                  overflow: TextOverflow.ellipsis,
+                );
+              }
+              return const Text('...');
+            },
+          ),
+          contentPadding: EdgeInsets.zero,
+        ),
+        const Divider(),
+        // Backup Statistics
+        ListTile(
+          leading: const Icon(Icons.storage),
+          title: const Text('إحصائيات التخزين'),
+          subtitle: _backupList.isEmpty
+              ? const Text('جاري الحساب...')
+              : Text(
+                  '${_backupList.length} نسخة احتياطية (${_formatBackupSize(_backupList.fold(0, (sum, b) => sum + b.size))})',
+                  style: AppTextStyles.caption,
+                ),
           contentPadding: EdgeInsets.zero,
         ),
         const Divider(),

@@ -31,6 +31,7 @@ class StatsRow extends StatelessWidget {
 
   Widget _buildRowLayout() {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: _StatCard(

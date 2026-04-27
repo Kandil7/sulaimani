@@ -32,68 +32,78 @@ const SettingsModelSchema = CollectionSchema(
       name: r'createdAt',
       type: IsarType.dateTime,
     ),
-    r'enableNotificationSounds': PropertySchema(
+    r'customBackupPath': PropertySchema(
       id: 3,
+      name: r'customBackupPath',
+      type: IsarType.string,
+    ),
+    r'enableNotificationSounds': PropertySchema(
+      id: 4,
       name: r'enableNotificationSounds',
       type: IsarType.bool,
     ),
     r'enableWindowsNotifications': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'enableWindowsNotifications',
       type: IsarType.bool,
     ),
     r'expiryWarningDays': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'expiryWarningDays',
       type: IsarType.long,
     ),
     r'invoiceFooter': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'invoiceFooter',
       type: IsarType.string,
     ),
     r'invoiceHeader': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'invoiceHeader',
       type: IsarType.string,
     ),
     r'invoiceLogoPath': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'invoiceLogoPath',
       type: IsarType.string,
     ),
     r'lastBackupDate': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'lastBackupDate',
       type: IsarType.dateTime,
     ),
     r'lowStockWarning': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'lowStockWarning',
       type: IsarType.long,
     ),
+    r'maxBackupFiles': PropertySchema(
+      id: 12,
+      name: r'maxBackupFiles',
+      type: IsarType.long,
+    ),
     r'nextScheduledBackup': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'nextScheduledBackup',
       type: IsarType.dateTime,
     ),
     r'pharmacyAddress': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'pharmacyAddress',
       type: IsarType.string,
     ),
     r'pharmacyName': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'pharmacyName',
       type: IsarType.string,
     ),
     r'pharmacyPhone': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'pharmacyPhone',
       type: IsarType.string,
     ),
     r'updatedAt': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'updatedAt',
       type: IsarType.dateTime,
     )
@@ -118,6 +128,12 @@ int _settingsModelEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.customBackupPath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   {
     final value = object.invoiceFooter;
     if (value != null) {
@@ -161,19 +177,21 @@ void _settingsModelSerialize(
   writer.writeBool(offsets[0], object.autoBackupEnabled);
   writer.writeLong(offsets[1], object.backupIntervalHours);
   writer.writeDateTime(offsets[2], object.createdAt);
-  writer.writeBool(offsets[3], object.enableNotificationSounds);
-  writer.writeBool(offsets[4], object.enableWindowsNotifications);
-  writer.writeLong(offsets[5], object.expiryWarningDays);
-  writer.writeString(offsets[6], object.invoiceFooter);
-  writer.writeString(offsets[7], object.invoiceHeader);
-  writer.writeString(offsets[8], object.invoiceLogoPath);
-  writer.writeDateTime(offsets[9], object.lastBackupDate);
-  writer.writeLong(offsets[10], object.lowStockWarning);
-  writer.writeDateTime(offsets[11], object.nextScheduledBackup);
-  writer.writeString(offsets[12], object.pharmacyAddress);
-  writer.writeString(offsets[13], object.pharmacyName);
-  writer.writeString(offsets[14], object.pharmacyPhone);
-  writer.writeDateTime(offsets[15], object.updatedAt);
+  writer.writeString(offsets[3], object.customBackupPath);
+  writer.writeBool(offsets[4], object.enableNotificationSounds);
+  writer.writeBool(offsets[5], object.enableWindowsNotifications);
+  writer.writeLong(offsets[6], object.expiryWarningDays);
+  writer.writeString(offsets[7], object.invoiceFooter);
+  writer.writeString(offsets[8], object.invoiceHeader);
+  writer.writeString(offsets[9], object.invoiceLogoPath);
+  writer.writeDateTime(offsets[10], object.lastBackupDate);
+  writer.writeLong(offsets[11], object.lowStockWarning);
+  writer.writeLong(offsets[12], object.maxBackupFiles);
+  writer.writeDateTime(offsets[13], object.nextScheduledBackup);
+  writer.writeString(offsets[14], object.pharmacyAddress);
+  writer.writeString(offsets[15], object.pharmacyName);
+  writer.writeString(offsets[16], object.pharmacyPhone);
+  writer.writeDateTime(offsets[17], object.updatedAt);
 }
 
 SettingsModel _settingsModelDeserialize(
@@ -186,20 +204,22 @@ SettingsModel _settingsModelDeserialize(
   object.autoBackupEnabled = reader.readBool(offsets[0]);
   object.backupIntervalHours = reader.readLong(offsets[1]);
   object.createdAt = reader.readDateTime(offsets[2]);
-  object.enableNotificationSounds = reader.readBool(offsets[3]);
-  object.enableWindowsNotifications = reader.readBool(offsets[4]);
-  object.expiryWarningDays = reader.readLong(offsets[5]);
+  object.customBackupPath = reader.readStringOrNull(offsets[3]);
+  object.enableNotificationSounds = reader.readBool(offsets[4]);
+  object.enableWindowsNotifications = reader.readBool(offsets[5]);
+  object.expiryWarningDays = reader.readLong(offsets[6]);
   object.id = id;
-  object.invoiceFooter = reader.readStringOrNull(offsets[6]);
-  object.invoiceHeader = reader.readStringOrNull(offsets[7]);
-  object.invoiceLogoPath = reader.readStringOrNull(offsets[8]);
-  object.lastBackupDate = reader.readDateTimeOrNull(offsets[9]);
-  object.lowStockWarning = reader.readLong(offsets[10]);
-  object.nextScheduledBackup = reader.readDateTimeOrNull(offsets[11]);
-  object.pharmacyAddress = reader.readStringOrNull(offsets[12]);
-  object.pharmacyName = reader.readString(offsets[13]);
-  object.pharmacyPhone = reader.readStringOrNull(offsets[14]);
-  object.updatedAt = reader.readDateTime(offsets[15]);
+  object.invoiceFooter = reader.readStringOrNull(offsets[7]);
+  object.invoiceHeader = reader.readStringOrNull(offsets[8]);
+  object.invoiceLogoPath = reader.readStringOrNull(offsets[9]);
+  object.lastBackupDate = reader.readDateTimeOrNull(offsets[10]);
+  object.lowStockWarning = reader.readLong(offsets[11]);
+  object.maxBackupFiles = reader.readLong(offsets[12]);
+  object.nextScheduledBackup = reader.readDateTimeOrNull(offsets[13]);
+  object.pharmacyAddress = reader.readStringOrNull(offsets[14]);
+  object.pharmacyName = reader.readString(offsets[15]);
+  object.pharmacyPhone = reader.readStringOrNull(offsets[16]);
+  object.updatedAt = reader.readDateTime(offsets[17]);
   return object;
 }
 
@@ -217,30 +237,34 @@ P _settingsModelDeserializeProp<P>(
     case 2:
       return (reader.readDateTime(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
       return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 7:
       return (reader.readStringOrNull(offset)) as P;
     case 8:
       return (reader.readStringOrNull(offset)) as P;
     case 9:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 10:
-      return (reader.readLong(offset)) as P;
-    case 11:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 12:
       return (reader.readStringOrNull(offset)) as P;
+    case 10:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 11:
+      return (reader.readLong(offset)) as P;
+    case 12:
+      return (reader.readLong(offset)) as P;
     case 13:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 14:
       return (reader.readStringOrNull(offset)) as P;
     case 15:
+      return (reader.readString(offset)) as P;
+    case 16:
+      return (reader.readStringOrNull(offset)) as P;
+    case 17:
       return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -461,6 +485,160 @@ extension SettingsModelQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'customBackupPath',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'customBackupPath',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customBackupPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customBackupPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customBackupPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customBackupPath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customBackupPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customBackupPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customBackupPath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customBackupPath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customBackupPath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      customBackupPathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customBackupPath',
+        value: '',
       ));
     });
   }
@@ -1188,6 +1366,62 @@ extension SettingsModelQueryFilter
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      maxBackupFilesEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'maxBackupFiles',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      maxBackupFilesGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'maxBackupFiles',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      maxBackupFilesLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'maxBackupFiles',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
+      maxBackupFilesBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'maxBackupFiles',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterFilterCondition>
       nextScheduledBackupIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1812,6 +2046,20 @@ extension SettingsModelQuerySortBy
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByCustomBackupPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackupPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByCustomBackupPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackupPath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
       sortByEnableNotificationSounds() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enableNotificationSounds', Sort.asc);
@@ -1920,6 +2168,20 @@ extension SettingsModelQuerySortBy
       sortByLowStockWarningDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lowStockWarning', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByMaxBackupFiles() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxBackupFiles', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      sortByMaxBackupFilesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxBackupFiles', Sort.desc);
     });
   }
 
@@ -2033,6 +2295,20 @@ extension SettingsModelQuerySortThenBy
       thenByCreatedAtDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'createdAt', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByCustomBackupPath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackupPath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByCustomBackupPathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackupPath', Sort.desc);
     });
   }
 
@@ -2161,6 +2437,20 @@ extension SettingsModelQuerySortThenBy
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByMaxBackupFiles() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxBackupFiles', Sort.asc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
+      thenByMaxBackupFilesDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'maxBackupFiles', Sort.desc);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QAfterSortBy>
       thenByNextScheduledBackup() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'nextScheduledBackup', Sort.asc);
@@ -2253,6 +2543,14 @@ extension SettingsModelQueryWhereDistinct
   }
 
   QueryBuilder<SettingsModel, SettingsModel, QDistinct>
+      distinctByCustomBackupPath({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customBackupPath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QDistinct>
       distinctByEnableNotificationSounds() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'enableNotificationSounds');
@@ -2308,6 +2606,13 @@ extension SettingsModelQueryWhereDistinct
       distinctByLowStockWarning() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lowStockWarning');
+    });
+  }
+
+  QueryBuilder<SettingsModel, SettingsModel, QDistinct>
+      distinctByMaxBackupFiles() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'maxBackupFiles');
     });
   }
 
@@ -2376,6 +2681,13 @@ extension SettingsModelQueryProperty
     });
   }
 
+  QueryBuilder<SettingsModel, String?, QQueryOperations>
+      customBackupPathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customBackupPath');
+    });
+  }
+
   QueryBuilder<SettingsModel, bool, QQueryOperations>
       enableNotificationSoundsProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -2428,6 +2740,12 @@ extension SettingsModelQueryProperty
   QueryBuilder<SettingsModel, int, QQueryOperations> lowStockWarningProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lowStockWarning');
+    });
+  }
+
+  QueryBuilder<SettingsModel, int, QQueryOperations> maxBackupFilesProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'maxBackupFiles');
     });
   }
 

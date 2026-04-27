@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../settings/widgets/global_search_dialog.dart';
 
 class SideMenu extends StatelessWidget {
   final int alertCount;
@@ -253,7 +254,17 @@ class _LogoHeader extends StatelessWidget {
               ),
             ),
           ],
-          const Spacer(),
+          // Global search button
+          IconButton(
+            icon: const Icon(Icons.search, color: AppColors.primary),
+            tooltip: 'بحث شامل (Ctrl+K)',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (_) => const GlobalSearchDialog(),
+              );
+            },
+          ),
           if (onToggle != null)
             IconButton(
               icon: Icon(

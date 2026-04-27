@@ -18,7 +18,12 @@ class UpdateSettings extends SettingsEvent {
 
 class ResetSettings extends SettingsEvent {}
 
-class CreateBackup extends SettingsEvent {}
+class CreateBackup extends SettingsEvent {
+  final String? customPath;
+  const CreateBackup({this.customPath});
+  @override
+  List<Object?> get props => [customPath];
+}
 
 class RestoreBackup extends SettingsEvent {
   final String backupPath;

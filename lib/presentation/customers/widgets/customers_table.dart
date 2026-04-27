@@ -124,6 +124,8 @@ class _CustomersTableState extends State<CustomersTable> {
                     DataColumn(
                         label: Text('التليفون', style: AppTextStyles.label)),
                     DataColumn(
+                        label: Text('العنوان', style: AppTextStyles.label)),
+                    DataColumn(
                         label: Text('الدين', style: AppTextStyles.label)),
                     DataColumn(
                         label:
@@ -154,6 +156,17 @@ class _CustomersTableState extends State<CustomersTable> {
                         DataCell(Text('${globalIndex + 1}')),
                         DataCell(_buildCustomerNameCell(customer)),
                         DataCell(Text(customer.phone)),
+                        DataCell(
+                          Text(
+                            customer.address ?? '-',
+                            style: TextStyle(
+                              color: customer.address != null
+                                  ? AppColors.textPrimary
+                                  : AppColors.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                         DataCell(_buildDebtCell(customer.debtBalance)),
                         DataCell(Text(_formatDate(customer.createdAt))),
                         DataCell(_buildActionButtons(customer)),
@@ -514,6 +527,31 @@ class _CustomerCardState extends State<_CustomerCard> {
                         fontSize: 13,
                       ),
                     ),
+                    if (widget.customer.address != null &&
+                        widget.customer.address!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on,
+                            size: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              widget.customer.address!,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

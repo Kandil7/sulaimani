@@ -12,7 +12,13 @@ class CustomerModel {
   @Index(unique: true)
   late String phone;
 
+  String? address;
+
+  String? notes;
+
   double debtBalance = 0.0;
+
+  int totalPurchases = 0;
 
   late DateTime createdAt;
 

@@ -16,11 +16,13 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -29,6 +31,9 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
       context.read<CustomersBloc>().add(AddCustomer(
             name: _nameController.text.trim(),
             phone: _phoneController.text.trim(),
+            address: _addressController.text.trim().isEmpty
+                ? null
+                : _addressController.text.trim(),
           ));
       Navigator.of(context).pop();
     }
@@ -95,6 +100,12 @@ class _AddCustomerDialogState extends State<AddCustomerDialog> {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: AppSizes.md),
+              _buildTextField(
+                controller: _addressController,
+                label: 'العنوان',
+                keyboardType: TextInputType.streetAddress,
               ),
               const SizedBox(height: AppSizes.xl),
               Row(

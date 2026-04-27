@@ -29,6 +29,8 @@ class DataBackupService {
   final DatabaseService _databaseService;
   final SettingsRepository _settingsRepository;
 
+  String? _customBackupPath;
+
   DataBackupService({
     required ProductLocalDatasource productDatasource,
     required CustomerLocalDatasource customerDatasource,
@@ -42,6 +44,14 @@ class DataBackupService {
         _settingsRepository = settingsRepository;
 
   Isar get _isar => _databaseService.isar;
+
+  /// Set custom backup path
+  void setCustomBackupPath(String? path) {
+    _customBackupPath = path;
+  }
+
+  /// Get current backup path
+  String? get customBackupPath => _customBackupPath;
 
   // ============================================================================
   // EXPORT METHODS
@@ -285,6 +295,7 @@ class DataBackupService {
       final headers = _parseCsvLine(lines[0]);
       final int nameIndex = headers.indexOf('name');
       final int phoneIndex = headers.indexOf('phone');
+      final int addressIndex = headers.indexOf('address');
 
       if (nameIndex == -1) {
         return ImportResult(
@@ -309,6 +320,11 @@ class DataBackupService {
             ..phone = phoneIndex >= 0 && phoneIndex < values.length
                 ? values[phoneIndex]
                 : ''
+            ..address = addressIndex >= 0 &&
+                    addressIndex < values.length &&
+                    values[addressIndex].isNotEmpty
+                ? values[addressIndex]
+                : null
             ..debtBalance = 0
             ..createdAt = DateTime.now();
 
@@ -412,8 +428,13 @@ class DataBackupService {
   // ============================================================================
 
   Future<Directory> _getBackupDirectory() async {
-    final dir = await getApplicationDocumentsDirectory();
-    final backupDir = Directory('${dir.path}/sulaimani_backups');
+    Directory backupDir;
+    if (_customBackupPath != null && _customBackupPath!.isNotEmpty) {
+      backupDir = Directory(_customBackupPath!);
+    } else {
+      final dir = await getApplicationDocumentsDirectory();
+      backupDir = Directory('${dir.path}/sulaimani_backups');
+    }
     if (!await backupDir.exists()) {
       await backupDir.create(recursive: true);
     }
@@ -476,7 +497,7 @@ class DataBackupService {
         c.id,
         _escapeCsv(c.name),
         _escapeCsv(c.description ?? ''),
-        c.createdAt?.toIso8601String() ?? '',
+        c.createdAt.toIso8601String(),
       ].join(','));
     }
 
@@ -486,13 +507,16 @@ class DataBackupService {
   Future<void> _exportCustomersToCsv(
       List<CustomerModel> customers, String path) async {
     final buffer = StringBuffer();
-    buffer.writeln('id,name,phone,debtBalance,createdAt,updatedAt');
+    buffer.writeln(
+        'id,name,phone,address,totalPurchases,debtBalance,createdAt,updatedAt');
 
     for (final c in customers) {
       buffer.writeln([
         c.id,
         _escapeCsv(c.name),
         _escapeCsv(c.phone),
+        _escapeCsv(c.address ?? ''),
+        c.totalPurchases,
         c.debtBalance,
         c.createdAt.toIso8601String(),
         c.updatedAt?.toIso8601String() ?? '',
@@ -663,4 +687,109 @@ class BackupInfo {
     if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
     return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
+}
+
+// ============================================================================
+// BACKUP PATH MANAGEMENT
+// ============================================================================
+
+/// Get the current backup directory path
+Future<String> getBackupDirectoryPath({String? customPath}) async {
+  if (customPath != null && customPath.isNotEmpty) {
+    final dir = Directory(customPath);
+    if (!await dir.exists()) {
+      await dir.create(recursive: true);
+    }
+    return customPath;
+  }
+  final dir = await getApplicationDocumentsDirectory();
+  final backupDir = Directory('${dir.path}/sulaimani_backups');
+  if (!await backupDir.exists()) {
+    await backupDir.create(recursive: true);
+  }
+  return backupDir.path;
+}
+
+/// List all backup files in the backup directory
+Future<List<BackupInfo>> listBackups({String? customPath}) async {
+  final backupPath = await getBackupDirectoryPath(customPath: customPath);
+  final dir = Directory(backupPath);
+
+  if (!await dir.exists()) {
+    return [];
+  }
+
+  final List<BackupInfo> backups = [];
+  await for (final entity in dir.list()) {
+    if (entity is File && entity.path.endsWith('.csv')) {
+      final stat = await entity.stat();
+      final name = entity.path.split(Platform.pathSeparator).last;
+
+      // Try to parse the timestamp from the filename
+      DateTime? createdAt;
+      try {
+        // Extract date from filename like "products_20241215_143022.csv"
+        final parts = name.split('_');
+        if (parts.length >= 2) {
+          final datePart = parts[1]; // "20241215"
+          final timePart =
+              parts.length > 2 ? parts[2].replaceAll('.csv', '') : '';
+          if (datePart.length == 8) {
+            final year = int.parse(datePart.substring(0, 4));
+            final month = int.parse(datePart.substring(4, 6));
+            final day = int.parse(datePart.substring(6, 8));
+            int hour = 0, minute = 0, second = 0;
+            if (timePart.length == 6) {
+              hour = int.parse(timePart.substring(0, 2));
+              minute = int.parse(timePart.substring(2, 4));
+              second = int.parse(timePart.substring(4, 6));
+            }
+            createdAt = DateTime(year, month, day, hour, minute, second);
+          }
+        }
+      } catch (_) {}
+
+      backups.add(BackupInfo(
+        name: name,
+        path: entity.path,
+        createdAt: createdAt ?? stat.modified,
+        size: stat.size,
+      ));
+    }
+  }
+
+  // Sort by date descending (newest first)
+  backups.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+  return backups;
+}
+
+/// Delete old backup files, keeping only the most recent N backups
+Future<int> cleanupOldBackups({int keepCount = 10, String? customPath}) async {
+  final backups = await listBackups(customPath: customPath);
+
+  if (backups.length <= keepCount) {
+    return 0;
+  }
+
+  int deletedCount = 0;
+  for (int i = keepCount; i < backups.length; i++) {
+    try {
+      final file = File(backups[i].path);
+      if (await file.exists()) {
+        await file.delete();
+        deletedCount++;
+      }
+    } catch (_) {
+      // Ignore deletion errors
+    }
+  }
+
+  return deletedCount;
+}
+
+/// Get total backup size
+Future<int> getTotalBackupSize({String? customPath}) async {
+  final backups = await listBackups(customPath: customPath);
+  return backups.fold<int>(0, (sum, b) => sum + b.size);
 }
