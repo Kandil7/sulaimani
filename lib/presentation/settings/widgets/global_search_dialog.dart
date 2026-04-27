@@ -162,7 +162,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog>
                   name: (p as dynamic).name,
                   barcode: (p as dynamic).barcode,
                   stockQuantity: (p as dynamic).stockQuantity,
-                  salePrice: (p as dynamic).salePrice,
+                  salePrice: (p as dynamic).sellingPrice,
                 ))
             .toList();
       } else {

@@ -248,13 +248,13 @@ class _SettingsFormState extends State<SettingsForm> {
 
   Widget _buildPharmacyInfoSection() {
     return _buildSectionCard(
-      title: 'معلومات الصيدلية',
+      title: 'معلومات المحل',
       icon: Icons.local_pharmacy,
       children: [
         TextFormField(
           controller: _pharmacyNameController,
           decoration: const InputDecoration(
-            labelText: 'اسم الصيدلية',
+            labelText: 'اسم المحل',
             border: OutlineInputBorder(),
           ),
           validator: (v) => v?.trim().isEmpty ?? true ? 'الحقل مطلوب' : null,
@@ -749,8 +749,8 @@ class _SettingsFormState extends State<SettingsForm> {
       children: [
         ListTile(
           leading: const Icon(Icons.apps),
-          title: const Text('صيدلية السليماني'),
-          subtitle: const Text('نظام إدارة الصيدلية'),
+          title: const Text('محل السليماني'),
+          subtitle: const Text('نظام إدارة المحل'),
           contentPadding: EdgeInsets.zero,
         ),
         const Divider(),

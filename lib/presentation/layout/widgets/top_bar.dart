@@ -32,7 +32,7 @@ class TopBar extends StatelessWidget {
       buildWhen: (prev, curr) =>
           curr is SettingsLoaded || curr is SettingsSaved,
       builder: (context, settingsState) {
-        String pharmacyName = 'صيدلية السليماني';
+        String pharmacyName = 'محل السليماني';
         if (settingsState is SettingsLoaded) {
           pharmacyName = settingsState.settings.pharmacyName;
         } else if (settingsState is SettingsSaved) {

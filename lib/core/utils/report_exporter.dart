@@ -57,7 +57,7 @@ class ReportExporter {
 
     // Header
     page.graphics.drawString(
-      shopName ?? 'صيدلية السليماني',
+      shopName ?? 'محل السليماني',
       headerFont,
       bounds: Rect.fromLTWH(0, yPos, pageSize.width, 30),
       format: centerRtlFormat,

@@ -31,7 +31,7 @@ void main() async {
     backgroundColor: Colors.transparent,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.normal,
-    title: 'صيدلية السليماني — نظام إدارة الصيدلية',
+    title: 'محل السليماني — نظام إدارة المحل',
   );
 
   windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -90,7 +90,7 @@ class _MyAppState extends State<MyApp> {
           }
         },
         child: MaterialApp.router(
-          title: 'صيدلية السليماني',
+          title: 'محل السليماني',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
 

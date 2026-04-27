@@ -76,7 +76,7 @@ class InvoicePreviewCard extends StatelessWidget {
                     child: Text(
                       pharmacyName.isNotEmpty
                           ? pharmacyName
-                          : 'صيدلية السليماني',
+                          : 'محل السليماني',
                       style: AppTextStyles.h2.copyWith(
                         fontWeight: FontWeight.bold,
                       ),

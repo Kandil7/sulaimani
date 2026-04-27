@@ -1,4 +1,4 @@
-أكيد — هشرح لك **كل feature** في نظام **صيدلية السليماني** بالتفصيل، ومع كل feature هحط **user stories** واضحة ومعاها **acceptance criteria** علشان يبقى عندك تصور منتج/تنفيذ كامل. أمثلة user story الجيدة بتكون بصيغة “As a… I want… so that…” مع acceptance criteria واضحة لتقليل الغموض. [pmprompt](https://pmprompt.com/blog/user-story-examples)
+أكيد — هشرح لك **كل feature** في نظام **محل السليماني** بالتفصيل، ومع كل feature هحط **user stories** واضحة ومعاها **acceptance criteria** علشان يبقى عندك تصور منتج/تنفيذ كامل. أمثلة user story الجيدة بتكون بصيغة “As a… I want… so that…” مع acceptance criteria واضحة لتقليل الغموض. [pmprompt](https://pmprompt.com/blog/user-story-examples)
 
 ## 1) إدارة المنتجات
 
@@ -233,7 +233,7 @@
 
 ## 1) Product Management
 
-هذه الـ feature هي أساس النظام كله. من غيرها لا يوجد بيع، ولا تقارير، ولا تنبيهات دقيقة. في نظام صيدلية/مبيدات، إدارة المنتج لا تقتصر على الاسم والسعر فقط، بل تشمل النوع، الصلاحية، الكمية، والحد الأدنى، لأن إدارة المخزون الصيدلي تعتمد على تتبع التواريخ والدفعات والحدود الدنيا. [langate](https://langate.com/news-and-blog/10-main-features-of-a-pharmacy-inventory-management-system/)
+هذه الـ feature هي أساس النظام كله. من غيرها لا يوجد بيع، ولا تقارير، ولا تنبيهات دقيقة. في نظام محل/مبيدات، إدارة المنتج لا تقتصر على الاسم والسعر فقط، بل تشمل النوع، الصلاحية، الكمية، والحد الأدنى، لأن إدارة المخزون الصيدلي تعتمد على تتبع التواريخ والدفعات والحدود الدنيا. [langate](https://langate.com/news-and-blog/10-main-features-of-a-pharmacy-inventory-management-system/)
 
 ### Story PM-01
 **As a** shop owner, **I want** to add a new product with all required details, **so that** I can sell it and track its inventory.

@@ -386,7 +386,7 @@ void main() {
     theme: AppTheme.light,
     home: Scaffold(
       body: Center(
-        child: Text('صيدلية السليماني',
+        child: Text('محل السليماني',
           style: AppTextStyles.headline1),
       ),
     ),
@@ -875,7 +875,7 @@ WindowOptions windowOptions = WindowOptions(
   size: Size(1280, 800),
   minimumSize: Size(1024, 600),
   center: true,
-  title: 'صيدلية السليماني — نظام الإدارة',
+  title: 'محل السليماني — نظام الإدارة',
   titleBarStyle: TitleBarStyle.normal,
 );
 await windowManager.waitUntilReadyToShow(windowOptions, () async {

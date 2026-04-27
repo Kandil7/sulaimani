@@ -31,7 +31,7 @@ class SettingsModel {
   late DateTime updatedAt;
 
   static SettingsModel get defaults => SettingsModel()
-    ..pharmacyName = 'صيدلية السليماني'
+    ..pharmacyName = 'محل السليماني'
     ..pharmacyAddress = null
     ..pharmacyPhone = null
     ..invoiceHeader = null
