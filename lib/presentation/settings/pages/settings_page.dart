@@ -299,38 +299,47 @@ class _SettingsPageContent extends StatelessWidget {
       );
 
       if (result != null && result.files.isNotEmpty && context.mounted) {
-        // Show progress dialog
-        final NavigatorState navigator = Navigator.of(context);
+        // Show progress indicator while restoring
         showDialog(
           context: context,
           barrierDismissible: false,
-          builder: (_) => _RestoreProgressDialog(
-            files: result.files.map((f) => f.path!).toList(),
-            onRestore: (filePaths) async {
-              for (int i = 0; i < filePaths.length; i++) {
-                final path = filePaths[i];
-                // Restore each file
-                if (context.mounted) {
-                  context.read<SettingsBloc>().add(RestoreBackup(path));
-                }
-                // Update progress
-                await Future.delayed(const Duration(milliseconds: 500));
-              }
-              if (context.mounted) {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('تم استيراد ${filePaths.length} ملف بنجاح'),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
-              }
-            },
+          builder: (dialogContext) => AlertDialog(
+            title: const Row(
+              children: [
+                CircularProgressIndicator(strokeWidth: 2),
+                SizedBox(width: AppSizes.md),
+                Text('جاري الاستعادة'),
+              ],
+            ),
+            content:
+                Text('تم اختيار ${result.files.length} ملف. جاري الاستيراد...'),
           ),
         );
+
+        // Restore files sequentially
+        int successCount = 0;
+        for (final file in result.files) {
+          if (file.path != null) {
+            context.read<SettingsBloc>().add(RestoreBackup(file.path!));
+            await Future.delayed(const Duration(milliseconds: 300));
+            successCount++;
+          }
+        }
+
+        // Close the loading dialog
+        if (context.mounted) {
+          Navigator.of(context, rootNavigator: true).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('تم استيراد $successCount ملف بنجاح'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('فشل في اختيار الملف: $e'),
@@ -339,73 +348,5 @@ class _SettingsPageContent extends StatelessWidget {
         );
       }
     }
-  }
-}
-
-// Progress dialog for restore
-class _RestoreProgressDialog extends StatefulWidget {
-  final List<String> files;
-  final Function(List<String>) onRestore;
-
-  const _RestoreProgressDialog({
-    required this.files,
-    required this.onRestore,
-  });
-
-  @override
-  State<_RestoreProgressDialog> createState() => _RestoreProgressDialogState();
-}
-
-class _RestoreProgressDialogState extends State<_RestoreProgressDialog> {
-  int _currentFileIndex = 0;
-  String _currentFileName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _startRestore();
-  }
-
-  Future<void> _startRestore() async {
-    await widget.onRestore(widget.files);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final progress =
-        widget.files.isEmpty ? 0.0 : _currentFileIndex / widget.files.length;
-
-    return AlertDialog(
-      title: Row(
-        children: [
-          const Icon(Icons.restore, color: AppColors.primary),
-          const SizedBox(width: AppSizes.sm),
-          const Text('جاري الاستعادة'),
-        ],
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('ملفات محددة: ${widget.files.length}'),
-          const SizedBox(height: AppSizes.md),
-          LinearProgressIndicator(value: progress),
-          const SizedBox(height: AppSizes.sm),
-          Text(
-            _currentFileIndex < widget.files.length
-                ? 'جاري استيراد: ${widget.files[_currentFileIndex].split(Platform.pathSeparator).last}'
-                : 'جاري الانتهاء...',
-            style:
-                const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('إلغاء'),
-        ),
-      ],
-    );
   }
 }
