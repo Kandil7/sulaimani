@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../settings/widgets/global_search_dialog.dart';
 
 class SideMenu extends StatelessWidget {
@@ -32,11 +33,11 @@ class SideMenu extends StatelessWidget {
     // Desktop/Tablet sidebar
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: AppColors.shadowLight,
+            blurRadius: 16,
             offset: const Offset(2, 0),
           ),
         ],
@@ -54,6 +55,7 @@ class SideMenu extends StatelessWidget {
                 children: [
                   _MenuItem(
                     icon: Icons.dashboard_outlined,
+                    selectedIcon: Icons.dashboard,
                     title: AppStrings.dashboard,
                     isExpanded: isExpanded,
                     isActive: currentPath == '/',
@@ -61,6 +63,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.point_of_sale_outlined,
+                    selectedIcon: Icons.point_of_sale,
                     title: 'نقطة البيع',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/pos'),
@@ -68,6 +71,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.inventory_2_outlined,
+                    selectedIcon: Icons.inventory_2,
                     title: 'إدارة المنتجات',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/products'),
@@ -75,6 +79,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.people_outline,
+                    selectedIcon: Icons.people,
                     title: 'العملاء',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/customers'),
@@ -82,6 +87,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.warning_amber_outlined,
+                    selectedIcon: Icons.warning_amber,
                     title: 'التنبيهات',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/alerts'),
@@ -90,6 +96,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.receipt_long_outlined,
+                    selectedIcon: Icons.receipt_long,
                     title: 'التقارير',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/reports'),
@@ -97,6 +104,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.description_outlined,
+                    selectedIcon: Icons.description,
                     title: 'الفواتير',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/invoices'),
@@ -104,6 +112,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.settings_outlined,
+                    selectedIcon: Icons.settings,
                     title: 'الإعدادات',
                     isExpanded: isExpanded,
                     isActive: currentPath.startsWith('/settings'),
@@ -121,9 +130,9 @@ class SideMenu extends StatelessWidget {
   /// Build mobile drawer menu
   Widget _buildMobileMenu(BuildContext context, String currentPath) {
     return Container(
-      width: 280,
+      width: AppSizes.sidebarMobileWidth,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
       ),
       child: Column(
         children: [
@@ -138,6 +147,7 @@ class SideMenu extends StatelessWidget {
                 children: [
                   _MenuItem(
                     icon: Icons.dashboard_outlined,
+                    selectedIcon: Icons.dashboard,
                     title: AppStrings.dashboard,
                     isExpanded: true,
                     isActive: currentPath == '/',
@@ -148,6 +158,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.point_of_sale_outlined,
+                    selectedIcon: Icons.point_of_sale,
                     title: 'نقطة البيع',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/pos'),
@@ -158,6 +169,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.inventory_2_outlined,
+                    selectedIcon: Icons.inventory_2,
                     title: 'إدارة المنتجات',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/products'),
@@ -168,6 +180,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.people_outline,
+                    selectedIcon: Icons.people,
                     title: 'العملاء',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/customers'),
@@ -178,6 +191,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.warning_amber_outlined,
+                    selectedIcon: Icons.warning_amber,
                     title: 'التنبيهات',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/alerts'),
@@ -189,6 +203,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.receipt_long_outlined,
+                    selectedIcon: Icons.receipt_long,
                     title: 'التقارير',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/reports'),
@@ -199,6 +214,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.description_outlined,
+                    selectedIcon: Icons.description,
                     title: 'الفواتير',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/invoices'),
@@ -209,6 +225,7 @@ class SideMenu extends StatelessWidget {
                   ),
                   _MenuItem(
                     icon: Icons.settings_outlined,
+                    selectedIcon: Icons.settings,
                     title: 'الإعدادات',
                     isExpanded: true,
                     isActive: currentPath.startsWith('/settings'),
@@ -235,23 +252,38 @@ class _LogoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.sm),
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.md),
+      decoration: BoxDecoration(
+        color: AppColors.primarySurface,
+        border: Border(
+          bottom: BorderSide(color: AppColors.borderLight),
+        ),
+      ),
       child: Row(
         children: [
-          Flexible(
+          // Logo container with gradient
+          Container(
+            padding: const EdgeInsets.all(AppSizes.sm),
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Image.asset(
               'assets/images/logo.png',
-              width: 40,
-              height: 40,
-              errorBuilder: (context, error, stackTrace) => Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.home, color: AppColors.primary),
+              width: 28,
+              height: 28,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.store,
+                color: Colors.white,
+                size: 24,
               ),
             ),
           ),
@@ -260,9 +292,7 @@ class _LogoHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 AppStrings.appName,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                style: AppTextStyles.h5.copyWith(
                   color: AppColors.primary,
                 ),
                 overflow: TextOverflow.ellipsis,
@@ -271,7 +301,10 @@ class _LogoHeader extends StatelessWidget {
           ],
           // Global search button
           IconButton(
-            icon: const Icon(Icons.search, color: AppColors.primary),
+            icon: Icon(
+              Icons.search,
+              color: AppColors.primary,
+            ),
             tooltip: 'بحث شامل (Ctrl+K)',
             onPressed: () {
               showDialog(
@@ -298,6 +331,7 @@ class _LogoHeader extends StatelessWidget {
 
 class _MenuItem extends StatelessWidget {
   final IconData icon;
+  final IconData selectedIcon;
   final String title;
   final bool isExpanded;
   final bool isActive;
@@ -306,6 +340,7 @@ class _MenuItem extends StatelessWidget {
 
   const _MenuItem({
     required this.icon,
+    required this.selectedIcon,
     required this.title,
     required this.isExpanded,
     required this.isActive,
@@ -315,78 +350,100 @@ class _MenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        margin:
-            const EdgeInsets.symmetric(horizontal: AppSizes.sm, vertical: 4),
-        padding: EdgeInsets.symmetric(
-          horizontal: isExpanded ? AppSizes.md : AppSizes.xs,
-          vertical: AppSizes.sm,
-        ),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.primarySurface : Colors.transparent,
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.sm,
+        vertical: AppSizes.xxs,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 24,
-              child: Center(
-                child: Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(
-                      icon,
-                      color: isActive
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
-                      size: 20,
-                    ),
-                    if (badgeCount != null)
-                      Positioned(
-                        right: -8,
-                        top: -8,
-                        child: Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: const BoxDecoration(
-                            color: AppColors.danger,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            badgeCount! > 99 ? '99+' : badgeCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 8,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              horizontal: isExpanded ? AppSizes.md : AppSizes.sm,
+              vertical: AppSizes.sm,
             ),
-            if (isExpanded) ...[
-              const SizedBox(width: AppSizes.md),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isActive ? AppColors.primary : AppColors.textPrimary,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            decoration: BoxDecoration(
+              color: isActive ? AppColors.primarySurface : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              border: isActive
+                  ? Border.all(color: AppColors.primary.withOpacity(0.2))
+                  : null,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: 24,
+                  child: Center(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Icon(
+                          isActive ? selectedIcon : icon,
+                          color: isActive
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
+                          size: 20,
+                        ),
+                        if (badgeCount != null)
+                          Positioned(
+                            right: -8,
+                            top: -8,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: AppColors.danger,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.danger.withOpacity(0.3),
+                                    blurRadius: 4,
+                                  ),
+                                ],
+                              ),
+                              constraints: const BoxConstraints(
+                                minWidth: 18,
+                                minHeight: 18,
+                              ),
+                              child: Text(
+                                badgeCount! > 99
+                                    ? '99+'
+                                    : badgeCount.toString(),
+                                style: AppTextStyles.badge.copyWith(
+                                  fontSize: 9,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
-          ],
+                if (isExpanded) ...[
+                  const SizedBox(width: AppSizes.md),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: isActive
+                          ? AppTextStyles.label.copyWith(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
+                            )
+                          : AppTextStyles.label.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

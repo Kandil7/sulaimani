@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/product_model.dart';
 import 'product_pos_card.dart';
 
@@ -117,27 +118,29 @@ class ProductGrid extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 64,
-            color: AppColors.textSecondary.withOpacity(0.5),
+          Container(
+            padding: const EdgeInsets.all(AppSizes.lg),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.search_off,
+              size: 48,
+              color: AppColors.textTertiary,
+            ),
           ),
-          const SizedBox(height: AppSizes.md),
+          const SizedBox(height: AppSizes.lg),
           Text(
             'لا توجد منتجات',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textSecondary.withOpacity(0.7),
+            style: AppTextStyles.h4.copyWith(
+              color: AppColors.textSecondary,
             ),
           ),
-          const SizedBox(height: AppSizes.sm),
+          const SizedBox(height: AppSizes.xs),
           Text(
             'جرب البحث بكلمة مفتاحية مختلفة',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textSecondary.withOpacity(0.5),
-            ),
+            style: AppTextStyles.bodySm,
           ),
         ],
       ),

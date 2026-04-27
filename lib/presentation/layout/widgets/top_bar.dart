@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../core/theme/responsive/responsive_layout.dart';
 import '../../alerts/bloc/alerts_bloc.dart';
 import '../../alerts/bloc/alerts_state.dart';
@@ -52,11 +53,11 @@ class TopBar extends StatelessWidget {
                 horizontal: isMobile ? AppSizes.md : AppSizes.xl,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 5,
+                    color: AppColors.shadowLight,
+                    blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -67,17 +68,27 @@ class TopBar extends StatelessWidget {
                   // Left: Menu toggle (mobile) or pharmacy name
                   if (showMobileMenu && isMobile)
                     IconButton(
-                      icon: const Icon(Icons.menu, color: AppColors.primary),
+                      icon: Icon(Icons.menu, color: AppColors.primary),
                       onPressed: onMobileMenuTap,
                     )
                   else
-                    Text(
-                      pharmacyName,
-                      style: TextStyle(
-                        fontSize: isMobile ? 14 : 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.store,
+                          color: AppColors.primary,
+                          size: isMobile ? 18 : 22,
+                        ),
+                        const SizedBox(width: AppSizes.sm),
+                        Text(
+                          pharmacyName,
+                          style: TextStyle(
+                            fontSize: isMobile ? 14 : 18,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   // Right side actions
                   Row(
@@ -87,13 +98,25 @@ class TopBar extends StatelessWidget {
                         StreamBuilder(
                           stream: Stream.periodic(const Duration(seconds: 1)),
                           builder: (context, snapshot) {
-                            return Text(
-                              DateFormat('hh:mm a | yyyy/MM/dd', 'en_US')
-                                  .format(DateTime.now()),
-                              textDirection: TextDirection.ltr,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.sm,
+                                vertical: AppSizes.xs,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.background,
+                                borderRadius:
+                                    BorderRadius.circular(AppSizes.radiusSm),
+                              ),
+                              child: Text(
+                                DateFormat('hh:mm a | yyyy/MM/dd', 'en_US')
+                                    .format(DateTime.now()),
+                                textDirection: TextDirection.ltr,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             );
                           },
@@ -103,12 +126,17 @@ class TopBar extends StatelessWidget {
                       PopupMenuButton<String>(
                         icon: Badge(
                           label: totalCount > 0
-                              ? Text(totalCount > 99
-                                  ? '99+'
-                                  : totalCount.toString())
+                              ? Text(
+                                  totalCount > 99
+                                      ? '99+'
+                                      : totalCount.toString(),
+                                  style: const TextStyle(fontSize: 10),
+                                )
                               : const SizedBox.shrink(),
+                          backgroundColor: AppColors.danger,
+                          textStyle: AppTextStyles.badge,
                           isLabelVisible: totalCount > 0,
-                          child: const Icon(Icons.notifications_outlined,
+                          child: Icon(Icons.notifications_outlined,
                               color: AppColors.textSecondary),
                         ),
                         offset: const Offset(0, 50),
@@ -123,14 +151,28 @@ class TopBar extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSizes.md),
                       // User Profile Placeholder
-                      CircleAvatar(
-                        radius: isMobile ? 14 : 16,
-                        backgroundColor: AppColors.primary,
-                        child: Text(
-                          pharmacyName.isNotEmpty ? pharmacyName[0] : 'ص',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: isMobile ? 12 : 14,
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.2),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: isMobile ? 14 : 16,
+                          backgroundColor: Colors.transparent,
+                          child: Text(
+                            pharmacyName.isNotEmpty ? pharmacyName[0] : 'ص',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isMobile ? 12 : 14,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

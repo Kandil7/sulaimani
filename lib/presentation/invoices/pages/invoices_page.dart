@@ -408,28 +408,35 @@ class _InvoicesPageContentState extends State<_InvoicesPageContent> {
             ),
             Expanded(
               flex: 2,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    onPressed: () => _showEditInvoiceDialog(sale),
-                    icon: const Icon(Icons.edit, size: 18),
-                    tooltip: 'تعديل الملاحظات',
-                    color: AppColors.warning,
-                  ),
-                  IconButton(
-                    onPressed: () => _showReprintDialog(sale),
-                    icon: const Icon(Icons.print, size: 18),
-                    tooltip: 'إعادة طباعة',
-                    color: AppColors.primary,
-                  ),
-                  IconButton(
-                    onPressed: () => _showSaleDetails(sale),
-                    icon: const Icon(Icons.visibility, size: 18),
-                    tooltip: 'عرض التفاصيل',
-                    color: AppColors.textSecondary,
-                  ),
-                ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () => _showEditInvoiceDialog(sale),
+                      icon: const Icon(Icons.edit, size: 18),
+                      tooltip: 'تعديل الملاحظات',
+                      color: AppColors.warning,
+                      constraints: const BoxConstraints(maxWidth: 36),
+                    ),
+                    IconButton(
+                      onPressed: () => _showReprintDialog(sale),
+                      icon: const Icon(Icons.print, size: 18),
+                      tooltip: 'إعادة طباعة',
+                      color: AppColors.primary,
+                      constraints: const BoxConstraints(maxWidth: 36),
+                    ),
+                    IconButton(
+                      onPressed: () => _showSaleDetails(sale),
+                      icon: const Icon(Icons.visibility, size: 18),
+                      tooltip: 'عرض التفاصيل',
+                      color: AppColors.textSecondary,
+                      constraints: const BoxConstraints(maxWidth: 36),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

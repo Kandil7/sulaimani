@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/sale_item_model.dart';
 import 'cart_item_row.dart';
 
@@ -40,21 +41,36 @@ class CartPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         children: [
-          // Header
+          // Header with gradient accent
           Container(
             padding: const EdgeInsets.all(AppSizes.md),
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(color: AppColors.border),
+                bottom: BorderSide(color: AppColors.borderLight),
               ),
             ),
             child: Row(
               children: [
+                Icon(
+                  Icons.receipt_long,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: AppSizes.sm),
                 const Text(
-                  '🧾الفاتورة الحالية',
+                  'الفاتورة الحالية',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -68,16 +84,19 @@ class CartPanel extends StatelessWidget {
                     vertical: AppSizes.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   child: Text(
                     '$_itemCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
+                    style: AppTextStyles.badge,
                   ),
                 ),
               ],
@@ -284,27 +303,27 @@ class CartPanel extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 64,
-            color: AppColors.textSecondary.withOpacity(0.3),
+          Container(
+            padding: const EdgeInsets.all(AppSizes.lg),
+            decoration: BoxDecoration(
+              color: AppColors.primarySurface,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.shopping_cart_outlined,
+              size: 48,
+              color: AppColors.primary,
+            ),
           ),
-          const SizedBox(height: AppSizes.md),
+          const SizedBox(height: AppSizes.lg),
           Text(
             'السلة فارغة',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textSecondary.withOpacity(0.7),
-            ),
+            style: AppTextStyles.h4,
           ),
           const SizedBox(height: AppSizes.xs),
           Text(
             'أضف منتجات من اليمين',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppColors.textSecondary.withOpacity(0.5),
-            ),
+            style: AppTextStyles.bodySm,
           ),
         ],
       ),

@@ -162,7 +162,10 @@ class CustomerDetailPanel extends StatelessWidget {
         children: [
           const Icon(Icons.person, color: AppColors.primary, size: 20),
           const SizedBox(width: AppSizes.sm),
-          const Text('تفاصيل العميل', style: AppTextStyles.h3),
+          const Flexible(
+            child: Text('تفاصيل العميل',
+                style: AppTextStyles.h3, overflow: TextOverflow.ellipsis),
+          ),
           const Spacer(),
           IconButton(
             onPressed: () {
@@ -215,11 +218,14 @@ class CustomerDetailPanel extends StatelessWidget {
                         color: AppColors.textSecondary,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        customer.phone,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
+                      Flexible(
+                        child: Text(
+                          customer.phone,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],

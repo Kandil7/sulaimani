@@ -225,18 +225,32 @@ class _SummaryCard extends StatelessWidget {
       padding: const EdgeInsets.all(AppSizes.md),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadowLight,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(AppSizes.sm),
+            padding: const EdgeInsets.all(AppSizes.md),
             decoration: BoxDecoration(
               color: backgroundColor,
-              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              boxShadow: [
+                BoxShadow(
+                  color: iconColor.withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: Icon(icon, color: iconColor, size: 28),
+            child: Icon(icon, color: iconColor, size: 24),
           ),
           const SizedBox(width: AppSizes.md),
           Expanded(
@@ -245,13 +259,14 @@ class _SummaryCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: AppTextStyles.h2.copyWith(
+                  style: AppTextStyles.h3.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
+                const SizedBox(height: AppSizes.xxs),
                 Text(
                   label,
-                  style: AppTextStyles.caption,
+                  style: AppTextStyles.captionSm,
                 ),
               ],
             ),

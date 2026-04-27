@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/utils/currency_utils.dart';
+import '../../../core/theme/app_text_styles.dart';
 import '../../../data/models/product_model.dart';
 
 class ProductPOSCard extends StatefulWidget {
@@ -108,147 +109,145 @@ class _ProductPOSCardState extends State<ProductPOSCard>
           scale: _scaleAnimation.value,
           child: Opacity(
             opacity: isOutOfStock ? 0.5 : (isExpired ? 0.7 : 1.0),
-            child: Card(
-              elevation: _elevationAnimation.value,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                side: BorderSide(
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                border: Border.all(
                   color: _showCheckmark
                       ? AppColors.success
                       : isExpired
                           ? AppColors.danger.withOpacity(0.5)
                           : (hasLowStock
                               ? AppColors.warning.withOpacity(0.5)
-                              : Colors.transparent),
-                  width: _showCheckmark || isExpired || hasLowStock ? 2 : 0,
+                              : AppColors.border),
+                  width: _showCheckmark || isExpired || hasLowStock ? 2 : 1,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _showCheckmark
+                        ? AppColors.success.withOpacity(0.15)
+                        : AppColors.shadowLight,
+                    blurRadius: _elevationAnimation.value,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: InkWell(
-                onTap: isOutOfStock ? null : _handleTap,
-                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.sm),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Product icon
-                      Stack(
-                        children: [
-                          Icon(
-                            _getProductIcon(),
-                            size: 36,
-                            color: AppColors.primary,
-                          ),
-                          if (widget.quantityInCart > 0)
-                            Positioned(
-                              right: 0,
-                              top: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '${widget.quantityInCart}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: isOutOfStock ? null : _handleTap,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.sm),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Product icon with container
+                        Stack(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(AppSizes.sm),
+                              decoration: BoxDecoration(
+                                color: AppColors.primarySurface,
+                                borderRadius:
+                                    BorderRadius.circular(AppSizes.radiusMd),
+                              ),
+                              child: Icon(
+                                _getProductIcon(),
+                                size: 28,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            if (widget.quantityInCart > 0)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    gradient: AppColors.primaryGradient,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            AppColors.primary.withOpacity(0.3),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Text(
+                                    '${widget.quantityInCart}',
+                                    style: AppTextStyles.badge,
                                   ),
                                 ),
                               ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSizes.sm),
+                        // Product name
+                        Text(
+                          widget.product.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.labelSm.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        // Price
+                        Text(
+                          CurrencyUtils.format(widget.product.sellingPrice),
+                          style: AppTextStyles.moneySm,
+                        ),
+                        const SizedBox(height: AppSizes.xs),
+                        // Stock indicator
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: _getStockColor(),
+                                shape: BoxShape.circle,
+                              ),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.xs),
-                      // Product name
-                      Text(
-                        widget.product.name,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                            const SizedBox(width: 4),
+                            Text(
+                              '${widget.product.stockQuantity}',
+                              style: AppTextStyles.captionSm.copyWith(
+                                color: _getStockColor(),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      const Spacer(),
-                      // Price
-                      Text(
-                        CurrencyUtils.format(widget.product.sellingPrice),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(height: AppSizes.xs),
-                      // Stock indicator
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+                        if (isOutOfStock || isExpired)
                           Container(
-                            width: 8,
-                            height: 8,
+                            margin: const EdgeInsets.only(top: AppSizes.xs),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.sm,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: _getStockColor(),
-                              shape: BoxShape.circle,
+                              color: AppColors.dangerSurface,
+                              borderRadius:
+                                  BorderRadius.circular(AppSizes.radiusSm),
+                            ),
+                            child: Text(
+                              isOutOfStock ? 'نفد' : 'منتهي',
+                              style: AppTextStyles.captionSm.copyWith(
+                                color: AppColors.danger,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${widget.product.stockQuantity}',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: _getStockColor(),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (isOutOfStock)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.error,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'نفد',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      if (isExpired)
-                        Container(
-                          margin: const EdgeInsets.only(top: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.danger,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Text(
-                            'منتهي',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
