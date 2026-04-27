@@ -111,6 +111,7 @@ class _CustomersTableState extends State<CustomersTable> {
               scrollDirection: Axis.horizontal,
               child: SingleChildScrollView(
                 child: DataTable(
+                  showCheckboxColumn: false,
                   headingRowColor:
                       WidgetStateProperty.all(AppColors.background),
                   dataRowMinHeight: 48,
@@ -140,14 +141,15 @@ class _CustomersTableState extends State<CustomersTable> {
                         state.selectedCustomer?.id == customer.id;
 
                     return DataRow(
+                      selected: isSelected,
                       color: WidgetStateProperty.all(
                         isSelected
                             ? AppColors.primarySurface
                             : globalIndex.isEven
                                 ? Colors.transparent
-                                : AppColors.background.withOpacity(0.5),
+                                : AppColors.background.withValues(alpha: 0.5),
                       ),
-                      onSelectChanged: (_) {
+                      onSelectChanged: (selected) {
                         context
                             .read<CustomersBloc>()
                             .add(SelectCustomer(customer.id));
