@@ -49,7 +49,23 @@ class AppRouter {
           ),
           GoRoute(
             path: '/customers',
-            builder: (context, state) => const CustomersPage(),
+            builder: (context, state) {
+              final preselectedId = state.uri.queryParameters['preselect'];
+              return CustomersPage(
+                preselectedCustomerId:
+                    preselectedId != null ? int.tryParse(preselectedId) : null,
+              );
+            },
+          ),
+          GoRoute(
+            path: '/customers/:id',
+            builder: (context, state) {
+              final customerId = state.pathParameters['id'];
+              return CustomersPage(
+                preselectedCustomerId:
+                    customerId != null ? int.tryParse(customerId) : null,
+              );
+            },
           ),
           GoRoute(
             path: '/reports',

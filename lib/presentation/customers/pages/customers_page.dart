@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -22,13 +23,29 @@ import '../widgets/edit_customer_dialog.dart';
 import '../widgets/debt_statistics_card.dart';
 import '../widgets/invoice_details_dialog.dart';
 
-class CustomersPage extends StatelessWidget {
-  const CustomersPage({super.key});
+class CustomersPage extends StatefulWidget {
+  final int? preselectedCustomerId;
 
+  const CustomersPage({super.key, this.preselectedCustomerId});
+
+  @override
+  State<CustomersPage> createState() => _CustomersPageState();
+}
+
+class _CustomersPageState extends State<CustomersPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => sl<CustomersBloc>()..add(LoadCustomers()),
+      create: (_) {
+        final bloc = sl<CustomersBloc>()..add(LoadCustomers());
+        // If preselected customer ID is provided, select it after loading
+        if (widget.preselectedCustomerId != null) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            bloc.add(SelectCustomer(widget.preselectedCustomerId));
+          });
+        }
+        return bloc;
+      },
       child: const CustomersView(),
     );
   }

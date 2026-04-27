@@ -39,6 +39,7 @@ class CustomersBloc extends Bloc<CustomersEvent, CustomersState> {
       emit(CustomersLoaded(
         customers: customers,
         filteredCustomers: customers,
+        selectedCustomer: customers.isNotEmpty ? customers.first : null,
       ));
     } catch (e) {
       emit(CustomersError(e.toString()));
