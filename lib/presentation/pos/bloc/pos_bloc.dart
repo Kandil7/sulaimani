@@ -481,7 +481,6 @@ class PosBloc extends Bloc<PosEvent, PosState> {
       log('Creating sale record in database...');
 
       // Create sale model
-      final change = event.paidAmount - currentState.finalTotal;
       final sale = SaleModel()
         ..receiptNumber = receiptNumber
         ..date = DateTime.now()

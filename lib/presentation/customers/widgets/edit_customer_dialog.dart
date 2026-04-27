@@ -68,7 +68,7 @@ class _EditCustomerDialogState extends State<EditCustomerDialog> {
 
     if (mounted) {
       context.read<CustomersBloc>().add(UpdateCustomer(widget.customer));
-      context.pop();
+      Navigator.of(context).pop();
     }
   }
 

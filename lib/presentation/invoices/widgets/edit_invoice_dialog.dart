@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/theme/app_text_styles.dart';
 import '../bloc/invoices_bloc.dart';
 import '../bloc/invoices_event.dart';
 

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -331,7 +329,7 @@ class _PosViewState extends State<_PosView> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => BlocProvider.value(
+      builder: (dialogContext) => BlocProvider.value(
         value: context.read<PosBloc>(),
         child: PaymentDialog(
           totalAmount: state.total,
@@ -340,10 +338,9 @@ class _PosViewState extends State<_PosView> {
           selectedCustomerId: state.selectedCustomerId,
           customerDebt: customerDebt,
           onConfirm: (paymentType, paidAmount, customerId, notes) {
-            // Close dialog first
-            // Navigator.of(context).pop();
+            // Close dialog using dialog context
+            Navigator.of(dialogContext).pop();
             // Then confirm sale
-            context.pop();
             context.read<PosBloc>().add(ConfirmSale(
                   paymentType: paymentType,
                   paidAmount: paidAmount,
@@ -352,8 +349,7 @@ class _PosViewState extends State<_PosView> {
                 ));
           },
           onCancel: () {
-            // Navigator.of(context).pop();
-            context.pop();
+            Navigator.of(dialogContext).pop();
             context.read<PosBloc>().add(ClosePaymentDialog());
           },
           onCreateCustomer: (name, phone) {
@@ -368,16 +364,16 @@ class _PosViewState extends State<_PosView> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => BlocProvider.value(
+      builder: (dialogContext) => BlocProvider.value(
         value: context.read<PosBloc>(),
         child: ExpiryWarningDialog(
           product: state.pendingExpiryProduct!,
           onConfirm: () {
-            Navigator.of(context).pop();
+            Navigator.of(dialogContext).pop();
             context.read<PosBloc>().add(ConfirmExpiryWarning());
           },
           onCancel: () {
-            Navigator.of(context).pop();
+            Navigator.of(dialogContext).pop();
             context.read<PosBloc>().add(CloseExpiryWarningDialog());
           },
         ),
@@ -452,12 +448,14 @@ class _PosViewState extends State<_PosView> {
           showDialog(
             context: context,
             barrierDismissible: false,
-            builder: (_) => InvoicePreviewDialog(
+            builder: (dialogContext) => InvoicePreviewDialog(
               sale: state.sale,
               items: state.items,
               pdfBytes: state.pdfBytes,
               onNewSale: () {
-                Navigator.of(context).pop();
+                // Pop the dialog using dialog context
+                Navigator.of(dialogContext).pop();
+                // Reload products for a new sale
                 context.read<PosBloc>().add(LoadAllProducts());
               },
             ),

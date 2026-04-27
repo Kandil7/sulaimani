@@ -1,4 +1,3 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -134,7 +133,8 @@ class InvoiceGenerator {
     );
     yPos += 15;
 
-    final String paymentMethodStr = sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل';
+    final String paymentMethodStr =
+        sale.paymentMethod == 'cash' ? 'نقدي' : 'آجل';
     final PdfBrush paymentBrush =
         sale.paymentMethod == 'cash' ? PdfBrushes.green : PdfBrushes.orange;
 
@@ -248,15 +248,17 @@ class InvoiceGenerator {
       yPos += 15;
     }
 
-    drawSummaryRow('الإجمالي:', CurrencyUtils.format(sale.totalAmount), arabicFont);
+    drawSummaryRow(
+        'الإجمالي:', CurrencyUtils.format(sale.totalAmount), arabicFont);
     if (sale.discount > 0) {
-      drawSummaryRow('الخصم:', '- ${CurrencyUtils.format(sale.discount)}',
-          arabicFont, brush: PdfBrushes.green);
+      drawSummaryRow(
+          'الخصم:', '- ${CurrencyUtils.format(sale.discount)}', arabicFont,
+          brush: PdfBrushes.green);
     }
 
     yPos += 5;
-    page.graphics.drawLine(
-        PdfPens.darkGray, Offset(pageSize.width - 150, yPos), Offset(pageSize.width, yPos));
+    page.graphics.drawLine(PdfPens.darkGray, Offset(pageSize.width - 150, yPos),
+        Offset(pageSize.width, yPos));
     yPos += 5;
 
     drawSummaryRow(
@@ -265,8 +267,9 @@ class InvoiceGenerator {
         'المدفوع:', CurrencyUtils.format(sale.paidAmount), arabicFont);
 
     if (sale.remainingAmount > 0) {
-      drawSummaryRow('الباقي:', CurrencyUtils.format(sale.remainingAmount),
-          arabicFont, brush: PdfBrushes.orange);
+      drawSummaryRow(
+          'الباقي:', CurrencyUtils.format(sale.remainingAmount), arabicFont,
+          brush: PdfBrushes.orange);
     }
 
     // ── Footer ──
@@ -311,7 +314,8 @@ class InvoiceGenerator {
       logoPath: logoPath,
     );
 
-    await Printing.layoutPdf(onLayout: (format) async => Uint8List.fromList(bytes));
+    await Printing.layoutPdf(
+        onLayout: (format) async => Uint8List.fromList(bytes));
   }
 
   static Future<List<int>> generatePdfBytes({

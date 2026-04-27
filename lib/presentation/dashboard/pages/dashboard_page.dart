@@ -8,8 +8,6 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/di/injection_container.dart';
 import '../../../core/theme/app_text_styles.dart';
 import '../../../data/datasources/local/sale_local_datasource.dart';
-import '../../../data/models/sale_model.dart';
-import '../../../presentation/invoices/widgets/reprint_invoice_dialog.dart';
 import '../bloc/dashboard_bloc.dart';
 import '../bloc/dashboard_event.dart';
 import '../bloc/dashboard_state.dart';
